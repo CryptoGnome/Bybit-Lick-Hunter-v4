@@ -830,9 +830,12 @@ async function main() {
     }
 }
 
-
-main();
-
+try {
+    main();
+}
+catch (error) {
+    console.log(chalk.red(error));
+}
 
 
 
