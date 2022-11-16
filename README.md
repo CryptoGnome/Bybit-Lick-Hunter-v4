@@ -13,13 +13,23 @@ https://partner.bybit.com/b/lickhunterv4
 coming soon
 
 
-### Quick Setup Steps:
+### Quick Windows Setup Steps:
 - Install Node JS https://nodejs.org/en/download/
 - Clone Project
 - Open CMD prompt in directory 
 - npm install
 - create a copy of example.env named .env
 - edit settings
+-node app.js
+
+### Quick Linux Setup Steps:
+- apt install npm
+- npm i https://github.com/CryptoGnome/Lick-Hunter-v4.git
+- cd to directory
+- npm install
+- create a copy of example.env named .env
+- edit settings
+- node app.js
 
 
 Follow me on twitter for updates:
