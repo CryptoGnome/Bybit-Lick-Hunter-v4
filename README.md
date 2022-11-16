@@ -33,7 +33,7 @@ coming soon
 - node app.js
 
 ### TO UPDATE
-git fetch  https://github.com/CryptoGnome/Lick-Hunter-v4.git
+git pull
 
 
 Follow me on twitter for updates:
