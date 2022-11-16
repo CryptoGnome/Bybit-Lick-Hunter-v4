@@ -32,6 +32,9 @@ coming soon
 - edit settings
 - node app.js
 
+### TO UPDATE
+git fetch  https://github.com/CryptoGnome/Lick-Hunter-v4.git
+
 
 Follow me on twitter for updates:
 https://twitter.com/Crypt0Gnome

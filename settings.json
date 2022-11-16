@@ -8,8 +8,8 @@
             "stop_loss": "5",
             "order_size": 0.7174012855831037,
             "max_position_size": 172.23302715151516,
-            "long_price": 0.517266,
-            "short_price": 0.538932
+            "long_price": 0.517575,
+            "short_price": 0.538447
         },
         {
             "symbol": "AAVEUSDT",
@@ -19,8 +19,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 1.49202688,
-            "long_price": 57.875082,
-            "short_price": 60.489976
+            "long_price": 57.936058,
+            "short_price": 60.393073
         },
         {
             "symbol": "ADAUSDT",
@@ -31,7 +31,7 @@
             "order_size": 1.7778858732388712,
             "max_position_size": 271.1360713655337,
             "long_price": 0.32630400000000004,
-            "short_price": 0.33988799999999997
+            "short_price": 0.33959700000000004
         },
         {
             "symbol": "ALGOUSDT",
@@ -41,7 +41,7 @@
             "stop_loss": "5",
             "order_size": 2.644628099173554,
             "max_position_size": 330.6874121309091,
-            "long_price": 0.268521,
+            "long_price": 0.269448,
             "short_price": 0.290321
         },
         {
@@ -52,7 +52,7 @@
             "stop_loss": "5",
             "order_size": 0.13327780091628486,
             "max_position_size": 74.23594966204081,
-            "long_price": 1.180277,
+            "long_price": 1.18141,
             "short_price": 1.234422
         },
         {
@@ -64,7 +64,7 @@
             "order_size": 24.884528013601884,
             "max_position_size": 1014.3785648187396,
             "long_price": 0.087138,
-            "short_price": 0.090792
+            "short_price": 0.090695
         },
         {
             "symbol": "ANKRUSDT",
@@ -75,7 +75,7 @@
             "order_size": 430.6609029882483,
             "max_position_size": 4219.908971508121,
             "long_price": 0.020909,
-            "short_price": 0.021824999999999997
+            "short_price": 0.021728
         },
         {
             "symbol": "ANTUSDT",
@@ -85,8 +85,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 49.15623693837838,
-            "long_price": 1.837417,
-            "short_price": 1.9562959999999998
+            "long_price": 1.841434,
+            "short_price": 1.957169
         },
         {
             "symbol": "APEUSDT",
@@ -96,8 +96,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 30.59859970928668,
-            "long_price": 2.830131,
-            "short_price": 3.0044779999999998
+            "long_price": 2.831161,
+            "short_price": 3.003314
         },
         {
             "symbol": "API3USDT",
@@ -107,8 +107,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 61.653585312542376,
-            "long_price": 1.4294339999999999,
-            "short_price": 1.5081559999999998
+            "long_price": 1.431597,
+            "short_price": 1.4968069999999998
         },
         {
             "symbol": "APTUSDT",
@@ -118,8 +118,8 @@
             "stop_loss": "5",
             "order_size": 0.011046656936403016,
             "max_position_size": 21.37227692972973,
-            "long_price": 4.285521,
-            "short_price": 4.657261
+            "long_price": 4.308593,
+            "short_price": 4.695964
         },
         {
             "symbol": "ARUSDT",
@@ -129,8 +129,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 9.949566557549234,
-            "long_price": 9.284111000000001,
-            "short_price": 10.310518
+            "long_price": 9.260524,
+            "short_price": 10.313718999999999
         },
         {
             "symbol": "ARPAUSDT",
@@ -151,8 +151,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 8.607575800851869,
-            "long_price": 10.07237,
-            "short_price": 10.49249
+            "long_price": 10.067014,
+            "short_price": 10.474254
         },
         {
             "symbol": "AUDIOUSDT",
@@ -162,8 +162,8 @@
             "stop_loss": "5",
             "order_size": 8.948445766825877,
             "max_position_size": 608.2878818461539,
-            "long_price": 0.14533300000000002,
-            "short_price": 0.151417
+            "long_price": 0.14543599999999998,
+            "short_price": 0.15131999999999998
         },
         {
             "symbol": "AVAXUSDT",
@@ -173,8 +173,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 6.676875061380324,
-            "long_price": 12.966876000000001,
-            "short_price": 13.507831999999999
+            "long_price": 12.962859,
+            "short_price": 13.487365
         },
         {
             "symbol": "AXSUSDT",
@@ -184,8 +184,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 12.727647072918128,
-            "long_price": 6.970937,
-            "short_price": 7.261711
+            "long_price": 6.972894,
+            "short_price": 7.255018
         },
         {
             "symbol": "BAKEUSDT",
@@ -196,7 +196,7 @@
             "order_size": 6.0048789641583795,
             "max_position_size": 498.2961004712329,
             "long_price": 0.17819,
-            "short_price": 0.185658
+            "short_price": 0.185464
         },
         {
             "symbol": "BALUSDT",
@@ -206,8 +206,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 16.73211376927323,
-            "long_price": 5.165244,
-            "short_price": 5.401250999999999
+            "long_price": 5.163699,
+            "short_price": 5.396109999999999
         },
         {
             "symbol": "BANDUSDT",
@@ -217,8 +217,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 47.16755100414939,
-            "long_price": 1.905809,
-            "short_price": 2.219069
+            "long_price": 1.910238,
+            "short_price": 2.218778
         },
         {
             "symbol": "BATUSDT",
@@ -228,8 +228,8 @@
             "stop_loss": "5",
             "order_size": 3.7318828748559723,
             "max_position_size": 392.82521959395245,
-            "long_price": 0.22340700000000002,
-            "short_price": 0.232703
+            "long_price": 0.223304,
+            "short_price": 0.232412
         },
         {
             "symbol": "BCHUSDT",
@@ -239,8 +239,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 0.8790627195360078,
-            "long_price": 103.55990800000001,
-            "short_price": 107.87990799999999
+            "long_price": 103.62541600000002,
+            "short_price": 107.81821599999999
         },
         {
             "symbol": "BELUSDT",
@@ -251,7 +251,7 @@
             "order_size": 1.1691465043454836,
             "max_position_size": 219.87194955512575,
             "long_price": 0.397992,
-            "short_price": 0.41467499999999996
+            "short_price": 0.414093
         },
         {
             "symbol": "BLZUSDT",
@@ -262,7 +262,7 @@
             "order_size": 55.00413906146438,
             "max_position_size": 1508.110088490879,
             "long_price": 0.05768,
-            "short_price": 0.06014
+            "short_price": 0.06004299999999999
         },
         {
             "symbol": "BNBUSDT",
@@ -272,8 +272,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 0.3298477995502358,
-            "long_price": 267.86901,
-            "short_price": 279.04281
+            "long_price": 267.97458500000005,
+            "short_price": 278.81728499999997
         },
         {
             "symbol": "BNXUSDT",
@@ -283,8 +283,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 0.6203208617735335,
-            "long_price": 147.36776500000002,
-            "short_price": 153.515013
+            "long_price": 147.47437,
+            "short_price": 153.44139
         },
         {
             "symbol": "BTCUSDT",
@@ -294,8 +294,8 @@
             "stop_loss": "5",
             "order_size": 0.001,
             "max_position_size": 0.005424015169748301,
-            "long_price": 16305.558376,
-            "short_price": 16985.728976
+            "long_price": 16310.448713,
+            "short_price": 16970.395312999997
         },
         {
             "symbol": "C98USDT",
@@ -305,8 +305,8 @@
             "stop_loss": "5",
             "order_size": 2.3217410736311166,
             "max_position_size": 309.8434014855196,
-            "long_price": 0.267285,
-            "short_price": 0.297693
+            "long_price": 0.268212,
+            "short_price": 0.297305
         },
         {
             "symbol": "CELOUSDT",
@@ -316,8 +316,8 @@
             "stop_loss": "5",
             "order_size": 1.0867143734276603,
             "max_position_size": 211.97911034032637,
-            "long_price": 0.419622,
-            "short_price": 0.43708199999999997
+            "long_price": 0.41982800000000003,
+            "short_price": 0.436888
         },
         {
             "symbol": "CELRUSDT",
@@ -338,8 +338,8 @@
             "stop_loss": "5",
             "order_size": 15.416384996465792,
             "max_position_size": 798.4112233187006,
-            "long_price": 0.110107,
-            "short_price": 0.114751
+            "long_price": 0.11021,
+            "short_price": 0.11465399999999999
         },
         {
             "symbol": "CHZUSDT",
@@ -349,7 +349,7 @@
             "stop_loss": "5",
             "order_size": 4.371277993391065,
             "max_position_size": 425.14744430107527,
-            "long_price": 0.215167,
+            "long_price": 0.21527,
             "short_price": 0.23105399999999998
         },
         {
@@ -360,8 +360,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 2.196595128888889,
-            "long_price": 39.640683,
-            "short_price": 41.346444
+            "long_price": 39.647378,
+            "short_price": 41.251578
         },
         {
             "symbol": "COTIUSDT",
@@ -372,7 +372,7 @@
             "order_size": 36.72123442101629,
             "max_position_size": 1232.2362918157182,
             "long_price": 0.07107000000000001,
-            "short_price": 0.07401100000000001
+            "short_price": 0.07391400000000001
         },
         {
             "symbol": "CRVUSDT",
@@ -382,8 +382,8 @@
             "stop_loss": "5",
             "order_size": 0.5322418826459874,
             "max_position_size": 148.3507966329527,
-            "long_price": 0.5829799999999999,
-            "short_price": 0.609354
+            "long_price": 0.5832890000000001,
+            "short_price": 0.6083839999999999
         },
         {
             "symbol": "CTKUSDT",
@@ -393,8 +393,8 @@
             "stop_loss": "5",
             "order_size": 0.32705175921141283,
             "max_position_size": 116.29033035294117,
-            "long_price": 0.7552989999999999,
-            "short_price": 0.7875429999999999
+            "long_price": 0.755814,
+            "short_price": 0.7863789999999999
         },
         {
             "symbol": "CTSIUSDT",
@@ -404,8 +404,8 @@
             "stop_loss": "5",
             "order_size": 18.244696038802818,
             "max_position_size": 868.5677013944604,
-            "long_price": 0.104133,
-            "short_price": 0.108543
+            "long_price": 0.104236,
+            "short_price": 0.10844599999999999
         },
         {
             "symbol": "CVCUSDT",
@@ -426,8 +426,8 @@
             "stop_loss": "5",
             "order_size": 0.012014609765474816,
             "max_position_size": 22.288979984313727,
-            "long_price": 3.932025,
-            "short_price": 4.096018999999999
+            "long_price": 3.932128,
+            "short_price": 4.091169
         },
         {
             "symbol": "DARUSDT",
@@ -438,7 +438,7 @@
             "order_size": 10.426305568950461,
             "max_position_size": 656.5995547725631,
             "long_price": 0.133694,
-            "short_price": 0.139292
+            "short_price": 0.13919499999999999
         },
         {
             "symbol": "DASHUSDT",
@@ -448,8 +448,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 2.6590362086549706,
-            "long_price": 33.078965,
-            "short_price": 34.458765
+            "long_price": 33.080304,
+            "short_price": 34.418704
         },
         {
             "symbol": "DENTUSDT",
@@ -481,8 +481,8 @@
             "stop_loss": "5",
             "order_size": 26.853964115047752,
             "max_position_size": 1053.7547895249131,
-            "long_price": 0.083945,
-            "short_price": 0.089822
+            "long_price": 0.08456300000000001,
+            "short_price": 0.089046
         },
         {
             "symbol": "DOTUSDT",
@@ -492,8 +492,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 15.361324043243245,
-            "long_price": 5.678802,
-            "short_price": 5.915642
+            "long_price": 5.676536,
+            "short_price": 5.906136
         },
         {
             "symbol": "DUSKUSDT",
@@ -514,8 +514,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 38.94605496188437,
-            "long_price": 2.282583,
-            "short_price": 2.445661
+            "long_price": 2.245503,
+            "short_price": 2.442557
         },
         {
             "symbol": "EGLDUSDT",
@@ -525,8 +525,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 2.1002087375519634,
-            "long_price": 41.85528600000001,
-            "short_price": 43.601306
+            "long_price": 41.84066,
+            "short_price": 43.5336
         },
         {
             "symbol": "ENJUSDT",
@@ -536,8 +536,8 @@
             "stop_loss": "5",
             "order_size": 1.9349423991834542,
             "max_position_size": 282.8585951353033,
-            "long_price": 0.309721,
-            "short_price": 0.32378599999999996
+            "long_price": 0.310236,
+            "short_price": 0.32330099999999995
         },
         {
             "symbol": "ENSUSDT",
@@ -547,8 +547,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 6.899775291047041,
-            "long_price": 12.66694,
-            "short_price": 13.322949999999999
+            "long_price": 12.658185000000001,
+            "short_price": 13.320137
         },
         {
             "symbol": "EOSUSDT",
@@ -558,8 +558,8 @@
             "stop_loss": "5",
             "order_size": 0.23223840665873957,
             "max_position_size": 97.99465337931034,
-            "long_price": 0.899808,
-            "short_price": 0.937408
+            "long_price": 0.900426,
+            "short_price": 0.9368259999999999
         },
         {
             "symbol": "ETCUSDT",
@@ -569,8 +569,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 4.465457320697276,
-            "long_price": 19.730989,
-            "short_price": 20.554008999999997
+            "long_price": 19.73171,
+            "short_price": 20.53005
         },
         {
             "symbol": "ETHUSDT",
@@ -580,8 +580,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 0.07290579094560469,
-            "long_price": 1199.126103,
-            "short_price": 1249.146503
+            "long_price": 1199.09098,
+            "short_price": 1247.60818
         },
         {
             "symbol": "FILUSDT",
@@ -591,8 +591,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 20.809848589473688,
-            "long_price": 4.290465,
-            "short_price": 4.490227
+            "long_price": 4.293555,
+            "short_price": 4.486638
         },
         {
             "symbol": "FLMUSDT",
@@ -603,7 +603,7 @@
             "order_size": 29.816879633729446,
             "max_position_size": 1110.3667684493284,
             "long_price": 0.078692,
-            "short_price": 0.082062
+            "short_price": 0.081868
         },
         {
             "symbol": "FLOWUSDT",
@@ -613,8 +613,8 @@
             "stop_loss": "5",
             "order_size": 0.13007284079084286,
             "max_position_size": 73.33793414193549,
-            "long_price": 1.197993,
-            "short_price": 1.265171
+            "long_price": 1.19995,
+            "short_price": 1.265268
         },
         {
             "symbol": "FTMUSDT",
@@ -624,7 +624,7 @@
             "stop_loss": "5",
             "order_size": 5.719351425548343,
             "max_position_size": 486.3050178395722,
-            "long_price": 0.181486,
+            "long_price": 0.18179499999999998,
             "short_price": 0.196037
         },
         {
@@ -635,8 +635,8 @@
             "stop_loss": "5",
             "order_size": 0.09192760700948002,
             "max_position_size": 61.653585312542376,
-            "long_price": 1.438704,
-            "short_price": 1.4986499999999998
+            "long_price": 1.4389100000000001,
+            "short_price": 1.497098
         },
         {
             "symbol": "GALAUSDT",
@@ -657,8 +657,8 @@
             "stop_loss": "5",
             "order_size": 1.3271467062474902,
             "max_position_size": 234.258213127254,
-            "long_price": 0.383263,
-            "short_price": 0.399252
+            "long_price": 0.383469,
+            "short_price": 0.398961
         },
         {
             "symbol": "GRTUSDT",
@@ -668,8 +668,8 @@
             "stop_loss": "5",
             "order_size": 48.074034012379066,
             "max_position_size": 1409.9075711007754,
-            "long_price": 0.061388000000000005,
-            "short_price": 0.064214
+            "long_price": 0.061491000000000004,
+            "short_price": 0.06411700000000001
         },
         {
             "symbol": "GTCUSDT",
@@ -679,8 +679,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 52.263815135632186,
-            "long_price": 1.638833,
-            "short_price": 1.840963
+            "long_price": 1.641923,
+            "short_price": 1.839896
         },
         {
             "symbol": "HBARUSDT",
@@ -690,8 +690,8 @@
             "stop_loss": "5",
             "order_size": 85.55335374493765,
             "max_position_size": 1880.8487763391938,
-            "long_price": 0.047277000000000007,
-            "short_price": 0.049179
+            "long_price": 0.047174,
+            "short_price": 0.049082
         },
         {
             "symbol": "HNTUSDT",
@@ -701,8 +701,8 @@
             "stop_loss": "5",
             "order_size": 0.03359312012899759,
             "max_position_size": 37.27009767868853,
-            "long_price": 2.340675,
-            "short_price": 2.438289
+            "long_price": 2.34119,
+            "short_price": 2.435864
         },
         {
             "symbol": "HOTUSDT",
@@ -723,8 +723,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 22.79173893132832,
-            "long_price": 3.841076,
-            "short_price": 4.00125
+            "long_price": 3.8419,
+            "short_price": 3.9973700000000005
         },
         {
             "symbol": "ICXUSDT",
@@ -734,8 +734,8 @@
             "stop_loss": "5",
             "order_size": 8.228823841865047,
             "max_position_size": 583.3164742527262,
-            "long_price": 0.152337,
-            "short_price": 0.158789
+            "long_price": 0.15244,
+            "short_price": 0.158692
         },
         {
             "symbol": "IMXUSDT",
@@ -745,8 +745,8 @@
             "stop_loss": "5",
             "order_size": 1.1284070841396743,
             "max_position_size": 216.0072169501188,
-            "long_price": 0.404996,
-            "short_price": 0.424569
+            "long_price": 0.405511,
+            "short_price": 0.423793
         },
         {
             "symbol": "INJUSDT",
@@ -756,8 +756,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 50.803932031284916,
-            "long_price": 1.719791,
-            "short_price": 1.8448429999999998
+            "long_price": 1.726589,
+            "short_price": 1.844261
         },
         {
             "symbol": "IOSTUSDT",
@@ -779,7 +779,7 @@
             "order_size": 4.0581121662202735,
             "max_position_size": 409.6353078198199,
             "long_price": 0.216403,
-            "short_price": 0.225331
+            "short_price": 0.225137
         },
         {
             "symbol": "IOTXUSDT",
@@ -811,8 +811,8 @@
             "stop_loss": "5",
             "order_size": 0.2263467632412857,
             "max_position_size": 96.74365780425534,
-            "long_price": 0.896924,
-            "short_price": 0.9533159999999999
+            "long_price": 0.9071210000000001,
+            "short_price": 0.953413
         },
         {
             "symbol": "KLAYUSDT",
@@ -823,7 +823,7 @@
             "order_size": 6.839711364180431,
             "max_position_size": 531.8072417309942,
             "long_price": 0.165006,
-            "short_price": 0.17188399999999998
+            "short_price": 0.17168999999999998
         },
         {
             "symbol": "KNCUSDT",
@@ -833,8 +833,8 @@
             "stop_loss": "5",
             "order_size": 0.5322418826459874,
             "max_position_size": 148.3507966329527,
-            "long_price": 0.599357,
-            "short_price": 0.6301119999999999
+            "long_price": 0.59946,
+            "short_price": 0.629724
         },
         {
             "symbol": "KSMUSDT",
@@ -844,8 +844,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 3.652170214297189,
-            "long_price": 24.386692,
-            "short_price": 25.403912
+            "long_price": 24.385456,
+            "short_price": 25.372096
         },
         {
             "symbol": "LDOUSDT",
@@ -855,8 +855,8 @@
             "stop_loss": "5",
             "order_size": 0.1418282548476454,
             "max_position_size": 76.58024280926315,
-            "long_price": 1.1781139999999999,
-            "short_price": 1.2513
+            "long_price": 1.179762,
+            "short_price": 1.251203
         },
         {
             "symbol": "LINAUSDT",
@@ -877,8 +877,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 14.389088344303797,
-            "long_price": 6.153529000000001,
-            "short_price": 6.442837
+            "long_price": 6.172378,
+            "short_price": 6.435077
         },
         {
             "symbol": "LITUSDT",
@@ -888,8 +888,8 @@
             "stop_loss": "5",
             "order_size": 0.4188648344122594,
             "max_position_size": 131.60497588422578,
-            "long_price": 0.679182,
-            "short_price": 0.7213890000000001
+            "long_price": 0.681139,
+            "short_price": 0.7219709999999999
         },
         {
             "symbol": "LPTUSDT",
@@ -899,8 +899,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 12.457402511780824,
-            "long_price": 6.987417000000001,
-            "short_price": 7.337273999999999
+            "long_price": 7.000704000000001,
+            "short_price": 7.325537
         },
         {
             "symbol": "LRCUSDT",
@@ -911,7 +911,7 @@
             "order_size": 2.9585798816568047,
             "max_position_size": 349.76553206153847,
             "long_price": 0.24617,
-            "short_price": 0.269078
+            "short_price": 0.268884
         },
         {
             "symbol": "LTCUSDT",
@@ -921,8 +921,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 1.5660244245910109,
-            "long_price": 56.905131000000004,
-            "short_price": 59.27893099999999
+            "long_price": 56.913371,
+            "short_price": 59.251771
         },
         {
             "symbol": "LUNA2USDT",
@@ -932,8 +932,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 53.96975568902078,
-            "long_price": 1.655416,
-            "short_price": 1.724466
+            "long_price": 1.655519,
+            "short_price": 1.723496
         },
         {
             "symbol": "MANAUSDT",
@@ -943,8 +943,8 @@
             "stop_loss": "5",
             "order_size": 0.9964923469387755,
             "max_position_size": 202.98892485714288,
-            "long_price": 0.431364,
-            "short_price": 0.450274
+            "long_price": 0.432085,
+            "short_price": 0.449789
         },
         {
             "symbol": "MASKUSDT",
@@ -954,8 +954,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 30.931645692517012,
-            "long_price": 3.03232,
-            "short_price": 3.43768
+            "long_price": 3.013265,
+            "short_price": 3.437001
         },
         {
             "symbol": "MATICUSDT",
@@ -965,8 +965,8 @@
             "stop_loss": "5",
             "order_size": 1,
             "max_position_size": 96.61004816317858,
-            "long_price": 0.888993,
-            "short_price": 0.9392510000000001
+            "long_price": 0.891362,
+            "short_price": 0.936923
         },
         {
             "symbol": "MKRUSDT",
@@ -976,8 +976,8 @@
             "stop_loss": "5",
             "order_size": 0.001,
             "max_position_size": 0.12862664545403113,
-            "long_price": 663.86796,
-            "short_price": 699.215867
+            "long_price": 663.8621919999999,
+            "short_price": 698.3963140000001
         },
         {
             "symbol": "MTLUSDT",
@@ -987,8 +987,8 @@
             "stop_loss": "5",
             "order_size": 0.42499298761570425,
             "max_position_size": 132.5641958250729,
-            "long_price": 0.6737230000000001,
-            "short_price": 0.712756
+            "long_price": 0.673826,
+            "short_price": 0.712659
         },
         {
             "symbol": "NEARUSDT",
@@ -998,8 +998,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 46.13852782141045,
-            "long_price": 1.9135339999999998,
-            "short_price": 1.9933500000000002
+            "long_price": 1.9134309999999999,
+            "short_price": 1.992089
         },
         {
             "symbol": "NEOUSDT",
@@ -1009,8 +1009,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 13.373387990588236,
-            "long_price": 6.568825,
-            "short_price": 6.842865
+            "long_price": 6.568001,
+            "short_price": 6.837821
         },
         {
             "symbol": "OCEANUSDT",
@@ -1020,8 +1020,8 @@
             "stop_loss": "5",
             "order_size": 10.563142239048135,
             "max_position_size": 660.8941739534885,
-            "long_price": 0.13070700000000002,
-            "short_price": 0.137837
+            "long_price": 0.131119,
+            "short_price": 0.137643
         },
         {
             "symbol": "OGNUSDT",
@@ -1031,8 +1031,8 @@
             "stop_loss": "5",
             "order_size": 17.867288924782287,
             "max_position_size": 859.537224347826,
-            "long_price": 0.10351500000000001,
-            "short_price": 0.108252
+            "long_price": 0.103412,
+            "short_price": 0.108058
         },
         {
             "symbol": "OMGUSDT",
@@ -1042,8 +1042,8 @@
             "stop_loss": "5",
             "order_size": 0.14735950192488348,
             "max_position_size": 78.05926037424894,
-            "long_price": 1.132691,
-            "short_price": 1.180005
+            "long_price": 1.132485,
+            "short_price": 1.179035
         },
         {
             "symbol": "ONEUSDT",
@@ -1065,7 +1065,7 @@
             "order_size": 6.613491986597097,
             "max_position_size": 522.9386908338126,
             "long_price": 0.168508,
-            "short_price": 0.17556999999999998
+            "short_price": 0.17537599999999998
         },
         {
             "symbol": "OPUSDT",
@@ -1075,8 +1075,8 @@
             "stop_loss": "5",
             "order_size": 0.24151672503320853,
             "max_position_size": 99.93300916043957,
-            "long_price": 0.884667,
-            "short_price": 0.948078
+            "long_price": 0.886521,
+            "short_price": 0.947884
         },
         {
             "symbol": "PEOPLEUSDT",
@@ -1086,7 +1086,7 @@
             "stop_loss": "5",
             "order_size": 376.43338775932733,
             "max_position_size": 3945.294504815618,
-            "long_price": 0.023278,
+            "long_price": 0.023175,
             "short_price": 0.025414
         },
         {
@@ -1097,8 +1097,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 43.407655530310265,
-            "long_price": 2.022714,
-            "short_price": 2.107034
+            "long_price": 2.0223020000000003,
+            "short_price": 2.105482
         },
         {
             "symbol": "REEFUSDT",
@@ -1119,7 +1119,7 @@
             "stop_loss": "5",
             "order_size": 32.705175921141276,
             "max_position_size": 1162.903303529412,
-            "long_price": 0.07642600000000001,
+            "long_price": 0.07652900000000001,
             "short_price": 0.079637
         },
         {
@@ -1152,8 +1152,8 @@
             "stop_loss": "5",
             "order_size": 0.13728258728255296,
             "max_position_size": 75.34303093289147,
-            "long_price": 1.1830580000000002,
-            "short_price": 1.2324819999999999
+            "long_price": 1.1831610000000001,
+            "short_price": 1.231803
         },
         {
             "symbol": "RVNUSDT",
@@ -1164,7 +1164,7 @@
             "order_size": 402.1798145951055,
             "max_position_size": 4077.9837818834085,
             "long_price": 0.021424,
-            "short_price": 0.022407
+            "short_price": 0.02231
         },
         {
             "symbol": "SANDUSDT",
@@ -1174,8 +1174,8 @@
             "stop_loss": "5",
             "order_size": 1,
             "max_position_size": 151.74209633906224,
-            "long_price": 0.577315,
-            "short_price": 0.6013999999999999
+            "long_price": 0.577109,
+            "short_price": 0.600818
         },
         {
             "symbol": "SFPUSDT",
@@ -1185,8 +1185,8 @@
             "stop_loss": "5",
             "order_size": 0.5253632229983005,
             "max_position_size": 147.3890410632091,
-            "long_price": 0.620781,
-            "short_price": 0.661734
+            "long_price": 0.615734,
+            "short_price": 0.661831
         },
         {
             "symbol": "SKLUSDT",
@@ -1207,8 +1207,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 51.81711586096867,
-            "long_price": 1.724529,
-            "short_price": 1.825831
+            "long_price": 1.7286489999999999,
+            "short_price": 1.8273829999999998
         },
         {
             "symbol": "SOLUSDT",
@@ -1218,8 +1218,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 6.4222484700564975,
-            "long_price": 13.836917,
-            "short_price": 14.427877
+            "long_price": 13.591674000000001,
+            "short_price": 14.40644
         },
         {
             "symbol": "SPELLUSDT",
@@ -1240,8 +1240,8 @@
             "stop_loss": "5",
             "order_size": 1.2499999999999998,
             "max_position_size": 227.34759584,
-            "long_price": 0.39037,
-            "short_price": 0.406721
+            "long_price": 0.390473,
+            "short_price": 0.40652699999999997
         },
         {
             "symbol": "STMXUSDT",
@@ -1263,7 +1263,7 @@
             "order_size": 2.1359306249733008,
             "max_position_size": 297.1863997908497,
             "long_price": 0.303232,
-            "short_price": 0.315832
+            "short_price": 0.31563800000000003
         },
         {
             "symbol": "SUSHIUSDT",
@@ -1273,8 +1273,8 @@
             "stop_loss": "5",
             "order_size": 0.12018508503094766,
             "max_position_size": 70.49537855503877,
-            "long_price": 1.268754,
-            "short_price": 1.343547
+            "long_price": 1.2782300000000002,
+            "short_price": 1.3426740000000001
         },
         {
             "symbol": "SXPUSDT",
@@ -1284,7 +1284,7 @@
             "stop_loss": "5",
             "order_size": 2.8696051423324147,
             "max_position_size": 344.4660543030303,
-            "long_price": 0.25029,
+            "long_price": 0.249054,
             "short_price": 0.26267599999999997
         },
         {
@@ -1295,8 +1295,8 @@
             "stop_loss": "5",
             "order_size": 0.23527086734957955,
             "max_position_size": 98.63236262039045,
-            "long_price": 0.8872420000000001,
-            "short_price": 0.9242159999999999
+            "long_price": 0.8870359999999999,
+            "short_price": 0.9234399999999999
         },
         {
             "symbol": "TOMOUSDT",
@@ -1306,8 +1306,8 @@
             "stop_loss": "5",
             "order_size": 2.2222222222222223,
             "max_position_size": 303.1301277866667,
-            "long_price": 0.29561,
-            "short_price": 0.307878
+            "long_price": 0.295713,
+            "short_price": 0.307781
         },
         {
             "symbol": "TRBUSDT",
@@ -1317,8 +1317,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 7.762615308237303,
-            "long_price": 11.331854,
-            "short_price": 11.876679999999999
+            "long_price": 11.340815000000001,
+            "short_price": 11.860577999999999
         },
         {
             "symbol": "TRXUSDT",
@@ -1329,7 +1329,7 @@
             "order_size": 79.36381962191076,
             "max_position_size": 1811.5346282071714,
             "long_price": 0.049337,
-            "short_price": 0.05141
+            "short_price": 0.051313000000000004
         },
         {
             "symbol": "UNFIUSDT",
@@ -1339,8 +1339,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 21.77398260169999,
-            "long_price": 4.092911,
-            "short_price": 4.3628659999999995
+            "long_price": 4.190452,
+            "short_price": 4.405061
         },
         {
             "symbol": "UNIUSDT",
@@ -1350,8 +1350,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 14.485351757884679,
-            "long_price": 5.912715,
-            "short_price": 6.298986
+            "long_price": 5.89881,
+            "short_price": 6.2986949999999995
         },
         {
             "symbol": "VETUSDT",
@@ -1372,8 +1372,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 39.62485330544663,
-            "long_price": 2.3195599999999996,
-            "short_price": 2.502115
+            "long_price": 2.322856,
+            "short_price": 2.502406
         },
         {
             "symbol": "WOOUSDT",
@@ -1394,8 +1394,8 @@
             "stop_loss": "5",
             "order_size": 189.3491124260355,
             "max_position_size": 2798.1242564923077,
-            "long_price": 0.031518,
-            "short_price": 0.032785999999999996
+            "long_price": 0.031415,
+            "short_price": 0.032689
         },
         {
             "symbol": "XLMUSDT",
@@ -1406,7 +1406,7 @@
             "order_size": 23.75843610094366,
             "max_position_size": 991.161180773842,
             "long_price": 0.089095,
-            "short_price": 0.092829
+            "short_price": 0.092732
         },
         {
             "symbol": "XMRUSDT",
@@ -1416,8 +1416,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 0.7099066224512101,
-            "long_price": 126.35916399999999,
-            "short_price": 131.630164
+            "long_price": 126.585043,
+            "short_price": 131.78604299999998
         },
         {
             "symbol": "XRPUSDT",
@@ -1427,8 +1427,8 @@
             "stop_loss": "5",
             "order_size": 1.3727317409690898,
             "max_position_size": 238.2474150799057,
-            "long_price": 0.370285,
-            "short_price": 0.385769
+            "long_price": 0.370182,
+            "short_price": 0.385478
         },
         {
             "symbol": "XTZUSDT",
@@ -1438,8 +1438,8 @@
             "stop_loss": "5",
             "order_size": 0.19489967052210702,
             "max_position_size": 89.77200230602173,
-            "long_price": 0.974071,
-            "short_price": 1.018888
+            "long_price": 0.976852,
+            "short_price": 1.0175299999999998
         },
         {
             "symbol": "YFIUSDT",
@@ -1449,8 +1449,8 @@
             "stop_loss": "5",
             "order_size": 0.0001,
             "max_position_size": 0.01413194068935509,
-            "long_price": 6298.825641,
-            "short_price": 6686.199039
+            "long_price": 6309.435568000001,
+            "short_price": 6686.282944
         },
         {
             "symbol": "ZECUSDT",
@@ -1460,8 +1460,8 @@
             "stop_loss": "5",
             "order_size": 0.01,
             "max_position_size": 2.228897998431373,
-            "long_price": 38.881882000000004,
-            "short_price": 40.65367
+            "long_price": 38.942961000000004,
+            "short_price": 40.611475
         },
         {
             "symbol": "ZENUSDT",
@@ -1471,8 +1471,8 @@
             "stop_loss": "5",
             "order_size": 0.1,
             "max_position_size": 8.498975545420562,
-            "long_price": 10.179902,
-            "short_price": 10.774663
+            "long_price": 10.179593,
+            "short_price": 10.774565999999998
         },
         {
             "symbol": "ZILUSDT",
@@ -1493,8 +1493,8 @@
             "stop_loss": "5",
             "order_size": 5.837369144425562,
             "max_position_size": 491.29680354403035,
-            "long_price": 0.176954,
-            "short_price": 0.184785
+            "long_price": 0.177263,
+            "short_price": 0.184591
         }
     ],
     "startingBalance": 454.69491328000004
