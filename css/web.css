@@ -1,0 +1,84 @@
+body {
+    background-color: #000000;
+}
+
+h1 {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 0;
+}
+h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 0;
+}
+h3 {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 0;
+}
+p {
+    font-size: 1em;
+    font-weight: normal;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 0;
+}
+
+th {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 10px;
+}
+td {
+    font-size: 1.2em;
+    color: rgb(248, 244, 244);
+    margin: 0 0 0.5em 0;
+    padding: 10px;
+}
+.header{
+    color: #ffffff;
+    display: flex;
+}
+.headbox{
+    display: flex;
+    padding: auto;
+    justify-content: flex-end;
+    margin-left: auto;
+    align-items: center;
+       /* space between items */
+    padding: 10px;
+
+}
+.gui {
+    display: flex;
+    flex-direction: row;
+   
+    
+}
+.left {
+    display: flex;
+    flex-direction: row;  
+}
+.account {
+    display: flex;
+    flex-direction: column;
+
+    padding: 50px;
+    margin: 0;
+}
+.pairs {
+    display: flex;
+    flex-direction: column;
+
+    padding: 50px;
+    margin-left: 25px;
+}
