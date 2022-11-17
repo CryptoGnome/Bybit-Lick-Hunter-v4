@@ -52,17 +52,19 @@ BLACKLIST = ETHUSDT, BTCUSDT, C98USDT // Place symbols you do not want to trade 
 USE_DISCORD = false // if you want to use discord webhooks make this true and add link to channel below
 DISCORD_URL = webhook_url_here //webhook url for discord channel here
 ```
+<br>
 
 *Webhook Examples*
+
 ![image](https://user-images.githubusercontent.com/33667144/202507520-5decb9e4-4f60-4e45-bf47-4371e74bf692.png)
 
 
+<br>
 
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
 ```
 git stash
 git pull
-
 ```
 <br>
 <br>
