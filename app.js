@@ -55,8 +55,8 @@ wsClient.on('update', (data) => {
     }
 
     //get blacklisted pairs
-    const blacklist = [];
-    process.env.BLACKLIST.split(',').forEach(item => {
+    const blacklist = []; 
+    process.env.BLACKLIST.split(', ').forEach(item => {
         blacklist.push(item);
     });
 
@@ -846,12 +846,15 @@ function orderWebhook(symbol, amount, side, position, pnl) {
         .addField('PnL: ', pnl.toString(), true)
         .setColor(color)
         .setTimestamp();
-    hook.send(embed);
+    try {
+        hook.send(embed); 
+    }
+    catch (err) {
+        console.log(chalk.red("Discord Webhook Error"));
+    }
 
 
 }
-
-
 
 //message webhook
 function messageWebhook(message) {
@@ -860,7 +863,12 @@ function messageWebhook(message) {
         .addField('Message: ', message, true)
         .setColor('#00FFFF')
         .setTimestamp();
-    hook.send(embed);
+    try {
+        hook.send(embed); 
+    }
+    catch (err) {
+        console.log(chalk.red("Discord Webhook Error"));
+    }
     
 }
 
@@ -874,7 +882,12 @@ function reportWebhook(pnl, percent, balance) {
         .setFooter('This report is sent every 5 minutes')
         .setColor('#800080')
         .setTimestamp();
-    hook.send(embed);
+    try {
+        hook.send(embed); 
+    }
+    catch (err) {
+        console.log(chalk.red("Discord Webhook Error"));
+    }
 
 }
 
