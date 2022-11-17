@@ -21,6 +21,8 @@ https://partner.bybit.com/b/lickhunterv4
 <br>
 
 ### Quick Linux Setup Steps:
+*run each of these one at a time in the terminal, and wait for each to complete*
+
 ```
 apt install npm
 ```
@@ -46,7 +48,7 @@ cp example.env .env
 ```
 
 
-*edit .env to the settings you want more on them below*
+*edit .env to the setup you wish to run you can learn more about the settings int the next section below*
 
 ```
 sudo npm install pm2 -g 
@@ -61,7 +63,7 @@ pm2 monit
 ```
 
 
-using pm2 will allow the bot to catch restarts and run after you close the server, if you are familiar with linux and would prefer to use screen you could also do that.
+*Using pm2 will allow the bot to catch restarts and run after you close the server, if you are familiar with linux and would prefer to use screen you could also do that.*
 
 ### Settings Explained:
 ```
