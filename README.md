@@ -56,7 +56,9 @@ DISCORD_URL = webhook_url_here //webhook url for discord channel here
 
 *Webhook Examples*
 
-![image](https://user-images.githubusercontent.com/33667144/202507520-5decb9e4-4f60-4e45-bf47-4371e74bf692.png)
+![image](https://user-images.githubusercontent.com/33667144/202516275-a39be9ce-dea2-45fd-ab12-5a407cb66284.png)
+![image](https://user-images.githubusercontent.com/33667144/202516232-4edd2fe5-8bb1-4afa-9b39-a8efd693ad44.png)
+
 
 
 <br>
