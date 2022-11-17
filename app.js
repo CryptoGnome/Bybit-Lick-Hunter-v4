@@ -842,8 +842,6 @@ function orderWebhook(symbol, amount, side, position, pnl) {
         .addField('Symbol: ', symbol.toString(), true)
         .addField('Amount: ', amount.toString(), true)
         .addField('Side: ', side, true)
-        .addField('Position Size: ', position.toString(), true)
-        .addField('PnL: ', pnl.toString(), true)
         .setColor(color)
         .setTimestamp();
     try {
