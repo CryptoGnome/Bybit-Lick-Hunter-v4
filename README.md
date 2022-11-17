@@ -27,9 +27,11 @@ https://partner.bybit.com/b/lickhunterv4
 - node app.js
 ```
 
-### TO UPDATE
+### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
+```
 git pull
+```
 
 
-Follow me on twitter for updates:
+# Follow me on twitter for updates:
 https://twitter.com/Crypt0Gnome
