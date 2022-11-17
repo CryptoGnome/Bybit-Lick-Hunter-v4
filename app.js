@@ -1,17 +1,23 @@
-import { WebsocketClient, WS_KEY_MAP, LinearClient} from 'bybit-api-gnome';
+import pkg from 'bybit-api-gnome';
+const { WebsocketClient, WS_KEY_MAP, LinearClient} = pkg;
 import { config } from 'dotenv';
 config();
 import fetch from 'node-fetch';
 import chalk from 'chalk';
 import fs from 'fs';
-import path from 'path';
+import { Webhook, MessageBuilder } from 'discord-webhook-node';
 
-const __dirname = path.resolve();
+var hook;
+if (process.env.USE_DISCORD) {
+    hook = new Webhook(process.env.DISCORD_URL);
+}
+
 
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
-var rateLimit = 750;
-var baseRateLimit = 500;
+var rateLimit = 1000;
+var baseRateLimit = 1000;
+var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 
@@ -151,6 +157,15 @@ async function getBalance() {
         console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
     }
+
+    //cehck when last was more than 5 minutes ago
+    if (Date.now() - lastReport > 300000) {
+        //send report
+        reportWebhook(diff.toFixed(4), percentGain.toFixed(2), balance.toFixed(4));
+        lastReport = Date.now();    
+    }
+
+
     return balance;
 
 }
@@ -348,6 +363,9 @@ async function scalp(pair, index) {
                         });
                         //console.log("Order placed: " + JSON.stringify(order, null, 2)); 
                         console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));  
+                        if(process.env.USE_DISCORD) {
+                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                        }
                     }
                     else {
                         //max position size reached
@@ -371,6 +389,9 @@ async function scalp(pair, index) {
                     });
                     //console.log("Order placed: " + JSON.stringify(order, null, 2)); 
                     console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));  
+                    if(process.env.USE_DISCORD) {
+                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                    }
                 }
                 else {
                     if(openPositions > process.env.MAX_OPEN_POSITIONS) {
@@ -416,6 +437,9 @@ async function scalp(pair, index) {
                         });
                         //console.log("Order placed: " + JSON.stringify(order, null, 2));
                         console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                        if(process.env.USE_DISCORD) {
+                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                        }
                     }
                 }
                 else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS) {
@@ -435,6 +459,9 @@ async function scalp(pair, index) {
                     });
                     //console.log("Order placed: " + JSON.stringify(order, null, 2));
                     console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                    if(process.env.USE_DISCORD) {
+                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                    }
                 }
                 else {
                     if(openPositions > process.env.MAX_OPEN_POSITIONS) {
@@ -482,17 +509,20 @@ async function checkOpenPositions() {
         console.log("Rate limit status: " + chalk.green(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 75) {
-        rateLimit = rateLimit + 10;
+        rateLimit = rateLimit + 25;
         console.log("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 50) {
-        rateLimit = rateLimit + 50;
+        rateLimit = rateLimit + 100;
         console.log("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
     }
+    else if (positions.rate_limit_status > 25) {
+        rateLimit = rateLimit + 200;
+        console.log("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
+    }
     else {
-        rateLimit = rateLimit + 1000;
+        rateLimit = rateLimit + 20;
         console.log("Rate limit status: " + chalk.red(positions.rate_limit_status));
-
     }
 
     //console.log("Positions: " + JSON.stringify(positions, null, 2));
@@ -680,7 +710,6 @@ async function createSettings() {
         
     }).catch(err => { throw err });
 }
-
 //update settings.json file with long_price and short_price
 async function updateSettings() {
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
@@ -799,7 +828,55 @@ async function updateSettings() {
 
 }
 
- 
+//discord webhook
+function orderWebhook(symbol, amount, side, position, pnl) {
+    if (side == "Buy") {
+        var color = '#00ff00';
+    }
+    else {
+        var color = '#ff0000';
+
+    }
+    const embed = new MessageBuilder()
+        .setTitle('New Liquidation')
+        .addField('Symbol: ', symbol, true)
+        .addField('Amount: ', amount, true)
+        .addField('Side: ', side, true)
+        .addField('Position: ', position, true)
+        .addField('PnL: ', pnl, true)
+        .setColor(color)
+        .setTimestamp();
+    hook.send(embed);
+
+
+}
+//message webhook
+function messageWebhook(message) {
+    const embed = new MessageBuilder()
+        .setTitle('New Alert')
+        .addField('Message: ', message, true)
+        .setColor('#00FFFF')
+        .setTimestamp();
+    hook.send(embed);
+    
+}
+
+//report webhook
+function reportWebhook(pnl, percent, balance) {
+    const embed = new MessageBuilder()
+        .setTitle('New Bot Status Report')
+        .addField('PnL: ', pnl + " USDT")
+        .addField('Percent: ', percent + " %")
+        .addField('Balance: ', balance + " USDT")
+        .setFooter('This report is sent every 5 minutes')
+        .setColor('#800080')
+        .setTimestamp();
+    hook.send(embed);
+
+}
+
+
+
 async function main() {
     console.log("Starting Lick Hunter!");
     pairs = await getSymbols();
@@ -817,24 +894,33 @@ async function main() {
     }
 
     await liquidationEngine(pairs);
-    try {
-        while (true) {
+
+    while (true) {
+        try {
             await getBalance();
             await updateSettings();
             await checkOpenPositions();
             await sleep(rateLimit);
+        } catch (e) {
+            console.log(e);
+            sleep(1000);
+            rateLimit = rateLimit + 1000;
         }
     }
-    catch (error) {
-        console.log(chalk.red(error));
-    }
+    
+
 }
 
 try {
+    if(process.env.USE_DISCORD) {
+        messageWebhook("Bot Starting Up/Restarting In Progress");
+    }
     main();
 }
 catch (error) {
-    console.log(chalk.red(error));
+    console.log(chalk.red("Error: ", error));
+    sleep(100000000);
+    main();
 }
 
 
