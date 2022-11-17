@@ -839,17 +839,20 @@ function orderWebhook(symbol, amount, side, position, pnl) {
     }
     const embed = new MessageBuilder()
         .setTitle('New Liquidation')
-        .addField('Symbol: ', symbol, true)
-        .addField('Amount: ', amount, true)
+        .addField('Symbol: ', symbol.toString(), true)
+        .addField('Amount: ', amount.toString(), true)
         .addField('Side: ', side, true)
-        .addField('Position: ', position, true)
-        .addField('PnL: ', pnl, true)
+        .addField('Position Size: ', position.toString(), true)
+        .addField('PnL: ', pnl.toString(), true)
         .setColor(color)
         .setTimestamp();
     hook.send(embed);
 
 
 }
+
+
+
 //message webhook
 function messageWebhook(message) {
     const embed = new MessageBuilder()
