@@ -1,6 +1,6 @@
 ![IMAGE ALT TEXT HERE](https://github.com/CryptoGnome/Lick-Hunter-v4/blob/main/css/logo.png)
 
-Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have learned in the past two years and fully asyncronus in Node JS. I have also released all of the source code in hope that if other users want to contribute to the project or add new features it is avaialable to them.
+Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have learned in the past two years and fully async compatable in Node JS. I have also released all of the source code in hope that if other users want to contribute to the project or add new features it is avaialable to them.
 
 
 *First off if you enjoy using open source software please use my refferel link to create a new account when using this bot, its free and help me make more cools stuff for you guys:*
