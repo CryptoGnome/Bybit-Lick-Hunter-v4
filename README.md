@@ -9,10 +9,14 @@ https://partner.bybit.com/b/lickhunterv4
 
 
 ### Suggested OS to Linux Unbuntu Vultr
+![image](https://user-images.githubusercontent.com/33667144/202495972-17734217-541c-49ab-ae34-b459fb6138c2.png)
 
-https://www.vultr.com/?ref=7300008
+*Using a VPS can ensure high uptime and is much more stable than running on your own PC*
+
+[VULTR IS OUR RECOMMENDED VPS PROVIDER](https://www.vultr.com/?ref=7300008)
 
 ### Quick Linux Setup Steps:
+```
 - apt install npm
 - apt  install gh
 - git clone https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4.git
@@ -21,6 +25,7 @@ https://www.vultr.com/?ref=7300008
 - cp example.env .env
 - edit settings
 - node app.js
+```
 
 ### TO UPDATE
 git pull
