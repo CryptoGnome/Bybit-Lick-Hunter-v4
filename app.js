@@ -161,7 +161,7 @@ async function getBalance() {
     //cehck when last was more than 5 minutes ago
     if (Date.now() - lastReport > 300000) {
         //send report
-        reportWebhook(diff.toFixed(4), percentGain.toFixed(2), balance.toFixed(4));
+        reportWebhook();
         lastReport = Date.now();    
     }
 
@@ -873,14 +873,60 @@ function messageWebhook(message) {
 }
 
 //report webhook
-function reportWebhook(pnl, percent, balance) {
+async function reportWebhook() {
+    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+    //check if starting balance is set
+    if (settings.startingBalance === 0) {
+        settings.startingBalance = balance;
+        fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
+        var startingBalance = settings.startingBalance;
+    }
+    else {
+        var startingBalance = settings.startingBalance;
+    }
+
+
+    //fetch balance
+    var balance = await getBalance();
+    var diff = balance - startingBalance;
+    var percentGain = (diff / startingBalance) * 100;
+    var percentGain = percentGain.toFixed(4);
+    var diff = diff.toFixed(4);
+    var balance = balance.toFixed(2);
+    //fetch positions
+    var positions = await linearClient.getPosition();
+    var positionList = [];
+    //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
+    for (var i = 0; i < positions.result.length; i++) {
+        if (positions.result[i].data.size > 0) {
+            var pnl = positions.result[i].data.realised_pnl;
+            var pnl = pnl.toFixed(4);
+            var symbol = positions.result[i].data.symbol;
+            var size = positions.result[i].data.size;
+            var size = size.toFixed(4);
+            //calulate size in USDT
+            var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+            var position = {
+                "symbol": symbol,
+                "size": size,
+                "sizeUSD": usdValue.toFixed(2),
+                "pnl": pnl
+            }
+            positionList.push(position);
+        }
+    }
+
     const embed = new MessageBuilder()
-        .setTitle('New Bot Status Report')
-        .addField('PnL: ', pnl + " USDT")
-        .addField('Percent: ', percent + " %")
-        .addField('Balance: ', balance + " USDT")
-        .setFooter('This report is sent every 5 minutes')
-        .setColor('#800080')
+        .setTitle('------------------------- Bot Report -------------------------')
+        .addField('Current Balance: ', balance.toString(), true)
+        .addField('Profit USDT: ', diff.toString(), true)
+        .addField('Profit %: ', percentGain.toString(), true)
+        //for each position in positionList add field only 7 fields per embed
+        for(var i = 0; i < positionList.length; i++) {
+            embed.addField(positionList[i].symbol, "Size: " + positionList[i].size + " | Value " + positionList[i].sizeUSD + " USDT" + " | Unrealized PnL: " + positionList[i].pnl, true);
+        }
+        //purple color
+        embed.setColor('#800080')
         .setTimestamp();
     try {
         hook.send(embed); 
@@ -888,6 +934,8 @@ function reportWebhook(pnl, percent, balance) {
     catch (err) {
         console.log(chalk.red("Discord Webhook Error"));
     }
+
+    
 
 }
 
@@ -928,14 +976,13 @@ async function main() {
 }
 
 try {
-    if(process.env.USE_DISCORD) {
-        messageWebhook("Bot Starting Up/Restarting In Progress");
-    }
     main();
 }
 catch (error) {
     console.log(chalk.red("Error: ", error));
-    sleep(100000000);
+    if(process.env.USE_DISCORD) {
+        messageWebhook(error);
+    }
     main();
 }
 
