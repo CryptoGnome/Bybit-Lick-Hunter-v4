@@ -28,7 +28,7 @@ apt install npm
 ```
 
 ```
-apt  install gh
+apt install gh
 ```
 
 ```
