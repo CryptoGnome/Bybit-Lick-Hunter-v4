@@ -86,25 +86,31 @@ DISCORD_URL = webhook_url_here //webhook url for discord channel here
 <br>
 
 ### TO START AND STOP BOT
+
 ```
 pm2 list to get id
 ```
+
 ```
 pm2 stop id
 ```
+
 ```
 pm2 start id
 ```
+
 <br>
 
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
-```
+
 ```
 git stash
 ```
+
 ```
 git pull
 ```
+
 <br>
 <br>
 
