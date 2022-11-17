@@ -60,6 +60,7 @@ DISCORD_URL = webhook_url_here //webhook url for discord channel here
 
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
 ```
+git stash
 git pull
 
 ```
