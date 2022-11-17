@@ -438,7 +438,7 @@ async function scalp(pair, index) {
                         //console.log("Order placed: " + JSON.stringify(order, null, 2));
                         console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                         if(process.env.USE_DISCORD) {
-                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                         }
                     }
                 }
@@ -460,7 +460,7 @@ async function scalp(pair, index) {
                     //console.log("Order placed: " + JSON.stringify(order, null, 2));
                     console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                     if(process.env.USE_DISCORD) {
-                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                     }
                 }
                 else {
