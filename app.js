@@ -97,7 +97,7 @@ wsClient.on('update', (data) => {
 
     }
     else {
-        console.log(chalk.gray("Liquidation Foudn for Blacklisted pair: " + pair));
+        console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
     }
 });
 
@@ -138,7 +138,7 @@ async function getBalance() {
     //load settings.json
     const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
     //check if starting balance is set
-    if (settings.startingBalance === undefined) {
+    if (settings.startingBalance === 0) {
         settings.startingBalance = balance;
         fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
         var startingBalance = settings.startingBalance;
