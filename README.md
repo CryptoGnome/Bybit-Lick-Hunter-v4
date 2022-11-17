@@ -8,19 +8,9 @@ Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have l
 https://partner.bybit.com/b/lickhunterv4
 
 
-### Full Docs:
+### Suggested OS to Linux Unbuntu Vultr
 
-coming soon
-
-
-### Quick Windows Setup Steps:
-- Install Node JS https://nodejs.org/en/download/
-- Clone Project
-- Open CMD prompt in directory 
-- npm install
-- create a copy of example.env named .env
-- edit settings
--node app.js
+https://www.vultr.com/?ref=7300008
 
 ### Quick Linux Setup Steps:
 - apt install npm

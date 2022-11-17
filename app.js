@@ -241,7 +241,7 @@ async function takeProfit(symbol, position) {
             });
             //console.log(JSON.stringify(order, null, 4));
 
-            if (order.ret_msg === "OK" || order.ret_msg === "not modified") {
+            if (order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code === 10002) {
                 //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
             }
             else if (order.ret_code === 130027 || order.ret_code === 130030 || order.ret_code === 130024) {
