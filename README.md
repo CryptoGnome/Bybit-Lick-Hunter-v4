@@ -29,8 +29,11 @@ https://partner.bybit.com/b/lickhunterv4
 - npm install
 - cp example.env .env
 - edit settings
-- node app.js
+- sudo npm install pm2 -g 
+- pm2 start app.js
 ```
+
+using pm2 will allow the bot to catch restarts and run after you close the server, if you are familiar with linux and would prefer to use screen you could also do that.
 
 ### Settings Explained:
 ```
