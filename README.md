@@ -22,16 +22,34 @@ https://partner.bybit.com/b/lickhunterv4
 
 ### Quick Linux Setup Steps:
 ```
-- apt install npm
-- apt  install gh
-- git clone https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4.git
-- cd Bybit-Lick-Hunter-v4
-- npm install
-- cp example.env .env
-- edit settings
-- sudo npm install pm2 -g 
-- pm2 start app.js
-- pm2 monit 
+apt install npm
+```
+```
+apt  install gh
+```
+```
+git clone https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4.git
+```
+```
+cd Bybit-Lick-Hunter-v4
+```
+```
+npm install
+```
+```
+cp example.env .env
+```
+```
+edit settings
+```
+sudo npm install pm2 -g 
+```
+```
+pm2 start app.js
+```
+```
+pm2 monit 
+```
 ```
 
 using pm2 will allow the bot to catch restarts and run after you close the server, if you are familiar with linux and would prefer to use screen you could also do that.
@@ -69,15 +87,22 @@ DISCORD_URL = webhook_url_here //webhook url for discord channel here
 
 ### TO START AND STOP BOT
 ```
-- pm2 list to get id
-- pm2 stop id
-- pm2 start id
+pm2 list to get id
+```
+```
+pm2 stop id
+```
+```
+pm2 start id
 ```
 <br>
 
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
 ```
+```
 git stash
+```
+```
 git pull
 ```
 <br>
