@@ -24,29 +24,38 @@ https://partner.bybit.com/b/lickhunterv4
 ```
 apt install npm
 ```
+
 ```
 apt  install gh
 ```
+
 ```
 git clone https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4.git
 ```
+
 ```
 cd Bybit-Lick-Hunter-v4
 ```
+
 ```
 npm install
 ```
+
 ```
 cp example.env .env
 ```
-```
-edit settings
+
+
+*edit .env to the settings you want more on them below*
+
 ```
 sudo npm install pm2 -g 
 ```
+
 ```
 pm2 start app.js
 ```
+
 ```
 pm2 monit 
 ```
