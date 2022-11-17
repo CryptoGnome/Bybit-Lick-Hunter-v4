@@ -53,6 +53,10 @@ USE_DISCORD = false // if you want to use discord webhooks make this true and ad
 DISCORD_URL = webhook_url_here //webhook url for discord channel here
 ```
 
+*Webhook Examples*
+![image](https://user-images.githubusercontent.com/33667144/202507520-5decb9e4-4f60-4e45-bf47-4371e74bf692.png)
+
+
 
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
 ```
