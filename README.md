@@ -33,5 +33,5 @@ git pull
 ```
 
 
-# Follow me on twitter for updates:
-https://twitter.com/Crypt0Gnome
+# For Help & to Chat with other users
+[Join The Disccord](https://discord.com/invite/TTn5Dxg)
