@@ -25,8 +25,8 @@ coming soon
 ### Quick Linux Setup Steps:
 - apt install npm
 - apt  install gh
-- git clone https://github.com/CryptoGnome/Lick-Hunter-v4.git
-- cd Lick-Hunter-v4
+- git clone https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4.git
+- cd Bybit-Lick-Hunter-v4
 - npm install
 - cp example.env .env
 - edit settings
