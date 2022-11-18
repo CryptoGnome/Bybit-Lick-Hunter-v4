@@ -124,6 +124,10 @@ pm2 start id
 ### TO UPDATE BOT WHEN A NEW RELEASE IS OUT
 
 ```
+cd Bybit-Lick-Hunter-v4
+```
+
+```
 git stash
 ```
 
