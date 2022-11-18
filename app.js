@@ -20,6 +20,7 @@ var baseRateLimit = 1000;
 var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
+var lastUpdate = 0;
 
 //create ws client
 const wsClient = new WebsocketClient({
@@ -711,120 +712,141 @@ async function createSettings() {
     }).catch(err => { throw err });
 }
 //update settings.json file with long_price and short_price
+
 async function updateSettings() {
-    var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
-    var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
-    const url = "https://api.liquidation.report/public/research";
-    fetch(url)
-    .then(res => res.json())
-    .then((out) => {
-        //create settings.json file with multiple pairs
-        //save result to research.json
-        fs.writeFileSync('research.json', JSON.stringify(out, null, 4));
-        var settings = {};
-        settings["pairs"] = [];
-        for (var i = 0; i < out.data.length; i++) {
-            //find index of pair in min_order_sizes.json "pair" key       
-            var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
-            var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
-            if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
-                //console.log("Skipping " + out.data[i].name + "USDT");
-            }
-            else {
-                //set risk then update long_price and short_price
-                var riskLevel = process.env.RISK_LEVEL;
-                if (riskLevel == 1) {
-                    //add 0.5% to long_price and subtract 0.5% from short_price
-                    var long_risk = out.data[i].long_price * 1.005
-                    var short_risk = out.data[i].short_price * 0.995
-                }
-                else if (riskLevel == 2) {
-                    //calculate price 1% below current price and1% above current price
-                    var long_risk = out.data[i].long_price * 1.01
-                    var short_risk = out.data[i].short_price * 0.99
-                }
-                else if (riskLevel == 3) {
-                    //calculate price 2% below current price and 2% above current price 
-                    var long_risk = out.data[i].long_price * 1.02
-                    var short_risk = out.data[i].short_price * 0.98
-                }
-                else if (riskLevel == 4) {
-                    //calculate price 3% below current price and 3% above current price
-                    var long_risk = out.data[i].long_price * 1.03
-                    var short_risk = out.data[i].short_price * 0.97
-                }
-                else if (riskLevel == 5) {
-                    //calculate price 4% below current price and 4% above current price
-                    var long_risk = out.data[i].long_price * 1.04
-                    var short_risk = out.data[i].short_price * 0.96
-                }
-                else {
-                    var long_risk = out.data[i].long_price;
-                    var short_risk = out.data[i].short_price;
-                }
-                //updated settings.json file
-                settingsFile.pairs[settingsIndex].long_price = long_risk;
-                settingsFile.pairs[settingsIndex].short_price = short_risk;
-            }
+    //check if last update was more than 5 minutes ago
+    if (lastUpdate == 0) {
+        lastUpdate = Date.now();
+    }
+    else {
+        var now = Date.now();
+        var diff = now - lastUpdate;
+        if (diff < 300000) {
+            return;
         }
-        fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
-    //if error load research.json file and update settings.json file
-    }).catch(
-        err => {
-            console.log(chalk.red("Reaseach API down Attempting to load research.json file, if this continues please contact @Crypt0gnoe or @Atsutane in Discord"));
+        else {
+            lastUpdate = Date.now();
             var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
             var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
-            var researchFile = JSON.parse(fs.readFileSync('research.json'));
-            var settings = {};
-            settings["pairs"] = [];
-            for (var i = 0; i < researchFile.data.length; i++) {
-                //find index of pair in min_order_sizes.json "pair" key       
-                var index = minOrderSizes.findIndex(x => x.pair === researchFile.data[i].name + "USDT");
-                var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === researchFile.data[i].name + "USDT");
-                if (index === -1 || settingsIndex === 'undefined' || researchFile.data[i].name.includes("1000")) {
-                    //console.log("Skipping " + researchFile.data[i].name + "USDT");
-                }
-                else {
-                    //set risk then update long_price and short_price
-                    var riskLevel = process.env.RISK_LEVEL;
-                    if (riskLevel == 1) {
-                        //add 0.5% to long_price and subtract 0.5% from short_price
-                        var long_risk = researchFile.data[i].long_price * 1.005
-                        var short_risk = researchFile.data[i].short_price * 0.995
-                    }
-                    else if (riskLevel == 2) {
-                        //calculate price 1% below current price and1% above current price
-                        var long_risk = researchFile.data[i].long_price * 1.01
-                        var short_risk = researchFile.data[i].short_price * 0.99
-                    }
-                    else if (riskLevel == 3) {
-                        //calculate price 2% below current price and 2% above current price 
-                        var long_risk = researchFile.data[i].long_price * 1.02
-                        var short_risk = researchFile.data[i].short_price * 0.98
-                    }
-                    else if (riskLevel == 4) {
-                        //calculate price 3% below current price and 3% above current price
-                        var long_risk = researchFile.data[i].long_price * 1.03
-                        var short_risk = researchFile.data[i].short_price * 0.97
-                    }
-                    else if (riskLevel == 5) {
-                        //calculate price 4% below current price and 4% above current price
-                        var long_risk = researchFile.data[i].long_price * 1.04
-                        var short_risk = researchFile.data[i].short_price * 0.96
+            const url = "https://api.liquidation.report/public/research";
+            fetch(url)
+            .then(res => res.json())
+            .then((out) => {
+                //create settings.json file with multiple pairs
+                //save result to research.json
+                fs.writeFileSync('research.json', JSON.stringify(out, null, 4));
+                var settings = {};
+                settings["pairs"] = [];
+                for (var i = 0; i < out.data.length; i++) {
+                    //find index of pair in min_order_sizes.json "pair" key       
+                    var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
+                    var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
+                    if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
+                        //console.log("Skipping " + out.data[i].name + "USDT");
                     }
                     else {
-                        var long_risk = researchFile.data[i].long_price;
-                        var short_risk = researchFile.data[i].short_price;
+                        //set risk then update long_price and short_price
+                        var riskLevel = process.env.RISK_LEVEL;
+                        if (riskLevel == 1) {
+                            //add 0.5% to long_price and subtract 0.5% from short_price
+                            var long_risk = out.data[i].long_price * 1.005
+                            var short_risk = out.data[i].short_price * 0.995
+                        }
+                        else if (riskLevel == 2) {
+                            //calculate price 1% below current price and1% above current price
+                            var long_risk = out.data[i].long_price * 1.01
+                            var short_risk = out.data[i].short_price * 0.99
+                        }
+                        else if (riskLevel == 3) {
+                            //calculate price 2% below current price and 2% above current price 
+                            var long_risk = out.data[i].long_price * 1.02
+                            var short_risk = out.data[i].short_price * 0.98
+                        }
+                        else if (riskLevel == 4) {
+                            //calculate price 3% below current price and 3% above current price
+                            var long_risk = out.data[i].long_price * 1.03
+                            var short_risk = out.data[i].short_price * 0.97
+                        }
+                        else if (riskLevel == 5) {
+                            //calculate price 4% below current price and 4% above current price
+                            var long_risk = out.data[i].long_price * 1.04
+                            var short_risk = out.data[i].short_price * 0.96
+                        }
+                        else {
+                            var long_risk = out.data[i].long_price;
+                            var short_risk = out.data[i].short_price;
+                        }
+                        //updated settings.json file
+                        settingsFile.pairs[settingsIndex].long_price = long_risk;
+                        settingsFile.pairs[settingsIndex].short_price = short_risk;
                     }
-                    //updated settings.json file
-                    settingsFile.pairs[settingsIndex].long_price = long_risk;
-                    settingsFile.pairs[settingsIndex].short_price = short_risk;
-
                 }
-            }
-            fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
+                fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
+            //if error load research.json file and update settings.json file
+            }).catch(
+                err => {
+                    console.log(chalk.red("Reaseach API down Attempting to load research.json file, if this continues please contact @Crypt0gnoe or @Atsutane in Discord"));
+                    var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
+                    var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
+                    var researchFile = JSON.parse(fs.readFileSync('research.json'));
+                    var settings = {};
+                    settings["pairs"] = [];
+                    for (var i = 0; i < researchFile.data.length; i++) {
+                        //find index of pair in min_order_sizes.json "pair" key     
+                        var index = minOrderSizes.findIndex(x => x.pair === researchFile.data[i].name + "USDT");
+                        var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === researchFile.data[i].name + "USDT");
+                        try{
+                            if (index === -1 || settingsIndex === 'undefined' || researchFile.data[i].name.includes("1000")) {
+                                //console.log("Skipping " + researchFile.data[i].name + "USDT");
+                            }
+                            else {
+                                //set risk then update long_price and short_price
+                                var riskLevel = process.env.RISK_LEVEL;
+                                if (riskLevel == 1) {
+                                    //add 0.5% to long_price and subtract 0.5% from short_price
+                                    var long_risk = researchFile.data[i].long_price * 1.005
+                                    var short_risk = researchFile.data[i].short_price * 0.995
+                                }
+                                else if (riskLevel == 2) {
+                                    //calculate price 1% below current price and1% above current price
+                                    var long_risk = researchFile.data[i].long_price * 1.01
+                                    var short_risk = researchFile.data[i].short_price * 0.99
+                                }
+                                else if (riskLevel == 3) {
+                                    //calculate price 2% below current price and 2% above current price 
+                                    var long_risk = researchFile.data[i].long_price * 1.02
+                                    var short_risk = researchFile.data[i].short_price * 0.98
+                                }
+                                else if (riskLevel == 4) {
+                                    //calculate price 3% below current price and 3% above current price
+                                    var long_risk = researchFile.data[i].long_price * 1.03
+                                    var short_risk = researchFile.data[i].short_price * 0.97
+                                }
+                                else if (riskLevel == 5) {
+                                    //calculate price 4% below current price and 4% above current price
+                                    var long_risk = researchFile.data[i].long_price * 1.04
+                                    var short_risk = researchFile.data[i].short_price * 0.96
+                                }
+                                else {
+                                    var long_risk = researchFile.data[i].long_price;
+                                    var short_risk = researchFile.data[i].short_price;
+                                }
+                                //updated settings.json file
+                                settingsFile.pairs[settingsIndex].long_price = long_risk;
+                                settingsFile.pairs[settingsIndex].short_price = short_risk;
+                            }
+                        }
+                        catch(err){
+                            console.log("Error updating " + researchFile.data[i].name + "USDT, this is liekly due to not having this pair active in your settings.json file");
+                        }
+
+                        
+                    }
+                    fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
+                }
+            );
         }
-    );
+    }
 
 }
 
@@ -888,8 +910,8 @@ async function reportWebhook() {
     var balance = await getBalance();
     var diff = balance - startingBalance;
     var percentGain = (diff / startingBalance) * 100;
-    var percentGain = percentGain.toFixed(4);
-    var diff = diff.toFixed(4);
+    var percentGain = percentGain.toFixed(6);
+    var diff = diff.toFixed(6);
     var balance = balance.toFixed(2);
     //fetch positions
     var positions = await linearClient.getPosition();
@@ -898,7 +920,7 @@ async function reportWebhook() {
     for (var i = 0; i < positions.result.length; i++) {
         if (positions.result[i].data.size > 0) {
             var pnl = positions.result[i].data.realised_pnl;
-            var pnl = pnl.toFixed(4);
+            var pnl = pnl.toFixed(6);
             var symbol = positions.result[i].data.symbol;
             var size = positions.result[i].data.size;
             var size = size.toFixed(4);
@@ -907,7 +929,7 @@ async function reportWebhook() {
             var position = {
                 "symbol": symbol,
                 "size": size,
-                "sizeUSD": usdValue.toFixed(2),
+                "sizeUSD": usdValue.toFixed(6),
                 "pnl": pnl
             }
             positionList.push(position);
