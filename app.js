@@ -576,7 +576,7 @@ async function getMinTradingSize() {
         var usdValue = (minOrderSize * price);
         //console.log("USD value of " + data.result[i].name + " is " + usdValue);
         //find usd valie of process.env.MIN_ORDER_SIZE
-        var minOrderSizeUSD = (process.env.PERCENT_ORDER_SIZE / price) * process.env.LEVERAGE;
+        var minOrderSizeUSD = ((balance * process.env.PERCENT_ORDER_SIZE/100) / price) * process.env.LEVERAGE;
         //console.log("USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
         if (minOrderSizeUSD < usdValue) {
             //use min order size
