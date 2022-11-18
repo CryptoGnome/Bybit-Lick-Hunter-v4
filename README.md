@@ -28,6 +28,15 @@ apt install npm
 ```
 
 ```
+npm install n -g
+```
+
+```
+n stable
+```
+
+
+```
 apt install gh
 ```
 
