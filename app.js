@@ -705,6 +705,9 @@ async function createSettings() {
                     }
                     settings["pairs"].push(pair);
                 }
+                //add line to settings.json file  "startingBalance": 0
+                settings["startingBalance"] = 0;
+                
             }
         }
         fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
