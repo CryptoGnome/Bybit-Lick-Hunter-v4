@@ -134,5 +134,13 @@ git pull
 <br>
 <br>
 
+### Check For Errors 
+
+```
+pm2 logs 'App ID' --err --lines 1000
+```
+<br>
+<br>
+
 ### For Help & to Chat with other users
 [Join The Disccord](https://discord.com/invite/TTn5Dxg)
