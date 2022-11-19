@@ -56,7 +56,7 @@ wsClient.on('update', (data) => {
     }
 
     //get blacklisted pairs
-    const blacklist = []; 
+    const blacklist = [];
     process.env.BLACKLIST.split(', ').forEach(item => {
         blacklist.push(item);
     });
@@ -85,7 +85,7 @@ wsClient.on('update', (data) => {
             liquidationOrders[index].qty = qty;
             liquidationOrders[index].timestamp = timestamp;
             liquidationOrders[index].amount = 1;
-        }    
+        }
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
             console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
@@ -163,7 +163,7 @@ async function getBalance() {
     if (Date.now() - lastReport > 300000) {
         //send report
         reportWebhook();
-        lastReport = Date.now();    
+        lastReport = Date.now();
     }
 
 
@@ -194,13 +194,13 @@ async function getPosition(pair) {
             var margin = positions.result[index ].data.position_value/process.env.LEVERAGE;
             var percentGain = (profit / margin) * 100;
             return {side: side, entryPrice: positions.result[index].data.entry_price , size: positions.result[index].data.size, percentGain: percentGain};
-    
+
         }
         else {
             return {side: "None", entryPrice: 0, size: 0, percentGain: 0};
         }
 
-        
+
     }
     else {
         console.log("Open positions response is null");
@@ -209,7 +209,7 @@ async function getPosition(pair) {
 
 }
 //take profit
-async function takeProfit(symbol, position) {    
+async function takeProfit(symbol, position) {
 
     //get entry price
     var positions = await position;
@@ -231,7 +231,7 @@ async function takeProfit(symbol, position) {
     var index = tickData.findIndex(x => x.pair === symbol);
     var tickSize = tickData[index].tickSize;
     var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-    
+
     if (positions.size > 0 && positions.take_profit === 0 || takeProfit !== positions.take_profit) {
         if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
             const order = await linearClient.setTradingStop({
@@ -267,7 +267,7 @@ async function takeProfit(symbol, position) {
             else {
                 console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 4)));
             }
- 
+
         }
         else {
             const order = await linearClient.setTradingStop({
@@ -300,11 +300,11 @@ async function takeProfit(symbol, position) {
                 });
                 console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST, TRYING TO FILL AT BID/ASK!!"));
             }
-            
+
         }
 
 
-        
+
     }
     else {
         //console.log("Take profit already set for " + symbol);
@@ -333,7 +333,7 @@ async function totalOpenPositions() {
 async function scalp(pair, index) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
-    
+
     //var index = liquidationOrders.findIndex(x => x.symbol === pair);
     //Long liquidation
     if (liquidationOrders[index].side === "Buy") {
@@ -362,8 +362,8 @@ async function scalp(pair, index) {
                             reduce_only: false,
                             close_on_trigger: false
                         });
-                        //console.log("Order placed: " + JSON.stringify(order, null, 2)); 
-                        console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));  
+                        //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                        console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                         if(process.env.USE_DISCORD) {
                             orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                         }
@@ -388,8 +388,8 @@ async function scalp(pair, index) {
                         reduce_only: false,
                         close_on_trigger: false
                     });
-                    //console.log("Order placed: " + JSON.stringify(order, null, 2)); 
-                    console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));  
+                    //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                    console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                     if(process.env.USE_DISCORD) {
                         orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                     }
@@ -399,7 +399,7 @@ async function scalp(pair, index) {
                         console.log(chalk.redBright("Max Positions Reached!"));
                     }
                 }
-        
+
             }
             else {
                 console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
@@ -408,7 +408,7 @@ async function scalp(pair, index) {
         else {
             console.log("Pair does not exist in settings.json");
         }
-    
+
     }
     else {
         const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
@@ -468,19 +468,19 @@ async function scalp(pair, index) {
                     if(openPositions > process.env.MAX_OPEN_POSITIONS) {
                         console.log(chalk.redBright("Max Positions Reached!"));
                     }
-               
+
                 }
 
             }
-            else {  
+            else {
                 console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
             }
         }
         else {
             console.log("Pair does not exist in settings.json");
-        }  
+        }
     }
- 
+
 }
 //set leverage on all pairs
 async function setLeverage(pairs, leverage) {
@@ -498,8 +498,8 @@ async function setLeverage(pairs, leverage) {
         console.log("Set leverage for " + pair + " to " + leverage);
 
     }
-                
-}   
+
+}
 //create loop that checks for open positions every second
 async function checkOpenPositions() {
     //gor through all pairs and getPosition()
@@ -543,7 +543,7 @@ async function checkOpenPositions() {
                     pnl: positions.result[i].data.unrealised_pnl
                 }
                 postionList.push(position);
-            }      
+            }
         }
     }
     else {
@@ -576,7 +576,7 @@ async function getMinTradingSize() {
         var usdValue = (minOrderSize * price);
         //console.log("USD value of " + data.result[i].name + " is " + usdValue);
         //find usd valie of process.env.MIN_ORDER_SIZE
-        var minOrderSizeUSD = ((balance * process.env.PERCENT_ORDER_SIZE/100) / price) * process.env.LEVERAGE;
+        var minOrderSizeUSD = (balance * process.env.PERCENT_ORDER_SIZE/100) * process.env.LEVERAGE;
         //console.log("USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
         if (minOrderSizeUSD < usdValue) {
             //use min order size
@@ -623,7 +623,7 @@ async function getSymbols() {
             if (t2.endsWith("USDT")) {
                 var pair = t1.concat(t2);
                 symbols.push(pair);
-            }  
+            }
 
         }
 
@@ -658,7 +658,7 @@ async function createSettings() {
                 if (index === -1) {
                     continue;
                 }
-                else { 
+                else {
 
                     //risk level
                     var riskLevel = process.env.RISK_LEVEL;
@@ -673,7 +673,7 @@ async function createSettings() {
                         var short_risk = out.data[i].short_price * 0.99
                     }
                     else if (riskLevel == 3) {
-                        //calculate price 2% below current price and 2% above current price 
+                        //calculate price 2% below current price and 2% above current price
                         var long_risk = out.data[i].long_price * 1.02
                         var short_risk = out.data[i].short_price * 0.98
                     }
@@ -691,7 +691,7 @@ async function createSettings() {
                         var long_risk = out.data[i].long_price;
                         var short_risk = out.data[i].short_price;
                     }
-    
+
                     var pair = {
                         "symbol": out.data[i].name + "USDT",
                         "leverage": process.env.LEVERAGE,
@@ -707,11 +707,11 @@ async function createSettings() {
                 }
                 //add line to settings.json file  "startingBalance": 0
                 settings["startingBalance"] = 0;
-                
+
             }
         }
         fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
-        
+
     }).catch(err => { throw err });
 }
 //update settings.json file with long_price and short_price
@@ -741,7 +741,7 @@ async function updateSettings() {
                 var settings = {};
                 settings["pairs"] = [];
                 for (var i = 0; i < out.data.length; i++) {
-                    //find index of pair in min_order_sizes.json "pair" key       
+                    //find index of pair in min_order_sizes.json "pair" key
                     var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
                     var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
                     if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
@@ -761,7 +761,7 @@ async function updateSettings() {
                             var short_risk = out.data[i].short_price * 0.99
                         }
                         else if (riskLevel == 3) {
-                            //calculate price 2% below current price and 2% above current price 
+                            //calculate price 2% below current price and 2% above current price
                             var long_risk = out.data[i].long_price * 1.02
                             var short_risk = out.data[i].short_price * 0.98
                         }
@@ -795,7 +795,7 @@ async function updateSettings() {
                     var settings = {};
                     settings["pairs"] = [];
                     for (var i = 0; i < researchFile.data.length; i++) {
-                        //find index of pair in min_order_sizes.json "pair" key     
+                        //find index of pair in min_order_sizes.json "pair" key
                         var index = minOrderSizes.findIndex(x => x.pair === researchFile.data[i].name + "USDT");
                         var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === researchFile.data[i].name + "USDT");
                         try{
@@ -816,7 +816,7 @@ async function updateSettings() {
                                     var short_risk = researchFile.data[i].short_price * 0.99
                                 }
                                 else if (riskLevel == 3) {
-                                    //calculate price 2% below current price and 2% above current price 
+                                    //calculate price 2% below current price and 2% above current price
                                     var long_risk = researchFile.data[i].long_price * 1.02
                                     var short_risk = researchFile.data[i].short_price * 0.98
                                 }
@@ -843,7 +843,7 @@ async function updateSettings() {
                             console.log("Error updating " + researchFile.data[i].name + "USDT, this is liekly due to not having this pair active in your settings.json file");
                         }
 
-                        
+
                     }
                     fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
                 }
@@ -870,7 +870,7 @@ function orderWebhook(symbol, amount, side, position, pnl) {
         .setColor(color)
         .setTimestamp();
     try {
-        hook.send(embed); 
+        hook.send(embed);
     }
     catch (err) {
         console.log(chalk.red("Discord Webhook Error"));
@@ -887,12 +887,12 @@ function messageWebhook(message) {
         .setColor('#00FFFF')
         .setTimestamp();
     try {
-        hook.send(embed); 
+        hook.send(embed);
     }
     catch (err) {
         console.log(chalk.red("Discord Webhook Error"));
     }
-    
+
 }
 
 //report webhook
@@ -952,13 +952,13 @@ async function reportWebhook() {
         embed.setColor('#800080')
         .setTimestamp();
     try {
-        hook.send(embed); 
+        hook.send(embed);
     }
     catch (err) {
         console.log(chalk.red("Discord Webhook Error"));
     }
 
-    
+
 
 }
 
@@ -994,7 +994,7 @@ async function main() {
             rateLimit = rateLimit + 1000;
         }
     }
-    
+
 
 }
 
@@ -1008,8 +1008,3 @@ catch (error) {
     }
     main();
 }
-
-
-
-
-
