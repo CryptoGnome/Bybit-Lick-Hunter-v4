@@ -973,7 +973,11 @@ async function main() {
     }
     if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
         console.log("Using Smart Settings");
-        await createSettings();
+        if (fs.existsSync('settings.json')) {
+            console.log("Found existing Settings file");
+        } else {
+            await createSettings();
+        }
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
         console.log("Using Set Leverage");
