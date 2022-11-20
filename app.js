@@ -965,9 +965,9 @@ async function main() {
     if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
         console.log("Using Smart Settings");
         if (fs.existsSync('settings.json')) {
-            console.log("Found existing Settings file.");
+            console.log("Found existing Settings.json file.");
         } else {
-            console.log("Creating Settings file.");
+            console.log("Creating Settings.json file.");
             await createSettings();
         }
     }
