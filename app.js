@@ -12,7 +12,6 @@ if (process.env.USE_DISCORD) {
     hook = new Webhook(process.env.DISCORD_URL);
 }
 
-
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 var rateLimit = 1000;
@@ -119,10 +118,10 @@ wsClient.on('response', (data) => {
     //console.log("Connection opened");
 });
 wsClient.on('reconnect', ({ wsKey }) => {
-console.log('ws automatically reconnecting.... ', wsKey);
+    console.log('ws automatically reconnecting.... ', wsKey);
 });
 wsClient.on('reconnected', (data) => {
-console.log('ws has reconnected ', data?.wsKey);
+    console.log('ws has reconnected ', data?.wsKey);
 });
 
 
@@ -165,8 +164,6 @@ async function getBalance() {
         reportWebhook();
         lastReport = Date.now();
     }
-
-
     return balance;
 
 }
@@ -199,7 +196,6 @@ async function getPosition(pair) {
         else {
             return {side: "None", entryPrice: 0, size: 0, percentGain: 0};
         }
-
 
     }
     else {
@@ -302,8 +298,6 @@ async function takeProfit(symbol, position) {
             }
 
         }
-
-
 
     }
     else {
@@ -553,7 +547,6 @@ async function checkOpenPositions() {
     console.log("------------------ OPEN POSITIONS ------------------");
     console.log("----------------------------------------------------");
     console.table(postionList);
-
 
 }
 
@@ -962,8 +955,6 @@ async function reportWebhook() {
 
 }
 
-
-
 async function main() {
     console.log("Starting Lick Hunter!");
     pairs = await getSymbols();
@@ -973,7 +964,12 @@ async function main() {
     }
     if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
         console.log("Using Smart Settings");
-        await createSettings();
+        if (fs.existsSync('settings.json')) {
+            console.log("Found existing Settings.json file.");
+        } else {
+            console.log("Creating Settings.json file.");
+            await createSettings();
+        }
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
         console.log("Using Set Leverage");
@@ -994,7 +990,6 @@ async function main() {
             rateLimit = rateLimit + 1000;
         }
     }
-
 
 }
 
