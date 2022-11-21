@@ -912,6 +912,7 @@ async function reportWebhook() {
     //fetch positions
     var positions = await linearClient.getPosition();
     var positionList = [];
+    var openPositions = await totalOpenPositions();
     //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
     for (var i = 0; i < positions.result.length; i++) {
         if (positions.result[i].data.size > 0) {
@@ -937,6 +938,7 @@ async function reportWebhook() {
         .addField('Current Balance: ', balance.toString(), true)
         .addField('Profit USDT: ', diff.toString(), true)
         .addField('Profit %: ', percentGain.toString(), true)
+        .setFooter('Open Positions: ' + openPositions.toString())
         //for each position in positionList add field only 7 fields per embed
         for(var i = 0; i < positionList.length; i++) {
             embed.addField(positionList[i].symbol, "Size: " + positionList[i].size + " | Value " + positionList[i].sizeUSD + " USDT" + " | Unrealized PnL: " + positionList[i].pnl, true);
