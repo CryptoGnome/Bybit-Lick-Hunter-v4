@@ -490,24 +490,26 @@ async function setLeverage(pairs, leverage) {
                 sell_leverage: leverage,
             }
         );
-
-        var currentLeverage = await checkLeverage(pair);
-
-
-        if (currentLeverage.toString() === leverage) {
-            console.log("Leverage for " + pair + " is set to " + leverage);
-        }
-        else {
-            console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, "Check Max Leverage for this pair"));
-            console.log(chalk.redBright("Blacklist " + pair + " in settings.json"));
-            //remove pair from settings.json
-            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
-            if(settingsIndex !== -1) {
-                settings.pairs.splice(settingsIndex, 1);
-                fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+        try{
+            var currentLeverage = await checkLeverage(pair);
+            if (currentLeverage.toString() === leverage) {
+                console.log("Leverage for " + pair + " is set to " + leverage);
             }
+            else {
+                console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, "Check Max Leverage for this pair"));
+                console.log(chalk.redBright("Blacklist " + pair + " in settings.json"));
+                //remove pair from settings.json
+                const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+                var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+                if(settingsIndex !== -1) {
+                    settings.pairs.splice(settingsIndex, 1);
+                    fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+                }
 
+            }
+        }
+        catch (e) {
+            await sleep(1000);
         }
 
     }
@@ -1003,7 +1005,7 @@ async function main() {
         }
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
-        console.log("Using Set Leverage");
+        console.log("Using Set Leverage");\
         await setLeverage(pairs, process.env.LEVERAGE);
     }
 
