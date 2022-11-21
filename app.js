@@ -490,10 +490,34 @@ async function setLeverage(pairs, leverage) {
                 sell_leverage: leverage,
             }
         );
-        console.log("Set leverage for " + pair + " to " + leverage);
+
+        var currentLeverage = await checkLeverage(pair);
+
+
+        if (currentLeverage.toString() === leverage) {
+            console.log("Leverage for " + pair + " is set to " + leverage);
+        }
+        else {
+            console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, "Check Max Leverage for this pair"));
+            console.log(chalk.redBright("Blacklist " + pair + " in settings.json"));
+            //remove pair from settings.json
+            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            if(settingsIndex !== -1) {
+                settings.pairs.splice(settingsIndex, 1);
+                fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+            }
+
+        }
 
     }
 
+}
+
+async function checkLeverage(symbol) {
+    var position = await linearClient.getPosition({symbol: symbol});
+    var leverage = position.result[0].leverage;
+    return leverage;
 }
 //create loop that checks for open positions every second
 async function checkOpenPositions() {
@@ -1001,7 +1025,6 @@ async function main() {
 }
 
 
-
 async function checkCommit() {
     const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
     const commits = await response.json();
@@ -1020,6 +1043,9 @@ async function checkCommit() {
         messageWebhook("New Update Available! Please update to the latest version!");    
     }
 }
+
+
+
 
 
 try {
