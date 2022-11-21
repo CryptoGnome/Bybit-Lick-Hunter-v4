@@ -1030,7 +1030,7 @@ async function main() {
 async function checkCommit() {
     const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
     const commits = await response.json();
-    const latestCommit = commits.length;
+    const latestCommit = commits[0].sha;
     //open version.json
     const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
     //check if latest commit is different from version.json
@@ -1043,6 +1043,10 @@ async function checkCommit() {
         console.log(chalk.red("New Update Available on Github!"));
         console.log(chalk.red("Please update to the latest version!"));
         messageWebhook("New Update Available! Please update to the latest version!");    
+    }
+    else {
+        version.commit = latestCommit;
+        fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
     }
 }
 
