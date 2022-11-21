@@ -1031,23 +1031,35 @@ async function checkCommit() {
     const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
     const commits = await response.json();
     const latestCommit = commits[0].sha;
-    //open version.json
-    const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
-    //check if latest commit is different from version.json
-    if (version.commit === 0) {
-        version.commit = latestCommit;
-        console.log(chalk.bgBlueBright("No commit found in version.json, setting commit to " + latestCommit));
-        fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
-    }
-    else if (version.commit != latestCommit) {
-        console.log(chalk.red("New Update Available on Github!"));
-        console.log(chalk.red("Please update to the latest version!"));
-        messageWebhook("New Update Available! Please update to the latest version!");    
+
+    //check if version.json exists if not create and write latest commit
+    if (fs.existsSync('version.json')) {
+        //open version.json
+        const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
+        //check if latest commit is different from version.json
+        if (version.commit === 0) {
+            version.commit = latestCommit;
+            console.log(chalk.bgBlueBright("No commit found in version.json, setting commit to " + latestCommit));
+            fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
+        }
+        else if (version.commit != latestCommit) {
+            console.log(chalk.red("New Update Available on Github!"));
+            console.log(chalk.red("Please update to the latest version!"));
+            messageWebhook("New Update Available! Please update to the latest version!");    
+        }
+        else {
+            version.commit = latestCommit;
+            fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
+        }
     }
     else {
-        version.commit = latestCommit;
+        //create version.json
+        var version = {
+            "commit": latestCommit
+        }
         fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
     }
+    
 }
 
 
