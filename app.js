@@ -162,6 +162,7 @@ async function getBalance() {
     if (Date.now() - lastReport > 300000) {
         //send report
         reportWebhook();
+        checkCommit();
         lastReport = Date.now();
     }
     return balance;
@@ -320,7 +321,7 @@ async function totalOpenPositions() {
 
     }
     catch (error) {
-        return 0;
+        return null;
     }
 }
 //against trend
@@ -367,7 +368,7 @@ async function scalp(pair, index) {
                         console.log("Max position size reached for " + pair);
                     }
                 }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS) {
+                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                     //load min order size json
                     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                     var index = tickData.findIndex(x => x.pair === pair);
@@ -437,7 +438,7 @@ async function scalp(pair, index) {
                         }
                     }
                 }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS) {
+                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                     //load min order size json
                     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                     var index = tickData.findIndex(x => x.pair === pair);
@@ -528,11 +529,15 @@ async function checkOpenPositions() {
             if (positions.result[i].data.size > 0) {
                 //console.log("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
                 takeProfit(positions.result[i].data.symbol, positions.result[i].data);
+                
+                //get usd value of position
+                var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
                 //create object to store in postionList
                 var position = {
                     symbol: positions.result[i].data.symbol,
                     size: positions.result[i].data.size,
+                    usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
                     pnl: positions.result[i].data.unrealised_pnl
                 }
@@ -995,7 +1000,30 @@ async function main() {
 
 }
 
+
+
+async function checkCommit() {
+    const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
+    const commits = await response.json();
+    const latestCommit = commits.length;
+    //open version.json
+    const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
+    //check if latest commit is different from version.json
+    if (version.commit === 0) {
+        version.commit = latestCommit;
+        console.log(chalk.bgBlueBright("No commit found in version.json, setting commit to " + latestCommit));
+        fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
+    }
+    else if (version.commit != latestCommit) {
+        console.log(chalk.red("New Update Available on Github!"));
+        console.log(chalk.red("Please update to the latest version!"));
+        messageWebhook("New Update Available! Please update to the latest version!");    
+    }
+}
+
+
 try {
+    checkCommit();
     main();
 }
 catch (error) {
