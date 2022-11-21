@@ -1005,7 +1005,7 @@ async function main() {
         }
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
-        console.log("Using Set Leverage");\
+        console.log("Using Set Leverage");
         await setLeverage(pairs, process.env.LEVERAGE);
     }
 
