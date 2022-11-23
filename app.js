@@ -136,11 +136,11 @@ async function getBalance() {
     var usedBalance = data.result['USDT'].used_margin;
     var balance = availableBalance + usedBalance;
     //load settings.json
-    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
     //check if starting balance is set
     if (settings.startingBalance === 0) {
         settings.startingBalance = balance;
-        fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
+        fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
         var startingBalance = settings.startingBalance;
     }
     else {
@@ -162,7 +162,7 @@ async function getBalance() {
     if (Date.now() - lastReport > 300000) {
         //send report
         reportWebhook();
-        checkCommit();
+        //checkCommit();
         lastReport = Date.now();
     }
     return balance;
@@ -224,85 +224,93 @@ async function takeProfit(symbol, position) {
     }
 
     //load min order size json
+
     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-    var index = tickData.findIndex(x => x.pair === symbol);
-    var tickSize = tickData[index].tickSize;
-    var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-    if (positions.size > 0 && positions.take_profit === 0 || takeProfit !== positions.take_profit) {
-        if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
-            const order = await linearClient.setTradingStop({
-                symbol: symbol,
-                side: side,
-                take_profit: takeProfit.toFixed(decimalPlaces),
-                stop_loss: stopLoss.toFixed(decimalPlaces),
-            });
-            //console.log(JSON.stringify(order, null, 4));
+    try {
+        var index = tickData.findIndex(x => x.pair === symbol);
+        var tickSize = tickData[index].tickSize;
+        var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-            if (order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code === 10002) {
-                //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
-            }
-            else if (order.ret_code === 130027 || order.ret_code === 130030 || order.ret_code === 130024) {
-                //find current price
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
-                var price = priceFetch.result[0].last_price;
-                //if side is sell add 1 tick to price
-                if (side === "Sell") {
-                    price = parseFloat(priceFetch.result[0].ask_price);
-                }
-                else {
-                    price = parseFloat(priceFetch.result[0].bid_price);
-                }
+        if (positions.size > 0 && positions.take_profit === 0 || takeProfit !== positions.take_profit) {
+            if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
                     side: side,
-                    take_profit: price.toFixed(decimalPlaces),
+                    take_profit: takeProfit.toFixed(decimalPlaces),
                     stop_loss: stopLoss.toFixed(decimalPlaces),
                 });
-                console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
-            }
-            else {
-                console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 4)));
-            }
+                //console.log(JSON.stringify(order, null, 4));
 
-        }
-        else {
-            const order = await linearClient.setTradingStop({
-                symbol: symbol,
-                side: side,
-                take_profit: takeProfit.toFixed(decimalPlaces),
-            });
-            //console.log(JSON.stringify(order, null, 2));
-            if(order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code ===  130024) {
-                //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
-            }
-            else if (order.ret_code === 130027 || order.ret_code === 130030) {
-                console.log(chalk.cyanBright("TAKE PROFIT FAILED PRICING MOVING FAST!! TRYING TO PLACE ABOVE CURRENT PRICE!!"));
-                //find current price
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
-                console.log("Current price: " + JSON.stringify(priceFetch, null, 4));
-                var price = priceFetch.result[0].last_price;
-                //if side is sell add 1 tick to price
-                if (side === "Sell") {
-                    price = priceFetch.result[0].ask_price
+                if (order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code === 10002) {
+                    //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
+                }
+                else if (order.ret_code === 130027 || order.ret_code === 130030 || order.ret_code === 130024) {
+                    //find current price
+                    var priceFetch = await linearClient.getTickers({symbol: symbol});
+                    var price = priceFetch.result[0].last_price;
+                    //if side is sell add 1 tick to price
+                    if (side === "Sell") {
+                        price = parseFloat(priceFetch.result[0].ask_price);
+                    }
+                    else {
+                        price = parseFloat(priceFetch.result[0].bid_price);
+                    }
+                    const order = await linearClient.setTradingStop({
+                        symbol: symbol,
+                        side: side,
+                        take_profit: price.toFixed(decimalPlaces),
+                        stop_loss: stopLoss.toFixed(decimalPlaces),
+                    });
+                    console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
                 }
                 else {
-                    price = priceFetch.result[0].bid_price
+                    console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 4)));
                 }
-                console.log("Price for symbol " + symbol + " is " + price);
+
+            }
+            else {
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
                     side: side,
-                    take_profit: price,
+                    take_profit: takeProfit.toFixed(decimalPlaces),
                 });
-                console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST, TRYING TO FILL AT BID/ASK!!"));
+                //console.log(JSON.stringify(order, null, 2));
+                if(order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code ===  130024) {
+                    //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
+                }
+                else if (order.ret_code === 130027 || order.ret_code === 130030) {
+                    console.log(chalk.cyanBright("TAKE PROFIT FAILED PRICING MOVING FAST!! TRYING TO PLACE ABOVE CURRENT PRICE!!"));
+                    //find current price
+                    var priceFetch = await linearClient.getTickers({symbol: symbol});
+                    console.log("Current price: " + JSON.stringify(priceFetch, null, 4));
+                    var price = priceFetch.result[0].last_price;
+                    //if side is sell add 1 tick to price
+                    if (side === "Sell") {
+                        price = priceFetch.result[0].ask_price
+                    }
+                    else {
+                        price = priceFetch.result[0].bid_price
+                    }
+                    console.log("Price for symbol " + symbol + " is " + price);
+                    const order = await linearClient.setTradingStop({
+                        symbol: symbol,
+                        side: side,
+                        take_profit: price,
+                    });
+                    console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST, TRYING TO FILL AT BID/ASK!!"));
+                }
+                else {
+                    console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
+                }
             }
-
         }
-
+        else {
+            console.log("No take profit to set for " + symbol);
+        }
     }
-    else {
-        //console.log("Take profit already set for " + symbol);
+    catch (e) {
+        console.log(chalk.red("Error setting take profit: " + e + " for symbol " + symbol));
     }
 
 }
@@ -496,8 +504,7 @@ async function setLeverage(pairs, leverage) {
                 console.log("Leverage for " + pair + " is set to " + leverage);
             }
             else {
-                console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, "Check Max Leverage for this pair"));
-                console.log(chalk.redBright("Blacklist " + pair + " in settings.json"));
+                console.log(chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
                 //remove pair from settings.json
                 const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
                 var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
@@ -509,6 +516,7 @@ async function setLeverage(pairs, leverage) {
             }
         }
         catch (e) {
+            console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
             await sleep(1000);
         }
 
@@ -554,8 +562,9 @@ async function checkOpenPositions() {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
                 //console.log("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
+               
                 takeProfit(positions.result[i].data.symbol, positions.result[i].data);
-                
+   
                 //get usd value of position
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
@@ -586,6 +595,8 @@ async function getMinTradingSize() {
     const response = await fetch(url);
     const data = await response.json();
     var balance = await getBalance();
+    var tickers = await linearClient.getTickers();
+    var positions = await linearClient.getPosition();
 
     var minOrderSizes = [];
     console.log("Fetching min Trading Sizes for pairs, this could take a minute...");
@@ -593,9 +604,9 @@ async function getMinTradingSize() {
         console.log("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
         //check if min_trading_qty usd value is less than process.env.MIN_ORDER_SIZE
         var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
-        //get price of pair
-        var priceFetch = await linearClient.getTickers({symbol: data.result[i].name});
-        var price = priceFetch.result[0].last_price
+        //get price of pair from tickers
+        var priceFetch = tickers.result.find(x => x.symbol === data.result[i].name);
+        var price = priceFetch.last_price;
         //get usd value of min order size
         var usdValue = (minOrderSize * price);
         //console.log("USD value of " + data.result[i].name + " is " + usdValue);
@@ -609,21 +620,53 @@ async function getMinTradingSize() {
         else {
             //convert min orderSizeUSD to pair value
             var minOrderSizePair = (minOrderSizeUSD / price);
+        }
+        try{
+            //find pair ion positions
+            var position = positions.result.find(x => x.data.symbol === data.result[i].name);
+            var leverage = position.data.leverage;
+       
+            if (process.env.LEVERAGE === leverage.toString()) {
+                //find max position size for pair
+                var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
+                //save min order size and max position size to json
+                var minOrderSizeJson = {
+                    "pair": data.result[i].name,
+                    "minOrderSize": minOrderSizePair,
+                    "maxPositionSize": maxPositionSize,
+                    "tickSize": data.result[i].price_filter.tick_size,
+                }
+                //add to array
+                minOrderSizes.push(minOrderSizeJson);
 
+            }
+            else {
+                const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+                var settingsIndex = settings.pairs.findIndex(x => x.symbol === data.result[i].name);
+                if(settingsIndex !== -1) {
+                    settings.pairs.splice(settingsIndex, 1);
+                    fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+                }
+            }
         }
-        //find max position size for pair
-        var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
-        //save min order size and max position size to json
-        var minOrderSizeJson = {
-            "pair": data.result[i].name,
-            "minOrderSize": minOrderSizePair,
-            "maxPositionSize": maxPositionSize,
-            "tickSize": data.result[i].price_filter.tick_size,
+        catch (e) {
+            await sleep(10);
         }
-        //add to array
-        minOrderSizes.push(minOrderSizeJson);
+
     }
     fs.writeFileSync('min_order_sizes.json', JSON.stringify(minOrderSizes, null, 4));
+
+
+    //update settings.json with min order sizes
+    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+    for (var i = 0; i < minOrderSizes.length; i++) {
+        var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
+        if(settingsIndex !== -1) {
+            settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
+            settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
+            
+        }
+    }
 
 
 }
@@ -661,6 +704,7 @@ function sleep(ms) {
 }
 //auto create settings.json file
 async function createSettings() {
+    await getMinTradingSize();
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
     //get info from https://api.liquidation.report/public/research
     const url = "https://api.liquidation.report/public/research";
@@ -683,7 +727,6 @@ async function createSettings() {
                     continue;
                 }
                 else {
-
                     //risk level
                     var riskLevel = process.env.RISK_LEVEL;
                     if (riskLevel == 1) {
@@ -729,9 +772,6 @@ async function createSettings() {
                     }
                     settings["pairs"].push(pair);
                 }
-                //add line to settings.json file  "startingBalance": 0
-                settings["startingBalance"] = 0;
-
             }
         }
         fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
@@ -753,6 +793,9 @@ async function updateSettings() {
         }
         else {
             lastUpdate = Date.now();
+            if(process.env.UPDATE_MIN_ORDER_SIZING == "true") {
+                await getMinTradingSize();
+            }
             var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
             var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
             const url = "https://api.liquidation.report/public/research";
@@ -921,11 +964,11 @@ function messageWebhook(message) {
 
 //report webhook
 async function reportWebhook() {
-    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
     //check if starting balance is set
     if (settings.startingBalance === 0) {
         settings.startingBalance = balance;
-        fs.writeFileSync('settings.json', JSON.stringify(settings, null, 4));
+        fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
         var startingBalance = settings.startingBalance;
     }
     else {
@@ -1000,7 +1043,6 @@ async function main() {
         await createSettings();
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
-        console.log("Using Set Leverage");
         await setLeverage(pairs, process.env.LEVERAGE);
     }
 
@@ -1025,12 +1067,15 @@ async function main() {
 async function checkCommit() {
     const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
     const commits = await response.json();
+    console.log(JSON.stringify(commits, null, 4));
     const latestCommit = commits[0].sha;
-
     //check if version.json exists if not create and write latest commit
     if (fs.existsSync('version.json')) {
+        console.log("version.json exists");
         //open version.json
         const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
+        console.log("Latest Commit: " + latestCommit);
+        console.log("Current Commit: " + version.commit);
         //check if latest commit is different from version.json
         if (version.commit === 0) {
             version.commit = latestCommit;
@@ -1060,9 +1105,8 @@ async function checkCommit() {
 
 
 
-
 try {
-    checkCommit();
+    //checkCommit();
     main();
 }
 catch (error) {
