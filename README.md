@@ -3,7 +3,7 @@ Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have l
 
 ![image](https://user-images.githubusercontent.com/33667144/202498893-b747c8d2-0b12-43f0-96a9-2f637fe70558.png)
 
-*First off if you enjoy using open source software please use my refferel link to create a new account when using this bot, its free and help me make more cools stuff for you guys:*
+*First off if you enjoy using open source software please use my refferel link to create a new account when using this bot, its free and helps me make more cool stuff for you guys:*
 
 https://partner.bybit.com/b/lickhunterv4
 
