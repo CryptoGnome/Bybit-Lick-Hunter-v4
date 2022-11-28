@@ -171,12 +171,11 @@ async function getBalance() {
 //get position
 async function getPosition(pair) {
     //gor through all pairs and getPosition()
-    var positions = await linearClient.getPosition();
-    //console.log("Positions: " + JSON.stringify(positions, null, 2));
+    var positions = await linearClient.getPosition(pair);
+    //console.log("Positions: " + JSON.stringify(positions, null, 4));
     if (positions.result !== null) {
         //look for pair in positions
         var index = positions.result.findIndex(x => x.data.symbol === pair);
-        //console.log("Index: " + index);
 
         if (positions.result[index].data.size > 0) {
             //console.log(positions.result[index].data);
@@ -201,7 +200,7 @@ async function getPosition(pair) {
     }
     else {
         console.log("Open positions response is null");
-        return {side: "None", entryPrice: 0, size: 0, percentGain: 0};
+        return {side: null, entryPrice: null, size: null, percentGain: null};
     }
 
 }
@@ -346,9 +345,8 @@ async function scalp(pair, index) {
             if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
                 //see if we have an open position
                 var position = await getPosition(pair);
-                //create algo that is based of position size and the amount of pnl
                 //console.log(position);
-                if (position.side === "Buy" && position.percentGain <= 0) {
+                if (position.side === "Buy" && position.percentGain <= 0 && position.size != null) {
                     //maxe sure order is less than max order size
                     if (position.size < settings.pairs[settingsIndex].max_position_size) {
                         //load min order size json
@@ -376,7 +374,7 @@ async function scalp(pair, index) {
                         console.log("Max position size reached for " + pair);
                     }
                 }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
+                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
                     //load min order size json
                     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                     var index = tickData.findIndex(x => x.pair === pair);
@@ -422,7 +420,7 @@ async function scalp(pair, index) {
                 var position = await getPosition(pair);
                 //create algo that is based of position size and the amount of pnl
                 //console.log(position);
-                if (position.side === "Sell" && position.percentGain <= 0) {
+                if (position.side === "Sell" && position.percentGain <= 0 && position.size != null) {
                     //maxe sure order is less than max order size
                     if (position.size < settings.pairs[settingsIndex].max_position_size) {
                         //load min order size json
@@ -446,7 +444,7 @@ async function scalp(pair, index) {
                         }
                     }
                 }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
+                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
                     //load min order size json
                     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                     var index = tickData.findIndex(x => x.pair === pair);
