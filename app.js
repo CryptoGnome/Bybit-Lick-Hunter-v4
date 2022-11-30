@@ -336,21 +336,49 @@ async function scalp(pair, index) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
 
-    //var index = liquidationOrders.findIndex(x => x.symbol === pair);
     //Long liquidation
     if (liquidationOrders[index].side === "Buy") {
-        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
         var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
         if(settingsIndex !== -1) {
             if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
                 //see if we have an open position
                 var position = await getPosition(pair);
-                //console.log(position);
-                if (position.side === "Buy" && position.percentGain <= 0 && position.size != null) {
-                    //maxe sure order is less than max order size
-                    if (position.size < settings.pairs[settingsIndex].max_position_size) {
+
+                //make sure position.size greater than or equal to 0
+                if (position.size >= 0) {
+                    //console.log(position);
+                    if (position.side === "Buy" && position.percentGain <= 0 && position.size != null) {
+                        //maxe sure order is less than max order size
+                        if ((position.size + settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces))  < settings.pairs[settingsIndex].max_position_size) {
+                            //load min order size json
+                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                            var index = tickData.findIndex(x => x.pair === pair);
+                            var tickSize = tickData[index].tickSize;
+                            var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                            const order = await linearClient.placeActiveOrder({
+                                symbol: pair,
+                                side: "Buy",
+                                order_type: "Market",
+                                qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
+                                time_in_force: "GoodTillCancel",
+                                reduce_only: false,
+                                close_on_trigger: false
+                            });
+                            //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                            console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                            if(process.env.USE_DISCORD) {
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                            }
+                        }
+                        else {
+                            //max position size reached
+                            console.log("Max position size reached for " + pair);
+                        }
+                    }
+                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
                         //load min order size json
-                        const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                        const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                         var index = tickData.findIndex(x => x.pair === pair);
                         var tickSize = tickData[index].tickSize;
                         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
@@ -370,35 +398,13 @@ async function scalp(pair, index) {
                         }
                     }
                     else {
-                        //max position size reached
-                        console.log("Max position size reached for " + pair);
-                    }
-                }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
-                    //load min order size json
-                    const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                    var index = tickData.findIndex(x => x.pair === pair);
-                    var tickSize = tickData[index].tickSize;
-                    var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                    const order = await linearClient.placeActiveOrder({
-                        symbol: pair,
-                        side: "Buy",
-                        order_type: "Market",
-                        qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                        time_in_force: "GoodTillCancel",
-                        reduce_only: false,
-                        close_on_trigger: false
-                    });
-                    //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                    console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                    if(process.env.USE_DISCORD) {
-                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                        if(openPositions > process.env.MAX_OPEN_POSITIONS) {
+                            console.log(chalk.redBright("Max Positions Reached!"));
+                        }
                     }
                 }
                 else {
-                    if(openPositions > process.env.MAX_OPEN_POSITIONS) {
-                        console.log(chalk.redBright("Max Positions Reached!"));
-                    }
+                    console.log(chalk.redBright("Error getting position for " + pair));
                 }
 
             }
@@ -412,19 +418,41 @@ async function scalp(pair, index) {
 
     }
     else {
-        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
         var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
         if(settingsIndex !== -1) {
             if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
-                //see if we have an open position
                 var position = await getPosition(pair);
-                //create algo that is based of position size and the amount of pnl
-                //console.log(position);
-                if (position.side === "Sell" && position.percentGain <= 0 && position.size != null) {
-                    //maxe sure order is less than max order size
-                    if (position.size < settings.pairs[settingsIndex].max_position_size) {
+                //make sure position.size greater than or equal to 0
+                if (position.size >= 0) {
+
+                    if (position.side === "Sell" && position.percentGain <= 0 && position.size != null) {
+                        //maxe sure order is less than max order size
+                        if ((position.size + settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces)) < settings.pairs[settingsIndex].max_position_size) {
+                            //load min order size json
+                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                            var index = tickData.findIndex(x => x.pair === pair);
+                            var tickSize = tickData[index].tickSize;
+                            var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                            const order = await linearClient.placeActiveOrder({
+                                symbol: pair,
+                                side: "Sell",
+                                order_type: "Market",
+                                qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
+                                time_in_force: "GoodTillCancel",
+                                reduce_only: false,
+                                close_on_trigger: false
+                            });
+                            //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                            console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                            if(process.env.USE_DISCORD) {
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                            }
+                        }
+                    }
+                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
                         //load min order size json
-                        const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                        const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                         var index = tickData.findIndex(x => x.pair === pair);
                         var tickSize = tickData[index].tickSize;
                         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
@@ -443,33 +471,14 @@ async function scalp(pair, index) {
                             orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                         }
                     }
-                }
-                else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
-                    //load min order size json
-                    const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                    var index = tickData.findIndex(x => x.pair === pair);
-                    var tickSize = tickData[index].tickSize;
-                    var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                    const order = await linearClient.placeActiveOrder({
-                        symbol: pair,
-                        side: "Sell",
-                        order_type: "Market",
-                        qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                        time_in_force: "GoodTillCancel",
-                        reduce_only: false,
-                        close_on_trigger: false
-                    });
-                    //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                    console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                    if(process.env.USE_DISCORD) {
-                        orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                    else {
+                        if(openPositions > process.env.MAX_OPEN_POSITIONS) {
+                            console.log(chalk.redBright("Max Positions Reached!"));
+                        }
                     }
                 }
                 else {
-                    if(openPositions > process.env.MAX_OPEN_POSITIONS) {
-                        console.log(chalk.redBright("Max Positions Reached!"));
-                    }
-
+                    console.log(chalk.redBright("Error getting position for " + pair));
                 }
 
             }
