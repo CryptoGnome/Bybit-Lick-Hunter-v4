@@ -15,7 +15,7 @@ https://partner.bybit.com/b/lickhunterv4
 
 *Using a VPS can ensure high uptime and is much more stable than running on your own PC*
 
-[VULTR IS OUR RECOMMENDED VPS PROVIDER](https://www.vultr.com/?ref=7300008)
+[VULTR IS OUR RECOMMENDED VPS PROVIDER](https://www.vultr.com/?ref=9056023-8H)
 
 <br>
 <br>
