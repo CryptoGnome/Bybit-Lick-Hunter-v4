@@ -131,41 +131,46 @@ async function liquidationEngine(pairs) {
 }
 //get account balance
 async function getBalance() {
-    const data = await linearClient.getWalletBalance();
-    var availableBalance = data.result['USDT'].available_balance;
-    var usedBalance = data.result['USDT'].used_margin;
-    var balance = availableBalance + usedBalance;
-    //load settings.json
-    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
-    //check if starting balance is set
-    if (settings.startingBalance === 0) {
-        settings.startingBalance = balance;
-        fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
-        var startingBalance = settings.startingBalance;
-    }
-    else {
-        var startingBalance = settings.startingBalance;
-    }
+    try{
+        const data = await linearClient.getWalletBalance();
+        var availableBalance = data.result['USDT'].available_balance;
+        var usedBalance = data.result['USDT'].used_margin;
+        var balance = availableBalance + usedBalance;
+        //load settings.json
+        const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+        //check if starting balance is set
+        if (settings.startingBalance === 0) {
+            settings.startingBalance = balance;
+            fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
+            var startingBalance = settings.startingBalance;
+        }
+        else {
+            var startingBalance = settings.startingBalance;
+        }
 
-    var diff = balance - startingBalance;
-    var percentGain = (diff / startingBalance) * 100;
-    //if positive diff then log green
-    if (diff >= 0) {
-        console.log(chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
-    }
-    else {
-        console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
+        var diff = balance - startingBalance;
+        var percentGain = (diff / startingBalance) * 100;
+        //if positive diff then log green
+        if (diff >= 0) {
+            console.log(chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
+        }
+        else {
+            console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
-    }
+        }
 
-    //cehck when last was more than 5 minutes ago
-    if (Date.now() - lastReport > 300000) {
-        //send report
-        reportWebhook();
-        //checkCommit();
-        lastReport = Date.now();
+        //cehck when last was more than 5 minutes ago
+        if (Date.now() - lastReport > 300000) {
+            //send report
+            reportWebhook();
+            //checkCommit();
+            lastReport = Date.now();
+        }
+        return balance;
     }
-    return balance;
+    catch (e) {
+        return null;
+    }
 
 }
 //get position
@@ -602,79 +607,84 @@ async function getMinTradingSize() {
     const response = await fetch(url);
     const data = await response.json();
     var balance = await getBalance();
-    var tickers = await linearClient.getTickers();
-    var positions = await linearClient.getPosition();
 
-    var minOrderSizes = [];
-    console.log("Fetching min Trading Sizes for pairs, this could take a minute...");
-    for (var i = 0; i < data.result.length; i++) {
-        console.log("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
-        //check if min_trading_qty usd value is less than process.env.MIN_ORDER_SIZE
-        var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
-        //get price of pair from tickers
-        var priceFetch = tickers.result.find(x => x.symbol === data.result[i].name);
-        var price = priceFetch.last_price;
-        //get usd value of min order size
-        var usdValue = (minOrderSize * price);
-        //console.log("USD value of " + data.result[i].name + " is " + usdValue);
-        //find usd valie of process.env.MIN_ORDER_SIZE
-        var minOrderSizeUSD = (balance * process.env.PERCENT_ORDER_SIZE/100) * process.env.LEVERAGE;
-        //console.log("USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
-        if (minOrderSizeUSD < usdValue) {
-            //use min order size
-            var minOrderSizePair = minOrderSize;
-        }
-        else {
-            //convert min orderSizeUSD to pair value
-            var minOrderSizePair = (minOrderSizeUSD / price);
-        }
-        try{
-            //find pair ion positions
-            var position = positions.result.find(x => x.data.symbol === data.result[i].name);
-            var leverage = position.data.leverage;
-       
-            if (process.env.LEVERAGE === leverage.toString()) {
-                //find max position size for pair
-                var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
-                //save min order size and max position size to json
-                var minOrderSizeJson = {
-                    "pair": data.result[i].name,
-                    "minOrderSize": minOrderSizePair,
-                    "maxPositionSize": maxPositionSize,
-                    "tickSize": data.result[i].price_filter.tick_size,
-                }
-                //add to array
-                minOrderSizes.push(minOrderSizeJson);
+    if (balance !== null) {
+        var tickers = await linearClient.getTickers();
+        var positions = await linearClient.getPosition();
 
+        var minOrderSizes = [];
+        console.log("Fetching min Trading Sizes for pairs, this could take a minute...");
+        for (var i = 0; i < data.result.length; i++) {
+            console.log("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
+            //check if min_trading_qty usd value is less than process.env.MIN_ORDER_SIZE
+            var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
+            //get price of pair from tickers
+            var priceFetch = tickers.result.find(x => x.symbol === data.result[i].name);
+            var price = priceFetch.last_price;
+            //get usd value of min order size
+            var usdValue = (minOrderSize * price);
+            //console.log("USD value of " + data.result[i].name + " is " + usdValue);
+            //find usd valie of process.env.MIN_ORDER_SIZE
+            var minOrderSizeUSD = (balance * process.env.PERCENT_ORDER_SIZE/100) * process.env.LEVERAGE;
+            //console.log("USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
+            if (minOrderSizeUSD < usdValue) {
+                //use min order size
+                var minOrderSizePair = minOrderSize;
             }
             else {
-                const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-                var settingsIndex = settings.pairs.findIndex(x => x.symbol === data.result[i].name);
-                if(settingsIndex !== -1) {
-                    settings.pairs.splice(settingsIndex, 1);
-                    fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+                //convert min orderSizeUSD to pair value
+                var minOrderSizePair = (minOrderSizeUSD / price);
+            }
+            try{
+                //find pair ion positions
+                var position = positions.result.find(x => x.data.symbol === data.result[i].name);
+                var leverage = position.data.leverage;
+        
+                if (process.env.LEVERAGE === leverage.toString()) {
+                    //find max position size for pair
+                    var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
+                    //save min order size and max position size to json
+                    var minOrderSizeJson = {
+                        "pair": data.result[i].name,
+                        "minOrderSize": minOrderSizePair,
+                        "maxPositionSize": maxPositionSize,
+                        "tickSize": data.result[i].price_filter.tick_size,
+                    }
+                    //add to array
+                    minOrderSizes.push(minOrderSizeJson);
+
+                }
+                else {
+                    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+                    var settingsIndex = settings.pairs.findIndex(x => x.symbol === data.result[i].name);
+                    if(settingsIndex !== -1) {
+                        settings.pairs.splice(settingsIndex, 1);
+                        fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+                    }
                 }
             }
-        }
-        catch (e) {
-            await sleep(10);
-        }
+            catch (e) {
+                await sleep(10);
+            }
 
+        }
+        fs.writeFileSync('min_order_sizes.json', JSON.stringify(minOrderSizes, null, 4));
+
+
+        //update settings.json with min order sizes
+        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        for (var i = 0; i < minOrderSizes.length; i++) {
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
+            if(settingsIndex !== -1) {
+                settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
+                settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
+                
+            }
+        }
     }
-    fs.writeFileSync('min_order_sizes.json', JSON.stringify(minOrderSizes, null, 4));
-
-
-    //update settings.json with min order sizes
-    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-    for (var i = 0; i < minOrderSizes.length; i++) {
-        var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
-        if(settingsIndex !== -1) {
-            settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
-            settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
-            
-        }
+    else {
+        console.log("Error fetching balance");
     }
-
 
 }
 //get all symbols
