@@ -87,7 +87,6 @@ wsClient.on('update', (data) => {
         }
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-            console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
             scalp(pair, index);
         }
         else {
