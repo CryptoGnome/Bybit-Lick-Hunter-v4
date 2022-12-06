@@ -182,7 +182,7 @@ async function getPosition(pair) {
         var index = positions.result.findIndex(x => x.data.symbol === pair);
 
         if (positions.result[index].data.size >= 0) {
-            console.log(positions.result[index].data);
+            //console.log(positions.result[index].data);
             if(positions.result[index].data.size > 0){
                 console.log(chalk.blueBright("Open position found for " + positions.result[index].data.symbol + " with a size of " + positions.result[index].data.size + " contracts" + " with profit of " + positions.result[index].data.realised_pnl + " USDT"));
             }
@@ -196,10 +196,12 @@ async function getPosition(pair) {
             //calculate the profit % change in USD
             var margin = positions.result[index ].data.position_value/process.env.LEVERAGE;
             var percentGain = (profit / margin) * 100;
-            return {side: side, entryPrice: positions.result[index].data.entry_price , size: positions.result[index].data.size, percentGain: percentGain};
-
+            return {side: side, entryPrice: positions.result[index].data.entry_price, size: positions.result[index].data.size, percentGain: percentGain};
         }
         else {
+            // adding this for debugging purposes
+            console.log("Error: getPostion invalid for " + pair + " size parameter is returning " + positions.result[index].data.size);
+            messageWebhook("Error: getPostion invalid for " + pair + " size parameter is returning " + positions.result[index].data.size);
             return {side: null, entryPrice: null, size: null, percentGain: null};
         }
 
@@ -352,11 +354,11 @@ async function scalp(pair, index) {
                 var position = await getPosition(pair);
 
                 //make sure position.size greater than or equal to 0
-                if (position.size >= 0) {
+                if (position.size != null) {
                     //console.log(position);
-                    if (position.side === "Buy" && position.percentGain <= 0 && position.size != null) {
+                    if (position.side === "Buy" && position.percentGain <= 0) {
                         //maxe sure order is less than max order size
-                        if ((position.size + settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces))  < settings.pairs[settingsIndex].max_position_size) {
+                        if ((position.size + settings.pairs[settingsIndex].order_size)  < settings.pairs[settingsIndex].max_position_size) {
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
@@ -430,11 +432,11 @@ async function scalp(pair, index) {
             if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
                 var position = await getPosition(pair);
                 //make sure position.size greater than or equal to 0
-                if (position.size >= 0) {
+                if (position.size != null) {
 
-                    if (position.side === "Sell" && position.percentGain <= 0 && position.size != null) {
+                    if (position.side === "Sell" && position.percentGain <= 0) {
                         //maxe sure order is less than max order size
-                        if ((position.size + settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces)) < settings.pairs[settingsIndex].max_position_size) {
+                        if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
@@ -456,7 +458,7 @@ async function scalp(pair, index) {
                             }
                         }
                     }
-                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
+                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                         //load min order size json
                         const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                         var index = tickData.findIndex(x => x.pair === pair);
@@ -1125,7 +1127,7 @@ async function checkCommit() {
 
 try {
     //checkCommit();
-    getPosition('GALAUSDT');
+    //getPosition('GALAUSDT');
     main();
 }
 catch (error) {
