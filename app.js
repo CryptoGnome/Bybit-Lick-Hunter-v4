@@ -182,7 +182,7 @@ async function getPosition(pair) {
         //look for pair in positions
         var index = positions.result.findIndex(x => x.data.symbol === pair);
 
-        if (positions.result[index].data.size > 0) {
+        if (positions.result[index].data.size >= 0) {
             //console.log(positions.result[index].data);
             console.log(chalk.blueBright("Open position found for " + positions.result[index].data.symbol + " with a size of " + positions.result[index].data.size + " contracts" + " with profit of " + positions.result[index].data.realised_pnl + " USDT"));
             if (positions.result[index].data.side === "Buy") {
@@ -199,7 +199,7 @@ async function getPosition(pair) {
 
         }
         else {
-            return {side: "None", entryPrice: 0, size: 0, percentGain: 0};
+            return {side: null, entryPrice: null, size: null, percentGain: null};
         }
 
     }
