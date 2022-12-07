@@ -91,7 +91,7 @@ wsClient.on('update', (data) => {
         }
         else {
             console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-            console.log(chalk.gray("Not enough liquidations to trade " + liquidationOrders[index].pair));
+            console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
         }
 
     }
@@ -348,11 +348,12 @@ async function scalp(pair, index) {
     if (liquidationOrders[index].side === "Buy") {
         const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
         var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+        
         if(settingsIndex !== -1) {
             if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
                 //see if we have an open position
                 var position = await getPosition(pair);
-
+  
                 //make sure position.size greater than or equal to 0
                 if (position.size != null) {
                     //console.log(position);
@@ -384,7 +385,7 @@ async function scalp(pair, index) {
                             console.log("Max position size reached for " + pair);
                         }
                     }
-                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null && position.size != null) {
+                    else if (position.side === "Buy" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                         //load min order size json
                         const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                         var index = tickData.findIndex(x => x.pair === pair);
@@ -421,7 +422,7 @@ async function scalp(pair, index) {
             }
         }
         else {
-            console.log("Pair does not exist in settings.json");
+            console.log(chalk.bgRedBright("Pair does not exist in settings.json"));
         }
 
     }
@@ -458,7 +459,7 @@ async function scalp(pair, index) {
                             }
                         }
                     }
-                    else if (position.side === "None" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
+                    else if (position.side === "Sell" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                         //load min order size json
                         const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                         var index = tickData.findIndex(x => x.pair === pair);
