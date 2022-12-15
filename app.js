@@ -584,7 +584,7 @@ async function setPositionMode() {
         coin: "USDT",
         mode: "BothSide"
     });
-    //log response
+    //log responses
     if (set.ret_msg === "OK") {
         console.log("Position mode set");
         return true;
@@ -1138,7 +1138,7 @@ async function reportWebhook() {
         //.addField('Version: ', version.commit.toString(), true)
         .addField('Total USDT in Posi: ', "```autohotkey"+'\n'+marg.toFixed(2).toString()+"```", true)
         .addField('Profit USDT: ', "```autohotkey"+'\n'+diff.toString()+"```", true)
-        .addField('Daily Profit %: ', "```autohotkey"+'\n'+percentGain.toString()+"```"+'\n', true)
+        .addField('Profit %: ', "```autohotkey"+'\n'+percentGain.toString()+"```"+'\n', true)
         .addField('Server Time: ', "```autohotkey"+'\n'+time.toString()+"```", true)
         .setFooter('Open Positions: ' + openPositions.toString())
         //for each position in positionList add field only 7 fields per embed
