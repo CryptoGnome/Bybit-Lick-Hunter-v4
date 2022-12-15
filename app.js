@@ -588,6 +588,7 @@ async function setPositionMode(pairs, mode) {
             symbol: pair,
             mode: mode
         });
+        
     }
 }
 
