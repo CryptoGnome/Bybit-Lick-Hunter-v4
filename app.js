@@ -528,8 +528,10 @@ async function setLeverage(pairs, leverage) {
                     settings.pairs.splice(settingsIndex, 1);
                     fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
                 }
-
             }
+            
+
+
         }
         catch (e) {
             console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
@@ -538,6 +540,20 @@ async function setLeverage(pairs, leverage) {
 
     }
 
+}
+
+//set position mode to hedge
+async function setPositionMode(pairs, mode) {
+    for (var i = 0; i < pairs.length; i++) {
+        //remove "liquidation." from pair name
+        console.log("Setting position mode for " + pairs[i] + " to Hedged");
+        var pair = pairs[i].replace("liquidation.", "");
+
+        const set = linearClient.setPositionMode({
+            symbol: pair,
+            mode: mode
+        });
+    }
 }
 
 async function checkLeverage(symbol) {
@@ -1055,6 +1071,8 @@ async function reportWebhook() {
 async function main() {
     console.log("Starting Lick Hunter!");
     pairs = await getSymbols();
+    
+    await setPositionMode(pairs, 3);
 
     if(process.env.UPDATE_MIN_ORDER_SIZING == "true") {
         await getMinTradingSize();
@@ -1065,6 +1083,7 @@ async function main() {
     }
     if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
         await setLeverage(pairs, process.env.LEVERAGE);
+        
     }
 
     await liquidationEngine(pairs);
