@@ -578,18 +578,26 @@ async function setLeverage(pairs, leverage) {
 }
 
 //set position mode to hedge
-async function setPositionMode(pairs, mode) {
-    for (var i = 0; i < pairs.length; i++) {
-        //remove "liquidation." from pair name
-        console.log("Setting position mode for " + pairs[i] + " to Hedged");
-        var pair = pairs[i].replace("liquidation.", "");
+async function setPositionMode() {
 
-        const set = linearClient.setPositionMode({
-            symbol: pair,
-            mode: mode
-        });
-        
+    const set = await linearClient.setPositionMode({
+        coin: "USDT",
+        mode: "BothSide"
+    });
+    //log response
+    if (set.ret_msg === "OK") {
+        console.log("Position mode set");
+        return true;
     }
+    else if (set.ret_msg === "Partial symbols switched successfully, excluding symbols with open orders or positions.") {
+        console.log("Position mode set for symbols without  positions");
+        return false;
+    }
+    else {
+        console.log(chalk.redBright("Unable to set position mode"));
+        return false;
+    }
+    
 }
 
 async function checkLeverage(symbol) {
@@ -745,31 +753,36 @@ async function getMinTradingSize() {
 }
 //get all symbols
 async function getSymbols() {
-    const url = "https://api.bybit.com/v2/public/symbols";
-    const response = await fetch(url);
-    const data = await response.json();
-    //console.log(JSON.stringify(data.result[0], null, 2));
-    var symbols = [];
-    //only allow symbols that are not inverse
-    for (var i = 0; i < data.result.length; i++) {
-        //check if 1000 or any number is in the name
-        if (data.result[i].name.includes("1000")) {
-            continue;
-        }
-        else {
-            var t1 = "liquidation.";
-            var t2 = data.result[i].name.toString();
-            //check if t2 ends in USDT
-            if (t2.endsWith("USDT")) {
-                var pair = t1.concat(t2);
-                symbols.push(pair);
+    try{
+        const url = "https://api.bybit.com/v2/public/symbols";
+        const response = await fetch(url);
+        const data = await response.json();
+        //console.log(JSON.stringify(data.result[0], null, 2));
+        var symbols = [];
+        //only allow symbols that are not inverse
+        for (var i = 0; i < data.result.length; i++) {
+            //check if 1000 or any number is in the name
+            if (data.result[i].name.includes("1000")) {
+                continue;
+            }
+            else {
+                var t1 = "liquidation.";
+                var t2 = data.result[i].name.toString();
+                //check if t2 ends in USDT
+                if (t2.endsWith("USDT")) {
+                    var pair = t1.concat(t2);
+                    symbols.push(pair);
+                }
+
             }
 
         }
-
+        return symbols;
     }
-    return symbols;
-
+    catch{
+        console.log("Error fetching symbols");
+        return null;
+    }
 }
 //sleep function
 function sleep(ms) {
@@ -1159,20 +1172,37 @@ async function reportWebhook() {
 
 async function main() {
     console.log("Starting Lick Hunter!");
-    pairs = await getSymbols();
-    
-    await setPositionMode(pairs, 3);
+    try{
+        pairs = await getSymbols();
 
-    if(process.env.UPDATE_MIN_ORDER_SIZING == "true") {
-        await getMinTradingSize();
+        //load local file acccount.json with out require and see if "config_set" is true
+        var account = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+        if (account.config_set == false) {
+            var isSet = await setPositionMode();
+            if (isSet == true) {
+                //set to true and save
+                account.config_set = true;
+                fs.writeFileSync('account.json', JSON.stringify(account));
+            }
+
+        }
+
+        if(process.env.UPDATE_MIN_ORDER_SIZING == "true") {
+            await getMinTradingSize();
+        }
+        if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
+            console.log("Updating settings.json with smart settings");
+            await createSettings();
+        }
+        if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
+            await setLeverage(pairs, process.env.LEVERAGE);
+            
+        }
     }
-    if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
-        console.log("Updating settings.json with smart settings");
-        await createSettings();
-    }
-    if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
-        await setLeverage(pairs, process.env.LEVERAGE);
-        
+    catch (err) {
+        console.log(chalk.red("Error in main()"));
+        messageWebhook(err);
+        await sleep(10000);
     }
 
     await liquidationEngine(pairs);
