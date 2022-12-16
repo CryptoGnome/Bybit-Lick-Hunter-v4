@@ -14,12 +14,14 @@ if (process.env.USE_DISCORD) {
 
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
-var rateLimit = 1000;
-var baseRateLimit = 1000;
+var rateLimit = 2000;
+var baseRateLimit = 2000;
 var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
+
+
 
 //create ws client
 const wsClient = new WebsocketClient({
@@ -379,6 +381,7 @@ async function scalp(pair, index) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
 
+
     //Long liquidation
     if (liquidationOrders[index].side === "Buy") {
         const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
@@ -418,6 +421,8 @@ async function scalp(pair, index) {
                         else {
                             //max position size reached
                             console.log("Max position size reached for " + pair);
+                            messageWebhook("Max position size reached for " + pair);
+                            
                         }
                     }
                     else if (position.side === "Buy" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
@@ -444,6 +449,7 @@ async function scalp(pair, index) {
                     else {
                         if(openPositions > process.env.MAX_OPEN_POSITIONS) {
                             console.log(chalk.redBright("Max Positions Reached!"));
+                            messageWebhook("Max Positions Reached!");
                         }
                     }
                 }
@@ -467,9 +473,9 @@ async function scalp(pair, index) {
         if(settingsIndex !== -1) {
             if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
                 var position = await getPosition(pair);
+
                 //make sure position.size greater than or equal to 0
                 if (position.size != null) {
-
                     if (position.side === "Sell" && position.percentGain <= 0) {
                         //maxe sure order is less than max order size
                         if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
@@ -993,7 +999,7 @@ async function updateSettings() {
                             }
                         }
                         catch(err){
-                            console.log("Error updating " + researchFile.data[i].name + "USDT, this is liekly due to not having this pair active in your settings.json file");
+                            console.log("Error updating " + researchFile.data[i].name + "USDT, this is likely due to not having this pair active in your settings.json file");
                         }
 
 
