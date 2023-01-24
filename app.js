@@ -661,9 +661,6 @@ async function checkOpenPositions() {
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
 
-                //check if size less than MAX_POSITION_SIZE_PERCENT of balance
-                var balance = await getBalance();
-                var maxPositionSize = (balance * process.env.MAX_POSITION_SIZE_PERCENT) / 100;
                         
                 //create object to store in postionList
                 var position = {
@@ -671,7 +668,6 @@ async function checkOpenPositions() {
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
-                    underMaxSize: usdValue < maxPositionSize,
                     pnl: positions.result[i].data.unrealised_pnl
                 }
                 postionList.push(position);
