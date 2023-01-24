@@ -220,7 +220,7 @@ async function getPosition(pair, side) {
         //make sure index is not -1
         if (index !== -1) {
             if (positions.result[index].data.size >= 0) {
-                console.log(positions.result[index].data);
+                //console.log(positions.result[index].data);
                 if(positions.result[index].data.size > 0){
                     console.log(chalk.blueBright("Open position found for " + positions.result[index].data.symbol + " with a size of " + positions.result[index].data.size + " contracts" + " with profit of " + positions.result[index].data.realised_pnl + " USDT"));
                     var profit = positions.result[index ].data.unrealised_pnl;
@@ -404,7 +404,7 @@ async function scalp(pair, index) {
 
                     //make sure position.size greater than or equal to 0
                     if (position.size != null) {
-                        console.log(position);
+                        //console.log(position);
                         //no open position
                         if (position.side === "Buy" && position.size === 0) {
                             //load min order size json
@@ -487,7 +487,7 @@ async function scalp(pair, index) {
 
                     //make sure position.size greater than or equal to 0
                     if (position.size != null) {
-                        console.log(position);
+                        //console.log(position);
                         //no open position
                         if (position.side === "Sell" && position.size === 0) {
                             //load min order size json
