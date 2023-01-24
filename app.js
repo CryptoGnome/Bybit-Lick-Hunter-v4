@@ -362,10 +362,10 @@ async function takeProfit(symbol, position) {
 async function totalOpenPositions() {
     try{
         var positions = await linearClient.getPosition();
-        var open;
+        var open = 0;
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
-                if (open === undefined) {
+                if (open === null) {
                     open = 1;
                 }
                 else {
@@ -384,6 +384,7 @@ async function totalOpenPositions() {
 async function scalp(pair, index) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
+    console.log("Open positions: " + openPositions);
 
     //make sure openPositions is less than max open positions and not null
     if (openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
@@ -659,15 +660,22 @@ async function checkOpenPositions() {
                 //get usd value of position
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
+
+                //check if size less than MAX_POSITION_SIZE_PERCENT of balance
+                var balance = await getBalance();
+                var maxPositionSize = (balance * process.env.MAX_POSITION_SIZE_PERCENT) / 100;
+                        
                 //create object to store in postionList
                 var position = {
                     symbol: positions.result[i].data.symbol,
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
+                    underMaxSize: usdValue < maxPositionSize,
                     pnl: positions.result[i].data.unrealised_pnl
                 }
                 postionList.push(position);
+                
             }
         }
     }
@@ -1096,6 +1104,9 @@ async function reportWebhook() {
     var positions = await linearClient.getPosition();
     var positionList = [];
     var openPositions = await totalOpenPositions();
+    if(openPositions === null) {
+        openPositions = 0;
+    }
     var marg = await getMargin();
     var time = await getServerTime();
     //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
