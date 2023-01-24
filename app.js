@@ -643,19 +643,19 @@ async function checkOpenPositions() {
         console.log("Rate limit status: " + chalk.green(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 75) {
-        rateLimit = rateLimit + 50;
+        rateLimit = rateLimit + 500;
         console.log("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 50) {
-        rateLimit = rateLimit + 200;
+        rateLimit = rateLimit + 1000;
         console.log("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 25) {
-        rateLimit = rateLimit + 500;
+        rateLimit = rateLimit + 2000;
         console.log("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
     }
     else {
-        rateLimit = rateLimit + 20;
+        rateLimit = rateLimit + 200;
         console.log("Rate limit status: " + chalk.red(positions.rate_limit_status));
     }
 
