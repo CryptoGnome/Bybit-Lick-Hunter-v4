@@ -362,11 +362,15 @@ async function takeProfit(symbol, position) {
 async function totalOpenPositions() {
     try{
         var positions = await linearClient.getPosition();
-        //loop through to see which positions are open
-        var open = 0;
+        var open;
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
-                open++;
+                if (open === undefined) {
+                    open = 1;
+                }
+                else {
+                    open++;
+                }
             }
         }
         return open;
@@ -381,25 +385,54 @@ async function scalp(pair, index) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
 
-
-    //Long liquidation
-    if (liquidationOrders[index].side === "Buy") {
-        const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-        var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
-        
-        if(settingsIndex !== -1) {
-            if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
-                //see if we have an open position
-                var position = await getPosition(pair);
-  
-                //make sure position.size greater than or equal to 0
-                if (position.size != null) {
-                    //console.log(position);
-                    if (position.side === "Buy" && position.percentGain <= 0) {
-                        //maxe sure order is less than max order size
-                        if ((position.size + settings.pairs[settingsIndex].order_size)  < settings.pairs[settingsIndex].max_position_size) {
+    //make sure openPositions is less than max open positions and not null
+    if (openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
+        //Long liquidation
+        if (liquidationOrders[index].side === "Buy") {
+            const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            
+            if(settingsIndex !== -1) {
+                if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
+                    //see if we have an open position
+                    var position = await getPosition(pair);
+    
+                    //make sure position.size greater than or equal to 0
+                    if (position.size != null) {
+                        //console.log(position);
+                        if (position.side === "Buy" && position.percentGain <= 0) {
+                            //maxe sure order is less than max order size
+                            if ((position.size + settings.pairs[settingsIndex].order_size)  < settings.pairs[settingsIndex].max_position_size) {
+                                //load min order size json
+                                const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                                var index = tickData.findIndex(x => x.pair === pair);
+                                var tickSize = tickData[index].tickSize;
+                                var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                                const order = await linearClient.placeActiveOrder({
+                                    symbol: pair,
+                                    side: "Buy",
+                                    order_type: "Market",
+                                    qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
+                                    time_in_force: "GoodTillCancel",
+                                    reduce_only: false,
+                                    close_on_trigger: false
+                                });
+                                //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                                console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                if(process.env.USE_DISCORD) {
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                                }
+                            }
+                            else {
+                                //max position size reached
+                                console.log("Max position size reached for " + pair);
+                                messageWebhook("Max position size reached for " + pair);
+                                
+                            }
+                        }
+                        else if (position.side === "Buy" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                             //load min order size json
-                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                            const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
@@ -419,68 +452,62 @@ async function scalp(pair, index) {
                             }
                         }
                         else {
-                            //max position size reached
-                            console.log("Max position size reached for " + pair);
-                            messageWebhook("Max position size reached for " + pair);
-                            
-                        }
-                    }
-                    else if (position.side === "Buy" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
-                        //load min order size json
-                        const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                        var index = tickData.findIndex(x => x.pair === pair);
-                        var tickSize = tickData[index].tickSize;
-                        var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                        const order = await linearClient.placeActiveOrder({
-                            symbol: pair,
-                            side: "Buy",
-                            order_type: "Market",
-                            qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                            time_in_force: "GoodTillCancel",
-                            reduce_only: false,
-                            close_on_trigger: false
-                        });
-                        //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                        console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                        if(process.env.USE_DISCORD) {
-                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                            if(openPositions > process.env.MAX_OPEN_POSITIONS) {
+                                console.log(chalk.redBright("Max Positions Reached!"));
+                                messageWebhook("Max Positions Reached!");
+                            }
                         }
                     }
                     else {
-                        if(openPositions > process.env.MAX_OPEN_POSITIONS) {
-                            console.log(chalk.redBright("Max Positions Reached!"));
-                            messageWebhook("Max Positions Reached!");
-                        }
+                        console.log(chalk.redBright("Error getting position for " + pair));
                     }
+
                 }
                 else {
-                    console.log(chalk.redBright("Error getting position for " + pair));
+                    console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
                 }
-
             }
             else {
-                console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+                console.log(chalk.bgRedBright("Pair does not exist in settings.json"));
             }
+
         }
         else {
-            console.log(chalk.bgRedBright("Pair does not exist in settings.json"));
-        }
+            const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            if(settingsIndex !== -1) {
+                if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
+                    var position = await getPosition(pair);
 
-    }
-    else {
-        const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-        var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
-        if(settingsIndex !== -1) {
-            if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
-                var position = await getPosition(pair);
-
-                //make sure position.size greater than or equal to 0
-                if (position.size != null) {
-                    if (position.side === "Sell" && position.percentGain <= 0) {
-                        //maxe sure order is less than max order size
-                        if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
+                    //make sure position.size greater than or equal to 0
+                    if (position.size != null) {
+                        if (position.side === "Sell" && position.percentGain <= 0) {
+                            //maxe sure order is less than max order size
+                            if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
+                                //load min order size json
+                                const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                                var index = tickData.findIndex(x => x.pair === pair);
+                                var tickSize = tickData[index].tickSize;
+                                var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                                const order = await linearClient.placeActiveOrder({
+                                    symbol: pair,
+                                    side: "Sell",
+                                    order_type: "Market",
+                                    qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
+                                    time_in_force: "GoodTillCancel",
+                                    reduce_only: false,
+                                    close_on_trigger: false
+                                });
+                                //console.log("Order placed: " + JSON.stringify(order, null, 2));
+                                console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                if(process.env.USE_DISCORD) {
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                                }
+                            }
+                        }
+                        else if (position.side === "Sell" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
                             //load min order size json
-                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+                            const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
@@ -499,46 +526,28 @@ async function scalp(pair, index) {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                             }
                         }
-                    }
-                    else if (position.side === "Sell" && openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
-                        //load min order size json
-                        const tickData = await JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                        var index = tickData.findIndex(x => x.pair === pair);
-                        var tickSize = tickData[index].tickSize;
-                        var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                        const order = await linearClient.placeActiveOrder({
-                            symbol: pair,
-                            side: "Sell",
-                            order_type: "Market",
-                            qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                            time_in_force: "GoodTillCancel",
-                            reduce_only: false,
-                            close_on_trigger: false
-                        });
-                        //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                        console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                        if(process.env.USE_DISCORD) {
-                            orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                        else {
+                            if(openPositions > process.env.MAX_OPEN_POSITIONS) {
+                                console.log(chalk.redBright("Max Positions Reached!"));
+                            }
                         }
                     }
                     else {
-                        if(openPositions > process.env.MAX_OPEN_POSITIONS) {
-                            console.log(chalk.redBright("Max Positions Reached!"));
-                        }
+                        console.log(chalk.redBright("Error getting position for " + pair));
                     }
+
                 }
                 else {
-                    console.log(chalk.redBright("Error getting position for " + pair));
+                    console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
                 }
-
             }
             else {
-                console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
+                console.log("Pair does not exist in settings.json");
             }
         }
-        else {
-            console.log("Pair does not exist in settings.json");
-        }
+    }
+    else {
+        console.log(chalk.redBright("Max Open Positions Reached!"));
     }
 
 }
@@ -621,15 +630,15 @@ async function checkOpenPositions() {
         console.log("Rate limit status: " + chalk.green(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 75) {
-        rateLimit = rateLimit + 25;
+        rateLimit = rateLimit + 50;
         console.log("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 50) {
-        rateLimit = rateLimit + 100;
+        rateLimit = rateLimit + 200;
         console.log("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 25) {
-        rateLimit = rateLimit + 200;
+        rateLimit = rateLimit + 500;
         console.log("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
     }
     else {
@@ -1229,50 +1238,8 @@ async function main() {
 }
 
 
-async function checkCommit() {
-    const response = await fetch('https://api.github.com/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits');
-    const commits = await response.json();
-    console.log(JSON.stringify(commits, null, 4));
-    const latestCommit = commits[0].sha;
-    //check if version.json exists if not create and write latest commit
-    if (fs.existsSync('version.json')) {
-        console.log("version.json exists");
-        //open version.json
-        const version = JSON.parse(fs.readFileSync('version.json', 'utf8'));
-        console.log("Latest Commit: " + latestCommit);
-        console.log("Current Commit: " + version.commit);
-        //check if latest commit is different from version.json
-        if (version.commit === 0) {
-            version.commit = latestCommit;
-            console.log(chalk.bgBlueBright("No commit found in version.json, setting commit to " + latestCommit));
-            fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
-        }
-        else if (version.commit != latestCommit) {
-            console.log(chalk.red("New Update Available on Github!"));
-            console.log(chalk.red("Please update to the latest version!"));
-            messageWebhook("New Update Available! Please update to the latest version!");    
-        }
-        else {
-            version.commit = latestCommit;
-            fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
-        }
-    }
-    else {
-        //create version.json
-        var version = {
-            "commit": latestCommit
-        }
-        fs.writeFileSync('version.json', JSON.stringify(version, null, 4));
-    }
-    
-}
-
-
-
 
 try {
-    //checkCommit();
-    //getPosition('GALAUSDT');
     main();
 }
 catch (error) {
