@@ -1,5 +1,9 @@
+![CryptoGnome_a_robot_multiple_stock__crypto_screens_wall_street__12b4bad1-1b9a-4afb-8661-05cf768f6761](https://user-images.githubusercontent.com/33667144/214430088-9e2c5a18-879c-4978-8baa-b788152c42dc.png)
+
 Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have learned in the past two years and fully async compatable in Node JS. I have also released all of the source code in hope that if other users want to contribute to the project or add new features it is avaialable to them.
 
+
+---
 
 ![image](https://user-images.githubusercontent.com/33667144/202498893-b747c8d2-0b12-43f0-96a9-2f637fe70558.png)
 
@@ -149,3 +153,14 @@ pm2 logs 'App ID' --err --lines 1000
 
 ### For Help & to Chat with other users
 [Join The Disccord](https://discord.com/invite/TTn5Dxg)
+
+
+----
+
+### Are you a Developer?
+
+![image](https://user-images.githubusercontent.com/33667144/214430374-10324420-8869-4236-ab8b-919c3c47b559.png)
+
+There are now bounties on some issues in GitHub for anyone wanting to contribute by completing feature requests with the Bounty Tag, complete the task & send a pull request and DM to claim!
+https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4/issues
+If there are enhancements you would like to see make sure to open a detailed issue explaining how you would like it to be added to the bot.
