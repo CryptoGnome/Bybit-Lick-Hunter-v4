@@ -1039,33 +1039,35 @@ async function updateSettings() {
 
 //discord webhook
 function orderWebhook(symbol, amount, side, position, pnl) {
-    if (side == "Buy") {
-        var color = '#00ff00';
-    }
-    else {
-        var color = '#ff0000';
+    if(process.env.USE_DISCORD) {
+        if (side == "Buy") {
+            var color = '#00ff00';
+        }
+        else {
+            var color = '#ff0000';
 
-    }
-    var dir = "";
-    if (side === "Buy") {
-        dir = "✅Long / ❌Short";
-        var color = '#00ff00';
-    } else {
-        dir = "✅Short";
-        var color = '#ff0000';
-    }
-    const embed = new MessageBuilder()
-        .setTitle('New Liquidation')
-        .addField('Symbol: ', symbol.toString(), true)
-        .addField('Amount: ', amount.toString(), true)
-        .addField('Side: ', dir, true)
-        .setColor(color)
-        .setTimestamp();
-    try {
-        hook.send(embed);
-    }
-    catch (err) {
-        console.log(chalk.red("Discord Webhook Error"));
+        }
+        var dir = "";
+        if (side === "Buy") {
+            dir = "✅Long / ❌Short";
+            var color = '#00ff00';
+        } else {
+            dir = "✅Short";
+            var color = '#ff0000';
+        }
+        const embed = new MessageBuilder()
+            .setTitle('New Liquidation')
+            .addField('Symbol: ', symbol.toString(), true)
+            .addField('Amount: ', amount.toString(), true)
+            .addField('Side: ', dir, true)
+            .setColor(color)
+            .setTimestamp();
+        try {
+            hook.send(embed);
+        }
+        catch (err) {
+            console.log(chalk.red("Discord Webhook Error"));
+        }
     }
 
 
@@ -1073,133 +1075,136 @@ function orderWebhook(symbol, amount, side, position, pnl) {
 
 //message webhook
 function messageWebhook(message) {
-    const embed = new MessageBuilder()
-        .setTitle('New Alert')
-        .addField('Message: ', message, true)
-        .setColor('#00FFFF')
-        .setTimestamp();
-    try {
-        hook.send(embed);
+    if(process.env.USE_DISCORD) {
+        const embed = new MessageBuilder()
+            .setTitle('New Alert')
+            .addField('Message: ', message, true)
+            .setColor('#00FFFF')
+            .setTimestamp();
+        try {
+            hook.send(embed);
+        }
+        catch (err) {
+            console.log(chalk.red("Discord Webhook Error"));
+        }
     }
-    catch (err) {
-        console.log(chalk.red("Discord Webhook Error"));
-    }
-
 }
 
 //report webhook
 async function reportWebhook() {
-    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
-    //check if starting balance is set
-    if (settings.startingBalance === 0) {
-        settings.startingBalance = balance;
-        fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
-        var startingBalance = settings.startingBalance;
-    }
-    else {
-        var startingBalance = settings.startingBalance;
-    }
-
-
-    //fetch balance
-    var balance = await getBalance();
-    var diff = balance - startingBalance;
-    var percentGain = (diff / startingBalance) * 100;
-    var percentGain = percentGain.toFixed(6);
-    var diff = diff.toFixed(6);
-    var balance = balance.toFixed(2);
-    //fetch positions
-    var positions = await linearClient.getPosition();
-    var positionList = [];
-    var openPositions = await totalOpenPositions();
-    if(openPositions === null) {
-        openPositions = 0;
-    }
-    var marg = await getMargin();
-    var time = await getServerTime();
-    //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
-    for (var i = 0; i < positions.result.length; i++) {
-        if (positions.result[i].data.size > 0) {
-            
-            var pnl1 = positions.result[i].data.unrealised_pnl;
-            var pnl = pnl1.toFixed(6);
-            var symbol = positions.result[i].data.symbol;
-            var size = positions.result[i].data.size;
-            var liq = positions.result[i].data.liq_price;
-            var size = size.toFixed(4);
-            var ios = positions.result[i].data.is_isolated;
-
-            var priceFetch = await linearClient.getTickers({symbol: symbol});
-            var test = priceFetch.result[0].last_price;
-
-            let side = positions.result[i].data.side;
-            var dir = "";
-            if (side === "Buy") {
-                dir = "✅Long / ❌Short";
-            } else {
-                dir = "❌Long / ✅Short";
-            }
-
-            var stop_loss = positions.result[i].data.stop_loss;
-            var take_profit = positions.result[i].data.take_profit;
-            var price = positions.result[i].data.entry_price;
-            var fee = positions.result[i].data.occ_closing_fee;
-            var price = price.toFixed(4);
-            //calulate size in USDT
-            var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
-            var position = {
-                "symbol": symbol,
-                "size": size,
-                "side": dir,
-                "sizeUSD": usdValue.toFixed(3),
-                "pnl": pnl,
-                "liq": liq,
-                "price": price,
-                "stop_loss": stop_loss,
-                "take_profit": take_profit,
-                "iso": ios,
-                "test": test,
-                "fee": fee.toFixed(3)
-            }
-            positionList.push(position);
+    if(process.env.USE_DISCORD) {
+        const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+        //check if starting balance is set
+        if (settings.startingBalance === 0) {
+            settings.startingBalance = balance;
+            fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
+            var startingBalance = settings.startingBalance;
         }
-    }
-
-    const embed = new MessageBuilder()
-        .setTitle("```"+'---------------------------Bot Report---------------------------'+"```")
-        .addField('Balance: ', "```autohotkey"+'\n'+balance.toString()+"```", true)
-        .addField('Leverage: ', "```autohotkey"+'\n'+process.env.LEVERAGE.toString()+"```", true)
-        //.addField('Version: ', version.commit.toString(), true)
-        .addField('Total USDT in Posi: ', "```autohotkey"+'\n'+marg.toFixed(2).toString()+"```", true)
-        .addField('Profit USDT: ', "```autohotkey"+'\n'+diff.toString()+"```", true)
-        .addField('Profit %: ', "```autohotkey"+'\n'+percentGain.toString()+"```"+'\n', true)
-        .addField('Server Time: ', "```autohotkey"+'\n'+time.toString()+"```", true)
-        .setFooter('Open Positions: ' + openPositions.toString())
-        //for each position in positionList add field only 7 fields per embed
-        for(var i = 0; i < positionList.length; i++) {stop_loss
-            embed.addField(positionList[i].symbol,'\n'
-             +"```autohotkey"+'\n'
-             +"Isolated: " + positionList[i].iso +'\n'
-             +"Closing Fee: " + positionList[i].fee +'\n'
-             +"Size: " + positionList[i].size +'\n'
-             +"Value in $: " + positionList[i].sizeUSD +'\n'
-             + "PnL: " + positionList[i].pnl+'\n'+"```"
-             +"```fix"+'\n'+ positionList[i].side+"```"
-             +"```autohotkey"+'\n'
-             +"Price: " + positionList[i].test +'\n'
-             + "Entry Price: " + positionList[i].price+'\n'
-             + "Stop Loss: " + positionList[i].stop_loss+'\n'
-             + "Take Profit: " + positionList[i].take_profit+'\n'
-             + "Liq Price: " + positionList[i].liq+"```", true);
+        else {
+            var startingBalance = settings.startingBalance;
         }
-        //purple color
-        embed.setColor('#9966cc')
-        .setTimestamp();
-    try {
-        hook.send(embed);
-    }
-    catch (err) {
-        console.log(chalk.red("Discord Webhook Error"));
+
+
+        //fetch balance
+        var balance = await getBalance();
+        var diff = balance - startingBalance;
+        var percentGain = (diff / startingBalance) * 100;
+        var percentGain = percentGain.toFixed(6);
+        var diff = diff.toFixed(6);
+        var balance = balance.toFixed(2);
+        //fetch positions
+        var positions = await linearClient.getPosition();
+        var positionList = [];
+        var openPositions = await totalOpenPositions();
+        if(openPositions === null) {
+            openPositions = 0;
+        }
+        var marg = await getMargin();
+        var time = await getServerTime();
+        //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
+        for (var i = 0; i < positions.result.length; i++) {
+            if (positions.result[i].data.size > 0) {
+                
+                var pnl1 = positions.result[i].data.unrealised_pnl;
+                var pnl = pnl1.toFixed(6);
+                var symbol = positions.result[i].data.symbol;
+                var size = positions.result[i].data.size;
+                var liq = positions.result[i].data.liq_price;
+                var size = size.toFixed(4);
+                var ios = positions.result[i].data.is_isolated;
+
+                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var test = priceFetch.result[0].last_price;
+
+                let side = positions.result[i].data.side;
+                var dir = "";
+                if (side === "Buy") {
+                    dir = "✅Long / ❌Short";
+                } else {
+                    dir = "❌Long / ✅Short";
+                }
+
+                var stop_loss = positions.result[i].data.stop_loss;
+                var take_profit = positions.result[i].data.take_profit;
+                var price = positions.result[i].data.entry_price;
+                var fee = positions.result[i].data.occ_closing_fee;
+                var price = price.toFixed(4);
+                //calulate size in USDT
+                var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                var position = {
+                    "symbol": symbol,
+                    "size": size,
+                    "side": dir,
+                    "sizeUSD": usdValue.toFixed(3),
+                    "pnl": pnl,
+                    "liq": liq,
+                    "price": price,
+                    "stop_loss": stop_loss,
+                    "take_profit": take_profit,
+                    "iso": ios,
+                    "test": test,
+                    "fee": fee.toFixed(3)
+                }
+                positionList.push(position);
+            }
+        }
+
+        const embed = new MessageBuilder()
+            .setTitle("```"+'---------------------------Bot Report---------------------------'+"```")
+            .addField('Balance: ', "```autohotkey"+'\n'+balance.toString()+"```", true)
+            .addField('Leverage: ', "```autohotkey"+'\n'+process.env.LEVERAGE.toString()+"```", true)
+            //.addField('Version: ', version.commit.toString(), true)
+            .addField('Total USDT in Posi: ', "```autohotkey"+'\n'+marg.toFixed(2).toString()+"```", true)
+            .addField('Profit USDT: ', "```autohotkey"+'\n'+diff.toString()+"```", true)
+            .addField('Profit %: ', "```autohotkey"+'\n'+percentGain.toString()+"```"+'\n', true)
+            .addField('Server Time: ', "```autohotkey"+'\n'+time.toString()+"```", true)
+            .setFooter('Open Positions: ' + openPositions.toString())
+            //for each position in positionList add field only 7 fields per embed
+            for(var i = 0; i < positionList.length; i++) {stop_loss
+                embed.addField(positionList[i].symbol,'\n'
+                +"```autohotkey"+'\n'
+                +"Isolated: " + positionList[i].iso +'\n'
+                +"Closing Fee: " + positionList[i].fee +'\n'
+                +"Size: " + positionList[i].size +'\n'
+                +"Value in $: " + positionList[i].sizeUSD +'\n'
+                + "PnL: " + positionList[i].pnl+'\n'+"```"
+                +"```fix"+'\n'+ positionList[i].side+"```"
+                +"```autohotkey"+'\n'
+                +"Price: " + positionList[i].test +'\n'
+                + "Entry Price: " + positionList[i].price+'\n'
+                + "Stop Loss: " + positionList[i].stop_loss+'\n'
+                + "Take Profit: " + positionList[i].take_profit+'\n'
+                + "Liq Price: " + positionList[i].liq+"```", true);
+            }
+            //purple color
+            embed.setColor('#9966cc')
+            .setTimestamp();
+        try {
+            hook.send(embed);
+        }
+        catch (err) {
+            console.log(chalk.red("Discord Webhook Error"));
+        }
     }
 }
 
@@ -1263,8 +1268,6 @@ try {
 }
 catch (error) {
     console.log(chalk.red("Error: ", error));
-    if(process.env.USE_DISCORD) {
-        messageWebhook(error);
-    }
+    messageWebhook(error);
     main();
 }
