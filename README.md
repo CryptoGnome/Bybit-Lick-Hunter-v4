@@ -1,4 +1,4 @@
-![CryptoGnome_a_robot_multiple_stock__crypto_screens_wall_street__12b4bad1-1b9a-4afb-8661-05cf768f6761](https://user-images.githubusercontent.com/33667144/214430088-9e2c5a18-879c-4978-8baa-b788152c42dc.png)
+![CryptoGnome_a_robot_multiple_stock__crypto_screens_wall_street__12b4bad1-1b9a-4afb-8661-05cf768f6761](https://i.imgur.com/3FQpf1D.jpg)
 
 Lick Hunter v4 is a full rewrite of LickHunter using some of the skills I have learned in the past two years and fully async compatable in Node JS. I have also released all of the source code in hope that if other users want to contribute to the project or add new features it is avaialable to them.
 
