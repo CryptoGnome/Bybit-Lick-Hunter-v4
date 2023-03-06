@@ -8,7 +8,7 @@ import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 
 var hook;
-if (process.env.USE_DISCORD) {
+if (process.env.USE_DISCORD == true) {
     hook = new Webhook(process.env.DISCORD_URL);
 }
 
@@ -423,7 +423,7 @@ async function scalp(pair, index) {
                             });
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD) {
+                            if(process.env.USE_DISCORD == true) {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                             }
                             
@@ -449,7 +449,7 @@ async function scalp(pair, index) {
                                 });
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD) {
+                                if(process.env.USE_DISCORD == true) {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                                 }
                             }
@@ -506,7 +506,7 @@ async function scalp(pair, index) {
                             });
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD) {
+                            if(process.env.USE_DISCORD == true) {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                             }
     
@@ -531,7 +531,7 @@ async function scalp(pair, index) {
                                 });
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD) {
+                                if(process.env.USE_DISCORD == true) {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                                 }
                             }
@@ -1039,7 +1039,7 @@ async function updateSettings() {
 
 //discord webhook
 function orderWebhook(symbol, amount, side, position, pnl) {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         if (side == "Buy") {
             var color = '#00ff00';
         }
@@ -1075,7 +1075,7 @@ function orderWebhook(symbol, amount, side, position, pnl) {
 
 //message webhook
 function messageWebhook(message) {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         const embed = new MessageBuilder()
             .setTitle('New Alert')
             .addField('Message: ', message, true)
@@ -1092,7 +1092,7 @@ function messageWebhook(message) {
 
 //report webhook
 async function reportWebhook() {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //check if starting balance is set
         if (settings.startingBalance === 0) {
