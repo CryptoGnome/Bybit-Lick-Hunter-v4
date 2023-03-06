@@ -62,13 +62,19 @@ wsClient.on('update', (data) => {
         blacklist.push(item);
     });
 
+    // get whitelisted pairs
+    const whitelist = [];
+    process.env.USE_WHITELIST.split(', ').forEach(item => {
+        whitelist.push(item);
+    });
+
     //if pair is not in liquidationOrders array and not in blacklist, add it
-    if (index === -1 && !blacklist.includes(pair)) {
+    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
         liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
         index = liquidationOrders.findIndex(x => x.pair === pair);
     }
     //if pair is in liquidationOrders array, update it
-    else if (!blacklist.includes(pair)) {
+    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
         //check if timesstamp is withing 5 seconds of previous timestamp
         if (timestamp - liquidationOrders[index].timestamp <= 5) {
             liquidationOrders[index].price = price;
