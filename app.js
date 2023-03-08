@@ -1,5 +1,5 @@
 import pkg from 'bybit-api-gnome';
-const { WebsocketClient, WS_KEY_MAP, LinearClient} = pkg;
+const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
 import { config } from 'dotenv';
 config();
 import fetch from 'node-fetch';
@@ -32,6 +32,18 @@ const wsClient = new WebsocketClient({
 });
 //create linear client
 const linearClient = new LinearClient({
+    key: key,
+    secret: secret,
+    livenet: true,
+});
+//account client
+const accountClient = new AccountAssetClient({
+    key: key,
+    secret: secret,
+    livenet: true,
+});
+//spot client
+const spotClient = new SpotClientV3({
     key: key,
     secret: secret,
     livenet: true,
@@ -137,6 +149,53 @@ async function liquidationEngine(pairs) {
     wsClient.subscribe(pairs);
 }
 
+async function transferFunds(amount) {
+    const transfer = await accountClient.createInternalTransfer(
+        {
+            transfer_id: await generateTransferId(),
+            coin: 'USDT',
+            amount: amount.toFixed(2),
+            from_account_type: 'CONTRACT',
+            to_account_type: 'SPOT',
+        }
+    );
+}
+
+async function withdrawFunds() {
+    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+
+    if (settings.Withdraw == true){
+
+        const withdraw = await accountClient.submitWithdrawal(
+            {
+                coin: process.env.WITHDRAW_COIN,
+                chain: process.env.WITHDRAW_CHAIN,
+                address: process.env.WITHDRAW_ADDRESS,
+                amount: String(settings.BalanceToWithdraw).toFixed(2),
+                account_type: process.env.WITHDRAW_ACCOUNT
+            }
+        );
+
+        console.log("Withdrawl completed!")
+    } else {
+        console.log("Would withdrawl, but it's not active..")
+    }
+
+}
+
+//Generate transferId
+async function generateTransferId() {
+    const hexDigits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    let transferId = "";
+    for (let i = 0; i < 32; i++) {
+      transferId += hexDigits.charAt(Math.floor(Math.random() * 16));
+      if (i === 7 || i === 11 || i === 15 || i === 19) {
+        transferId += "-";
+      }
+    }
+    return transferId;
+}
+
 //Get server time
 async function getServerTime() {
     const data = await linearClient.fetchServerTime();
@@ -192,6 +251,21 @@ async function getBalance() {
 
         var diff = balance - startingBalance;
         var percentGain = (diff / startingBalance) * 100;
+
+        //check for gain to safe amount to spot
+        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0){
+            transferFunds(diff)
+            console.log("Moved " + diff + " to SPOT")
+        }
+
+        //check spot balance to withdraw
+        var withdrawCoin = spotBal.result.balances.find(item => item.coin === process.env.WITHDRAW_COIN);
+
+        if (withdrawCoin.total >= settings.BalanceToWithdraw && settings.Withdraw == true){
+            withdrawFunds();
+            console.log("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
+        }
+
         //if positive diff then log green
         if (diff >= 0) {
             console.log(chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
