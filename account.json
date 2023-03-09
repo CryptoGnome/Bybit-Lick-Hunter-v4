@@ -2,6 +2,6 @@
     "startingBalance":0,
     "BalanceToSpot": 1,
     "BalanceToWithdraw": 10,
-    "Withdraw": true,
+    "Withdraw": false,
     "config_set":false
 }
