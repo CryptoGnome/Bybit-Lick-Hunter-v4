@@ -1,5 +1,5 @@
 import pkg from 'bybit-api-gnome';
-const { WebsocketClient, WS_KEY_MAP, LinearClient} = pkg;
+const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
 import { config } from 'dotenv';
 config();
 import fetch from 'node-fetch';
@@ -8,7 +8,7 @@ import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 
 var hook;
-if (process.env.USE_DISCORD) {
+if (process.env.USE_DISCORD == true) {
     hook = new Webhook(process.env.DISCORD_URL);
 }
 
@@ -32,6 +32,18 @@ const wsClient = new WebsocketClient({
 });
 //create linear client
 const linearClient = new LinearClient({
+    key: key,
+    secret: secret,
+    livenet: true,
+});
+//account client
+const accountClient = new AccountAssetClient({
+    key: key,
+    secret: secret,
+    livenet: true,
+});
+//spot client
+const spotClient = new SpotClientV3({
     key: key,
     secret: secret,
     livenet: true,
@@ -62,13 +74,19 @@ wsClient.on('update', (data) => {
         blacklist.push(item);
     });
 
+    // get whitelisted pairs
+    const whitelist = [];
+    process.env.USE_WHITELIST.split(', ').forEach(item => {
+        whitelist.push(item);
+    });
+
     //if pair is not in liquidationOrders array and not in blacklist, add it
-    if (index === -1 && !blacklist.includes(pair)) {
+    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
         liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
         index = liquidationOrders.findIndex(x => x.pair === pair);
     }
     //if pair is in liquidationOrders array, update it
-    else if (!blacklist.includes(pair)) {
+    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
         //check if timesstamp is withing 5 seconds of previous timestamp
         if (timestamp - liquidationOrders[index].timestamp <= 5) {
             liquidationOrders[index].price = price;
@@ -131,6 +149,53 @@ async function liquidationEngine(pairs) {
     wsClient.subscribe(pairs);
 }
 
+async function transferFunds(amount) {
+    const transfer = await accountClient.createInternalTransfer(
+        {
+            transfer_id: await generateTransferId(),
+            coin: 'USDT',
+            amount: amount.toFixed(2),
+            from_account_type: 'CONTRACT',
+            to_account_type: 'SPOT',
+        }
+    );
+}
+
+async function withdrawFunds() {
+    const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+
+    if (settings.Withdraw == true){
+
+        const withdraw = await accountClient.submitWithdrawal(
+            {
+                coin: process.env.WITHDRAW_COIN,
+                chain: process.env.WITHDRAW_CHAIN,
+                address: process.env.WITHDRAW_ADDRESS,
+                amount: String(settings.BalanceToWithdraw).toFixed(2),
+                account_type: process.env.WITHDRAW_ACCOUNT
+            }
+        );
+
+        console.log("Withdrawl completed!")
+    } else {
+        console.log("Would withdrawl, but it's not active..")
+    }
+
+}
+
+//Generate transferId
+async function generateTransferId() {
+    const hexDigits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    let transferId = "";
+    for (let i = 0; i < 32; i++) {
+      transferId += hexDigits.charAt(Math.floor(Math.random() * 16));
+      if (i === 7 || i === 11 || i === 15 || i === 19) {
+        transferId += "-";
+      }
+    }
+    return transferId;
+}
+
 //Get server time
 async function getServerTime() {
     const data = await linearClient.fetchServerTime();
@@ -186,6 +251,21 @@ async function getBalance() {
 
         var diff = balance - startingBalance;
         var percentGain = (diff / startingBalance) * 100;
+
+        //check for gain to safe amount to spot
+        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0){
+            transferFunds(diff)
+            console.log("Moved " + diff + " to SPOT")
+        }
+
+        //check spot balance to withdraw
+        var withdrawCoin = spotBal.result.balances.find(item => item.coin === process.env.WITHDRAW_COIN);
+
+        if (withdrawCoin.total >= settings.BalanceToWithdraw && settings.Withdraw == true){
+            withdrawFunds();
+            console.log("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
+        }
+
         //if positive diff then log green
         if (diff >= 0) {
             console.log(chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
@@ -423,7 +503,7 @@ async function scalp(pair, index) {
                             });
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD) {
+                            if(process.env.USE_DISCORD == true) {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                             }
                             
@@ -449,7 +529,7 @@ async function scalp(pair, index) {
                                 });
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD) {
+                                if(process.env.USE_DISCORD == true) {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
                                 }
                             }
@@ -506,7 +586,7 @@ async function scalp(pair, index) {
                             });
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD) {
+                            if(process.env.USE_DISCORD == true) {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                             }
     
@@ -531,7 +611,7 @@ async function scalp(pair, index) {
                                 });
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD) {
+                                if(process.env.USE_DISCORD == true) {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
                                 }
                             }
@@ -1039,7 +1119,7 @@ async function updateSettings() {
 
 //discord webhook
 function orderWebhook(symbol, amount, side, position, pnl) {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         if (side == "Buy") {
             var color = '#00ff00';
         }
@@ -1075,7 +1155,7 @@ function orderWebhook(symbol, amount, side, position, pnl) {
 
 //message webhook
 function messageWebhook(message) {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         const embed = new MessageBuilder()
             .setTitle('New Alert')
             .addField('Message: ', message, true)
@@ -1092,7 +1172,7 @@ function messageWebhook(message) {
 
 //report webhook
 async function reportWebhook() {
-    if(process.env.USE_DISCORD) {
+    if(process.env.USE_DISCORD == true) {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //check if starting balance is set
         if (settings.startingBalance === 0) {
