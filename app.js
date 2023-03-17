@@ -510,10 +510,10 @@ async function scalp(pair, index) {
                             
             
                         }
-                        //open position
-                        else if (position.side === "Buy" && position.size > 0 && position.percentGain < 0) {
+                        //open DCA position
+                        else if (position.side === "Buy" && position.size > 0 && position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true") {
                             //maxe sure order is less than max order size
-                            if ((position.size + settings.pairs[settingsIndex].order_size)  < settings.pairs[settingsIndex].max_position_size) {
+                            if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
                                 //load min order size json
                                 const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                                 var index = tickData.findIndex(x => x.pair === pair);
@@ -592,10 +592,10 @@ async function scalp(pair, index) {
                             }
     
                         }
-                        //open position
+                        //open DCA position
                         else if (position.side === "Sell" && position.size > 0 && position.percentGain < 0) {
                             //maxe sure order is less than max order size
-                            if ((position.size + settings.pairs[settingsIndex].order_size)  < settings.pairs[settingsIndex].max_position_size) {
+                            if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size && process.env.USE_DCA_FEATURE == "true") {
                                 //load min order size json
                                 const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                                 var index = tickData.findIndex(x => x.pair === pair);
