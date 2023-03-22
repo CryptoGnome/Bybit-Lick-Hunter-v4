@@ -1141,11 +1141,11 @@ function orderWebhook(symbol, amount, side, position, pnl) {
             dir = "✅Long / ❌Short";
             var color = '#00ff00';
         } else {
-            dir = "✅Short";
+            dir = "❌Long / ✅Short";
             var color = '#ff0000';
         }
         const embed = new MessageBuilder()
-            .setTitle('New Liquidation')
+            .setTitle('New Liquidation | ' + symbol.toString() + ' | ' + dir)
             .addField('Symbol: ', symbol.toString(), true)
             .addField('Amount: ', amount.toString(), true)
             .addField('Side: ', dir, true)
