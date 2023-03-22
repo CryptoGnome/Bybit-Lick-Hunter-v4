@@ -6,6 +6,10 @@ import fetch from 'node-fetch';
 import chalk from 'chalk';
 import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
+import moment from 'moment';
+
+// used to calculate bot runtime
+const timestampBotStart = moment();
 
 var hook;
 if (process.env.USE_DISCORD == "true") {
@@ -1150,8 +1154,17 @@ function orderWebhook(symbol, amount, side, position, pnl) {
             console.log(chalk.red("Discord Webhook Error"));
         }
     }
+}
 
-
+function calculateBotUptime(uptimeSeconds) {
+    var elapsedDays = uptimeSeconds / 86400;  //days
+    var restSeconds = uptimeSeconds % 86400;   // rest of seconds left
+    var elapsedHours = restSeconds / 3600;          // hours
+    restSeconds = restSeconds % 3600;
+    var elapsedMinutes = restSeconds / 60;          // minutes
+    var elapsedSeconds = restSeconds % 60;
+    var times = [parseInt(elapsedDays), parseInt(elapsedHours), parseInt(elapsedMinutes), parseInt(elapsedSeconds)];
+    return times;
 }
 
 //message webhook
@@ -1185,6 +1198,10 @@ async function reportWebhook() {
             var startingBalance = settings.startingBalance;
         }
 
+        //get current timestamp and calculate bot uptime
+        const timestampNow = moment();
+        const timeUptimeInSeconds = timestampNow.diff(timestampBotStart, 'seconds');
+        const times = calculateBotUptime(timeUptimeInSeconds);
 
         //fetch balance
         var balance = await getBalance();
@@ -1258,7 +1275,10 @@ async function reportWebhook() {
             .addField('Total USDT in Posi: ', "```autohotkey"+'\n'+marg.toFixed(2).toString()+"```", true)
             .addField('Profit USDT: ', "```autohotkey"+'\n'+diff.toString()+"```", true)
             .addField('Profit %: ', "```autohotkey"+'\n'+percentGain.toString()+"```"+'\n', true)
+            .addField('Bot UpTime: ', "```autohotkey" + '\n' + times[0].toString() + " days " + times[1].toString() + " hr. " + times[2].toString() + " min. " + times[3].toString() + " sec." + "```", true)
             .addField('Server Time: ', "```autohotkey"+'\n'+time.toString()+"```", true)
+            .addField("","",true)
+            .addField("","",true)
             .setFooter('Open Positions: ' + openPositions.toString())
             //for each position in positionList add field only 7 fields per embed
             for(var i = 0; i < positionList.length; i++) {stop_loss

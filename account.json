@@ -1,7 +1,7 @@
 {
-    "startingBalance":0,
+    "startingBalance": 47.33566986,
     "BalanceToSpot": 1,
     "BalanceToWithdraw": 10,
     "Withdraw": false,
-    "config_set":false
+    "config_set": false
 }
