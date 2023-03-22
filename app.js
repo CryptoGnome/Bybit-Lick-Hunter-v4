@@ -83,6 +83,7 @@ wsClient.on('update', (data) => {
     // get whitelisted pairs
     const whitelist = [];
     var whitelist_all = process.env.WHITELIST;
+    whitelist_all = whitelist_all.replaceAll(" ", "");
     whitelist_all.split(',').forEach(item => {
         whitelist.push(item);
     });
