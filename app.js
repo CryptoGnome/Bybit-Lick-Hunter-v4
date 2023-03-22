@@ -115,7 +115,7 @@ wsClient.on('update', (data) => {
         }
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-            scalp(pair, index);
+            scalp(pair, index, liquidationOrders[index].qty);
         }
         else {
             console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
@@ -474,7 +474,7 @@ async function totalOpenPositions() {
     }
 }
 //against trend
-async function scalp(pair, index) {
+async function scalp(pair, index, trigger_qty) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
     console.log("Open positions: " + openPositions);
@@ -513,7 +513,7 @@ async function scalp(pair, index) {
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
                             }
                             
             
@@ -539,7 +539,7 @@ async function scalp(pair, index) {
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
                                 }
                             }
                             else {
@@ -596,7 +596,7 @@ async function scalp(pair, index) {
                             //console.log("Order placed: " + JSON.stringify(order, null, 2));
                             console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
                             }
     
                         }
@@ -621,7 +621,7 @@ async function scalp(pair, index) {
                                 //console.log("Order placed: " + JSON.stringify(order, null, 2));
                                 console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
                                 }
                             }
                             else {
@@ -1127,7 +1127,7 @@ async function updateSettings() {
 }
 
 //discord webhook
-function orderWebhook(symbol, amount, side, position, pnl) {
+function orderWebhook(symbol, amount, side, position, pnl, qty) {
     if(process.env.USE_DISCORD == "true") {
         if (side == "Buy") {
             var color = '#00ff00';
@@ -1148,6 +1148,7 @@ function orderWebhook(symbol, amount, side, position, pnl) {
             .setTitle('New Liquidation | ' + symbol.toString() + ' | ' + dir)
             .addField('Symbol: ', symbol.toString(), true)
             .addField('Amount: ', amount.toString(), true)
+            .addField('Liq. Vol.: ', qty.toString(), true)
             .addField('Side: ', dir, true)
             .setColor(color)
             .setTimestamp();
