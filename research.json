@@ -1,2063 +1,1015 @@
 {
     "data": [
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1472,
+            "long_price": 0.004013488138052,
+            "name": "10000NFT",
+            "short_price": 0.0045311376816120005
+        },
+        {
+            "long_price": 0.0006213729726,
+            "name": "1000BONK",
+            "short_price": 0.0007166499643038834
+        },
+        {
+            "long_price": 0.0005815242529134998,
+            "name": "1000BTT",
+            "short_price": 0.0006427373321675525
+        },
+        {
+            "long_price": 0.035322484506,
+            "name": "1000FLOKI",
+            "short_price": 0.0412663645605
+        },
+        {
+            "long_price": 0.12140331663599999,
             "name": "1000LUNC",
-            "price": 0.154,
-            "score": "Safe",
-            "short": 9.05,
-            "short_price": 0.1723,
-            "short_sell": 9.05,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.1350672483816
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0081,
-            "name": "1000SHIB",
-            "price": 0.0087,
-            "score": "Safe",
-            "short": 7.73,
-            "short_price": 0.0094,
-            "short_sell": 7.73,
-            "status": 1,
-            "volume": "Not Safe"
-        },
-        {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0271,
+            "long_price": 0.029720244086999997,
             "name": "1000XEC",
-            "price": 0.0281,
-            "score": "Safe",
-            "short": 8.82,
-            "short_price": 0.0316,
-            "short_sell": 8.82,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.033012504775
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.4723,
+            "long_price": 0.50110954236,
             "name": "1INCH",
-            "price": 0.5007,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.5417,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.55385791524
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 52.952,
+            "long_price": 74.21725700992499,
             "name": "AAVE",
-            "price": 56.39,
-            "score": "Safe",
-            "short": 6.93,
-            "short_price": 60.7854,
-            "short_sell": 6.93,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 82.02959985307501
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.2885,
+            "long_price": 0.03647874721476499,
+            "name": "ACH",
+            "short_price": 0.040318615342635
+        },
+        {
+            "long_price": 0.3396660752484,
             "name": "ADA",
-            "price": 0.3063,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.331,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.38669810381999997
         },
         {
-            "funding": "Safe",
-            "long": 8.19,
-            "long_buy": 8.19,
-            "long_price": 0.2384,
+            "long_price": 0.45653385822033,
+            "name": "AGIX",
+            "short_price": 0.5180041087610401
+        },
+        {
+            "long_price": 0.412469448310989,
+            "name": "AGLD",
+            "short_price": 0.4558872849753037
+        },
+        {
+            "long_price": 0.0043366691769512345,
+            "name": "AKRO",
+            "short_price": 0.0051681984975
+        },
+        {
+            "long_price": 0.20966701014336,
             "name": "ALGO",
-            "price": 0.2483,
-            "score": "Safe",
-            "short": 9.21,
-            "short_price": 0.2836,
-            "short_sell": 9.21,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.24032940687
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.075,
+            "long_price": 1.478538879725,
             "name": "ALICE",
-            "price": 1.129,
-            "score": "Safe",
-            "short": 8.89,
-            "short_price": 1.2566,
-            "short_sell": 8.89,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.673158342
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0781,
+            "long_price": 0.10487911304674999,
             "name": "ALPHA",
-            "price": 0.0828,
-            "score": "Safe",
-            "short": 8.61,
-            "short_price": 0.0911,
-            "short_sell": 8.61,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.11603931164
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0193,
+            "long_price": 0.0330295123416,
             "name": "ANKR",
-            "price": 0.0207,
-            "score": "Safe",
-            "short": 8.18,
-            "short_price": 0.0224,
-            "short_sell": 8.18,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0365063031144
         },
         {
-            "funding": "Safe",
-            "long": 8.4,
-            "long_buy": 8.4,
-            "long_price": 1.6461,
+            "long_price": 2.2382872480000002,
             "name": "ANT",
-            "price": 1.829,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 1.9201,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.4738964319999996
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 2.8269,
+            "long_price": 3.8948396542499997,
             "name": "APE",
-            "price": 3,
-            "score": "Safe",
-            "short": 8.49,
-            "short_price": 3.2925,
-            "short_sell": 8.49,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 4.334077545763651
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.2873,
+            "long_price": 1.5970429368849999,
             "name": "API3",
-            "price": 1.377,
-            "score": "Safe",
-            "short": 9.01,
-            "short_price": 1.5065,
-            "short_sell": 9.01,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.014431045
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 3.8346,
+            "long_price": 11.541378026349747,
             "name": "APT",
-            "price": 4.0301,
-            "score": "Safe",
-            "short": 9.74,
-            "short_price": 4.5176,
-            "short_sell": 9.74,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 13.1108505156325
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 8.9126,
+            "long_price": 8.222853375,
             "name": "AR",
-            "price": 9.402,
-            "score": "Safe",
-            "short": 10.67,
-            "short_price": 10.5889,
-            "short_sell": 10.67,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 9.183384498750002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0242,
+            "long_price": 0.04293791087399999,
             "name": "ARPA",
-            "price": 0.0255,
-            "score": "Safe",
-            "short": 7.32,
-            "short_price": 0.0278,
-            "short_sell": 7.32,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0494339192933
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0936,
-            "name": "ATA",
-            "price": 0.0978,
-            "score": "Safe",
-            "short": 9.23,
-            "short_price": 0.1098,
-            "short_sell": 9.23,
-            "status": 1,
-            "volume": "Not Safe"
+            "long_price": 0.06496931444038,
+            "name": "ASTR",
+            "short_price": 0.0720488410219725
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 8.6266,
+            "long_price": 11.258261234999999,
             "name": "ATOM",
-            "price": 9.107,
-            "score": "Safe",
-            "short": 7.62,
-            "short_price": 9.9667,
-            "short_sell": 7.62,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 12.79774665
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.134,
+            "long_price": 0.268867291825,
             "name": "AUDIO",
-            "price": 0.1418,
-            "score": "Safe",
-            "short": 8.97,
-            "short_price": 0.1568,
-            "short_sell": 8.97,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.304809707675
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 11.2895,
+            "long_price": 16.45349726475,
             "name": "AVAX",
-            "price": 11.882,
-            "score": "Safe",
-            "short": 7.2,
-            "short_price": 12.9923,
-            "short_sell": 7.2,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 18.185444345249998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 6.0473,
+            "long_price": 8.27997289889,
             "name": "AXS",
-            "price": 6.351,
-            "score": "Safe",
-            "short": 8.16,
-            "short_price": 7.0218,
-            "short_sell": 8.16,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 9.151548993510001
         },
         {
-            "funding": "Safe",
-            "long": 8.44,
-            "long_buy": 8.44,
-            "long_price": 0.1611,
+            "long_price": 0.18011959929000002,
             "name": "BAKE",
-            "price": 0.176,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.1879,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.19907955711000003
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 4.9332,
+            "long_price": 6.381806323649999,
             "name": "BAL",
-            "price": 5.192,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 5.6588,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 7.053575410350001
         },
         {
-            "funding": "Safe",
-            "long": 12.79,
-            "long_buy": 12.79,
-            "long_price": 1.5181,
+            "long_price": 1.6529490191999998,
             "name": "BAND",
-            "price": 1.8158,
-            "score": "Safe",
-            "short": 9.87,
-            "short_price": 1.9125,
-            "short_sell": 9.87,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.855263248
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.204,
+            "long_price": 0.23459892548249997,
             "name": "BAT",
-            "price": 0.2186,
-            "score": "Safe",
-            "short": 7.07,
-            "short_price": 0.2345,
-            "short_sell": 7.07,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.2592935492175
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 97.053,
+            "long_price": 125.842255438,
             "name": "BCH",
-            "price": 102.45,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 111.327,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 139.088808642
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.3638,
+            "long_price": 0.6168445882407498,
             "name": "BEL",
-            "price": 0.3886,
-            "score": "Safe",
-            "short": 8.85,
-            "short_price": 0.4251,
-            "short_sell": 8.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.68177559752925
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 6.5514,
-            "name": "BLUEBIRD",
-            "price": 6.95,
-            "score": "Safe",
-            "short": 7.65,
-            "short_price": 7.5713,
-            "short_sell": 7.65,
-            "status": 1,
-            "volume": "Not Safe"
+            "long_price": 0.3913431847437476,
+            "name": "BICO",
+            "short_price": 0.439629965
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0538,
+            "long_price": 0.53627170905,
+            "name": "BIT",
+            "short_price": 1.9084931959700935
+        },
+        {
+            "long_price": 0.5368544199947529,
+            "name": "BLUR",
+            "short_price": 0.600964048385038
+        },
+        {
+            "long_price": 0.080363302785,
             "name": "BLZ",
-            "price": 0.0564,
-            "score": "Safe",
-            "short": 9.42,
-            "short_price": 0.0632,
-            "short_sell": 9.42,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.088822597815
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 243.9189,
+            "long_price": 317.7991459999,
             "name": "BNB",
-            "price": 259.48,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 279.7931,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 351.25168768410003
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 144.6562,
+            "long_price": 0.55978254774975,
             "name": "BNX",
-            "price": 156.67,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 165.9314,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.6518236480047501
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 15088.8748,
+            "long_price": 0.22661627151624195,
+            "name": "BOBA",
+            "short_price": 0.267815866005
+        },
+        {
+            "long_price": 35.52496069321956,
+            "name": "BSV",
+            "short_price": 39.26443023987426
+        },
+        {
+            "long_price": 0.18587232218728938,
+            "name": "BSW",
+            "short_price": 0.210117657915
+        },
+        {
+            "long_price": 26685.641786264998,
             "name": "BTC",
-            "price": 16095.1,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 17308.0652,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 29494.656711134998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1223.0595,
-            "name": "BTCDOM",
-            "price": 1318.7,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 1402.9405,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
-        },
-        {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.2238,
+            "long_price": 0.21518593487999998,
             "name": "C98",
-            "price": 0.2399,
-            "score": "Safe",
-            "short": 8.14,
-            "short_price": 0.2599,
-            "short_sell": 8.14,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.23783708592
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.4154,
+            "long_price": 0.0866636481418541,
+            "name": "CEEK",
+            "short_price": 0.09578613741994402
+        },
+        {
+            "long_price": 0.5950162284,
             "name": "CELO",
-            "price": 0.441,
-            "score": "Safe",
-            "short": 9.46,
-            "short_price": 0.4882,
-            "short_sell": 9.46,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.66678978
         },
         {
-            "funding": "Safe",
-            "long": 7.54,
-            "long_buy": 7.54,
-            "long_price": 0.01,
+            "long_price": 0.0208211472,
             "name": "CELR",
-            "price": 0.0108,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0116,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.024967656
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0997,
+            "long_price": 0.38630561874520003,
+            "name": "CFX",
+            "short_price": 0.43841214202170004
+        },
+        {
+            "long_price": 0.1479487269,
             "name": "CHR",
-            "price": 0.1051,
-            "score": "Safe",
-            "short": 7.34,
-            "short_price": 0.1149,
-            "short_sell": 7.34,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.1635222771
         },
         {
-            "funding": "Safe",
-            "long": 7.91,
-            "long_buy": 7.91,
-            "long_price": 0.1863,
+            "long_price": 0.11544028916937499,
             "name": "CHZ",
-            "price": 0.1944,
-            "score": "Safe",
-            "short": 9.44,
-            "short_price": 0.2214,
-            "short_sell": 9.44,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.127591898555625
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 35.3597,
+            "long_price": 0.005069229440000001,
+            "name": "CKB",
+            "short_price": 0.0060132732408
+        },
+        {
+            "long_price": 1.5268005159670002,
+            "name": "COCOS",
+            "short_price": 1.7737523931399999
+        },
+        {
+            "long_price": 42.441199992,
             "name": "COMP",
-            "price": 37.92,
-            "score": "Safe",
-            "short": 8.57,
-            "short_price": 41.2132,
-            "short_sell": 8.57,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 46.908694728
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.068,
+            "long_price": 2.1109801182070247,
+            "name": "CORE",
+            "short_price": 2.333188551702501
+        },
+        {
+            "long_price": 0.07005816624249998,
             "name": "COTI",
-            "price": 0.0743,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.078,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.07758044043184
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.4779,
+            "long_price": 10.367913649822544,
+            "name": "CREAM",
+            "short_price": 12.693405755828515
+        },
+        {
+            "long_price": 0.06729204951359463,
+            "name": "CRO",
+            "short_price": 0.0743754231466046
+        },
+        {
+            "long_price": 0.93958062135,
             "name": "CRV",
-            "price": 0.501,
-            "score": "Safe",
-            "short": 9.35,
-            "short_price": 0.561,
-            "short_sell": 9.35,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.0384838446500002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.6915,
+            "long_price": 0.351896059369813,
+            "name": "CTC",
+            "short_price": 0.38893774982979334
+        },
+        {
+            "long_price": 0.741134974575,
             "name": "CTK",
-            "price": 0.7209,
-            "score": "Safe",
-            "short": 7.1,
-            "short_price": 0.795,
-            "short_sell": 7.1,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.819149182425
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0932,
+            "long_price": 0.14696803572499997,
             "name": "CTSI",
-            "price": 0.0979,
-            "score": "Safe",
-            "short": 8,
-            "short_price": 0.1081,
-            "short_sell": 8,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.163027097998625
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0881,
+            "long_price": 0.10406419110220728,
             "name": "CVC",
-            "price": 0.0944,
-            "score": "Safe",
-            "short": 8.85,
-            "short_price": 0.1029,
-            "short_sell": 8.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.116642442719
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 3.4177,
+            "long_price": 5.2445043697516,
             "name": "CVX",
-            "price": 3.666,
-            "score": "Safe",
-            "short": 7.62,
-            "short_price": 3.9486,
-            "short_sell": 7.62,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 5.7965574613044
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1191,
+            "long_price": 0.18651574865000004,
             "name": "DAR",
-            "price": 0.1272,
-            "score": "Safe",
-            "short": 9.35,
-            "short_price": 0.1399,
-            "short_sell": 9.35,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.20740110503750003
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 32.351,
+            "long_price": 54.67355415,
             "name": "DASH",
-            "price": 34.39,
-            "score": "Safe",
-            "short": 7.23,
-            "short_price": 37.241,
-            "short_sell": 7.23,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 60.49556235450001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 460.161,
-            "name": "DEFI",
-            "price": 490.8,
-            "score": "Safe",
-            "short": 7.65,
-            "short_price": 531.791,
-            "short_sell": 7.65,
-            "status": 1,
-            "volume": "Not Safe"
-        },
-        {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0006,
+            "long_price": 0.001046339616375,
             "name": "DENT",
-            "price": 0.0006,
-            "score": "Safe",
-            "short": 8.62,
-            "short_price": 0.0007,
-            "short_sell": 8.62,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0011564806286250002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0062,
+            "long_price": 0.00927677104,
             "name": "DGB",
-            "price": 0.0066,
-            "score": "Safe",
-            "short": 7.73,
-            "short_price": 0.0072,
-            "short_sell": 7.73,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.010317287232
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0718,
+            "long_price": 0.19484268898325,
+            "name": "DODO",
+            "short_price": 0.21941624233541251
+        },
+        {
+            "long_price": 0.071543320575,
             "name": "DOGE",
-            "price": 0.0762,
-            "score": "Safe",
-            "short": 9.78,
-            "short_price": 0.0847,
-            "short_sell": 9.78,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.07907419642499999
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 4.9239,
+            "long_price": 5.971349331249999,
             "name": "DOT",
-            "price": 5.21,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 5.6481,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 6.59991241875
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0807,
+            "long_price": 0.19282705654525,
             "name": "DUSK",
-            "price": 0.0843,
-            "score": "Safe",
-            "short": 7.5,
-            "short_price": 0.0931,
-            "short_sell": 7.5,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.21312464144475002
         },
         {
-            "funding": "Safe",
-            "long": 9.49,
-            "long_buy": 9.49,
-            "long_price": 1.66,
+            "long_price": 2.4646740264000004,
             "name": "DYDX",
-            "price": 1.874,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 1.9596,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.7241133976
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 38.6507,
+            "long_price": 41.67984727654999,
             "name": "EGLD",
-            "price": 40.98,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 44.3353,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 46.16017303910813
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.2736,
+            "long_price": 0.3840110368,
             "name": "ENJ",
-            "price": 0.2892,
-            "score": "Safe",
-            "short": 8.8,
-            "short_price": 0.3195,
-            "short_sell": 8.8,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.42443325120000003
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 11.3969,
+            "long_price": 13.34406432975,
             "name": "ENS",
-            "price": 12.074,
-            "score": "Safe",
-            "short": 7.28,
-            "short_price": 13.1257,
-            "short_sell": 7.28,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 14.74870268025
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.8085,
+            "long_price": 1.11183845175,
             "name": "EOS",
-            "price": 0.854,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.9275,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.2288740782499998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 16.8443,
+            "long_price": 19.583177665650002,
             "name": "ETC",
-            "price": 17.856,
-            "score": "Safe",
-            "short": 6.93,
-            "short_price": 19.3362,
-            "short_sell": 6.93,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 21.64456478835
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1060.2333,
+            "long_price": 1709.3757394769998,
             "name": "ETH",
-            "price": 1125.9,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 1216.1667,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1889.3100278429997
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 3.8965,
+            "long_price": 3.3028884763680817,
+            "name": "ETHW",
+            "short_price": 3.650560947564722
+        },
+        {
+            "long_price": 0.377653880157795,
+            "name": "FET",
+            "short_price": 0.4332824464591
+        },
+        {
+            "long_price": 5.5956776899000005,
             "name": "FIL",
-            "price": 4.18,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 4.4695,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 6.1846963941
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0714,
+            "long_price": 0.013788079453778208,
+            "name": "FITFI",
+            "short_price": 0.016791220319999998
+        },
+        {
+            "long_price": 0.09014720525,
             "name": "FLM",
-            "price": 0.0754,
-            "score": "Safe",
-            "short": 8.97,
-            "short_price": 0.0835,
-            "short_sell": 8.97,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.09996101457499999
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.0731,
+            "long_price": 1.00343203275,
             "name": "FLOW",
-            "price": 1.136,
-            "score": "Safe",
-            "short": 7.59,
-            "short_price": 1.2394,
-            "short_sell": 7.59,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.10905645725
         },
         {
-            "funding": "Safe",
-            "long": 10.55,
-            "long_buy": 10.55,
-            "long_price": 682.5919,
-            "name": "FOOTBALL",
-            "price": 721.47,
-            "score": "Safe",
-            "short": 11.05,
-            "short_price": 847.4212,
-            "short_sell": 11.05,
-            "status": 1,
-            "volume": "Not Safe"
+            "long_price": 0.02927220726780992,
+            "name": "FLR",
+            "short_price": 0.032447414516135996
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1603,
+            "long_price": 0.45981026700435,
             "name": "FTM",
-            "price": 0.172,
-            "score": "Safe",
-            "short": 8.96,
-            "short_price": 0.1875,
-            "short_sell": 8.96,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.50821134774165
         },
         {
-            "funding": "Safe",
-            "long": 7.34,
-            "long_buy": 7.34,
-            "long_price": 1.2536,
+            "long_price": 7.7311814961794,
+            "name": "FXS",
+            "short_price": 8.755844008758
+        },
+        {
+            "long_price": 1.7501673749183748,
             "name": "GAL",
-            "price": 1.3034,
-            "score": "Safe",
-            "short": 9.35,
-            "short_price": 1.4794,
-            "short_sell": 9.35,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.955510347512155
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0239,
+            "long_price": 0.040912290474,
             "name": "GALA",
-            "price": 0.025,
-            "score": "Safe",
-            "short": 8.26,
-            "short_price": 0.0277,
-            "short_sell": 8.26,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.045218847366
         },
         {
-            "funding": "Safe",
-            "long": 6.9,
-            "long_buy": 6.9,
-            "long_price": 0.3491,
+            "long_price": 0.04908724150456835,
+            "name": "GFT",
+            "short_price": 0.05425431955768082
+        },
+        {
+            "long_price": 0.3730245109104056,
+            "name": "GLMR",
+            "short_price": 0.41229024890097465
+        },
+        {
+            "long_price": 0.38575321876725,
             "name": "GMT",
-            "price": 0.3633,
-            "score": "Safe",
-            "short": 9.26,
-            "short_price": 0.4097,
-            "short_sell": 9.26,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.45109945255875
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0528,
+            "long_price": 77.29286664962801,
+            "name": "GMX",
+            "short_price": 86.0288068263666
+        },
+        {
+            "long_price": 0.0923748065129025,
+            "name": "GPT",
+            "short_price": 0.11369527563368
+        },
+        {
+            "long_price": 0.14306413868999998,
             "name": "GRT",
-            "price": 0.0551,
-            "score": "Safe",
-            "short": 7.7,
-            "short_price": 0.0611,
-            "short_sell": 7.7,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.15857859634583998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.4513,
+            "long_price": 1.82982946009119,
             "name": "GTC",
-            "price": 1.557,
-            "score": "Safe",
-            "short": 12.12,
-            "short_price": 1.7468,
-            "short_sell": 12.12,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.2953020768999997
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0432,
+            "long_price": 0.05970199505399999,
             "name": "HBAR",
-            "price": 0.0463,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0496,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.06598641558599999
         },
         {
-            "funding": "Safe",
-            "long": 7.4,
-            "long_buy": 7.4,
-            "long_price": 2.1078,
+            "long_price": 0.6401830080384742,
+            "name": "HFT",
+            "short_price": 0.7426644785
+        },
+        {
+            "long_price": 1.4434467974249998,
             "name": "HNT",
-            "price": 2.187,
-            "score": "Safe",
-            "short": 8.75,
-            "short_price": 2.4754,
-            "short_sell": 8.75,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.6721554772500002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0014,
+            "long_price": 1.9626987056307001,
+            "name": "HOOK",
+            "short_price": 2.2043428922981554
+        },
+        {
+            "long_price": 0.0017364581459999998,
             "name": "HOT",
-            "price": 0.0015,
-            "score": "Safe",
-            "short": 7.32,
-            "short_price": 0.0016,
-            "short_sell": 7.32,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.001919243214
         },
         {
-            "funding": "Safe",
-            "long": 8.23,
-            "long_buy": 8.23,
-            "long_price": 3.3681,
+            "long_price": 4.9474290193828505,
             "name": "ICP",
-            "price": 3.682,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 3.9216,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 5.51272947225
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1462,
+            "long_price": 0.20647174809,
             "name": "ICX",
-            "price": 0.1548,
-            "score": "Safe",
-            "short": 9.11,
-            "short_price": 0.1713,
-            "short_sell": 9.11,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.22820561631
         },
         {
-            "funding": "Safe",
-            "long": 8.24,
-            "long_buy": 8.24,
-            "long_price": 0.3631,
+            "long_price": 65.81852381558129,
+            "name": "ILV",
+            "short_price": 74.4150793918407
+        },
+        {
+            "long_price": 1.2152028141500002,
             "name": "IMX",
-            "price": 0.4005,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.4228,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.4481906822500001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.4996,
+            "long_price": 4.037265054620299,
             "name": "INJ",
-            "price": 1.583,
-            "score": "Safe",
-            "short": 9.51,
-            "short_price": 1.763,
-            "short_sell": 9.51,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 4.58756879178026
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0077,
+            "long_price": 0.010263008965875,
             "name": "IOST",
-            "price": 0.0081,
-            "score": "Safe",
-            "short": 8.4,
-            "short_price": 0.009,
-            "short_sell": 8.4,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.011343325699125
         },
         {
-            "funding": "Safe",
-            "long": 8.15,
-            "long_buy": 8.15,
-            "long_price": 0.1986,
+            "long_price": 0.205874892825,
             "name": "IOTA",
-            "price": 0.2058,
-            "score": "Safe",
-            "short": 7.79,
-            "short_price": 0.233,
-            "short_sell": 7.79,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.227545934175
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0214,
+            "long_price": 0.02453397036675,
             "name": "IOTX",
-            "price": 0.0228,
-            "score": "Safe",
-            "short": 8.03,
-            "short_price": 0.0249,
-            "short_sell": 8.03,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.02711649356325
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0036,
+            "long_price": 0.00466882114055,
             "name": "JASMY",
-            "price": 0.0037,
-            "score": "Safe",
-            "short": 7.88,
-            "short_price": 0.0041,
-            "short_sell": 7.88,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.00518554282915
         },
         {
-            "funding": "Safe",
-            "long": 7.34,
-            "long_buy": 7.34,
-            "long_price": 0.7673,
+            "long_price": 0.02555354516052854,
+            "name": "JST",
+            "short_price": 0.028243392019531542
+        },
+        {
+            "long_price": 0.889705875,
             "name": "KAVA",
-            "price": 0.8465,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.8848,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.04706615142912
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1543,
+            "long_price": 0.9464860783885966,
+            "name": "KDA",
+            "short_price": 1.13207289175
+        },
+        {
+            "long_price": 0.22080585235,
             "name": "KLAY",
-            "price": 0.1635,
-            "score": "Safe",
-            "short": 9.4,
-            "short_price": 0.1812,
-            "short_sell": 9.4,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.24441782255
         },
         {
-            "funding": "Safe",
-            "long": 9.18,
-            "long_buy": 9.18,
-            "long_price": 0.5461,
+            "long_price": 0.6904679639069999,
             "name": "KNC",
-            "price": 0.5683,
-            "score": "Safe",
-            "short": 8.67,
-            "short_price": 0.6535,
-            "short_sell": 8.67,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.763148802213
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 22.0272,
+            "long_price": 32.9479851048,
             "name": "KSM",
-            "price": 23.58,
-            "score": "Safe",
-            "short": 9,
-            "short_price": 25.7752,
-            "short_sell": 9,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 36.4161940632
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.0351,
+            "long_price": 2.286763229481125,
             "name": "LDO",
-            "price": 1.0896,
-            "score": "Safe",
-            "short": 6.89,
-            "short_price": 1.1877,
-            "short_sell": 6.89,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.5301051268629347
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0053,
+            "long_price": 0.01165243182925,
             "name": "LINA",
-            "price": 0.0057,
-            "score": "Safe",
-            "short": 9.72,
-            "short_price": 0.0063,
-            "short_sell": 9.72,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.012879003600750002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 5.3906,
+            "long_price": 6.959932357,
             "name": "LINK",
-            "price": 5.762,
-            "score": "Safe",
-            "short": 7.42,
-            "short_price": 6.2164,
-            "short_sell": 7.42,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 7.761437079899999
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.6185,
+            "long_price": 1.0282630410749998,
             "name": "LIT",
-            "price": 0.663,
-            "score": "Safe",
-            "short": 9.88,
-            "short_price": 0.7296,
-            "short_sell": 9.88,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.21930399
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 6.5345,
+            "long_price": 0.14741516693306486,
+            "name": "LOOKS",
+            "short_price": 0.168076203075
+        },
+        {
+            "long_price": 6.011739702,
             "name": "LPT",
-            "price": 6.977,
-            "score": "Safe",
-            "short": 9.61,
-            "short_price": 7.6891,
-            "short_sell": 9.61,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 6.8375676222
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.2184,
+            "long_price": 2.2562223692053496,
+            "name": "LQTY",
+            "short_price": 2.82048701454
+        },
+        {
+            "long_price": 0.33452107872167997,
             "name": "LRC",
-            "price": 0.2318,
-            "score": "Safe",
-            "short": 8.1,
-            "short_price": 0.2535,
-            "short_sell": 8.1,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.37110923534999996
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 57.1475,
+            "long_price": 77.433854836,
             "name": "LTC",
-            "price": 60.16,
-            "score": "Safe",
-            "short": 7.25,
-            "short_price": 65.7979,
-            "short_sell": 7.25,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 85.584786924
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.4306,
+            "long_price": 1.3447327322353924,
             "name": "LUNA2",
-            "price": 1.5032,
-            "score": "Safe",
-            "short": 8.86,
-            "short_price": 1.6719,
-            "short_sell": 8.86,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.52140905536165
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.358,
+            "long_price": 1.660707536125,
+            "name": "MAGIC",
+            "short_price": 2.0190862810676253
+        },
+        {
+            "long_price": 0.57941694378,
             "name": "MANA",
-            "price": 0.3771,
-            "score": "Safe",
-            "short": 8.07,
-            "short_price": 0.4153,
-            "short_sell": 8.07,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.6404082010200001
         },
         {
-            "funding": "Safe",
-            "long": 13.25,
-            "long_buy": 13.25,
-            "long_price": 2.1804,
+            "long_price": 5.045918138624999,
             "name": "MASK",
-            "price": 2.573,
-            "score": "Safe",
-            "short": 7.72,
-            "short_price": 2.7074,
-            "short_sell": 7.72,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 5.776682144374999
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.7507,
+            "long_price": 1.0868722258874999,
             "name": "MATIC",
-            "price": 0.8017,
-            "score": "Safe",
-            "short": 8.29,
-            "short_price": 0.8727,
-            "short_sell": 8.29,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.2012798286125002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 599.0663,
+            "long_price": 0.7871414500762175,
+            "name": "MINA",
+            "short_price": 0.88197103426215
+        },
+        {
+            "long_price": 648.5924869199999,
             "name": "MKR",
-            "price": 630.9,
-            "score": "Safe",
-            "short": 6.89,
-            "short_price": 687.431,
-            "short_sell": 6.89,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 731.0755755900001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.6368,
+            "long_price": 1.1171049999999998,
             "name": "MTL",
-            "price": 0.6794,
-            "score": "Safe",
-            "short": 9.34,
-            "short_price": 0.7474,
-            "short_sell": 9.34,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.2621
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.4561,
+            "long_price": 1.9267146776825,
             "name": "NEAR",
-            "price": 1.525,
-            "score": "Safe",
-            "short": 8.15,
-            "short_price": 1.6906,
-            "short_sell": 8.15,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.1295267490175003
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 6.0203,
+            "long_price": 11.642209020799998,
             "name": "NEO",
-            "price": 6.415,
-            "score": "Safe",
-            "short": 6.93,
-            "short_price": 6.9109,
-            "short_sell": 6.93,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 12.8677047072
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0696,
+            "long_price": 0.10632901192925,
             "name": "NKN",
-            "price": 0.0742,
-            "score": "Safe",
-            "short": 9.28,
-            "short_price": 0.0817,
-            "short_sell": 9.28,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.11757352659602001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1146,
+            "long_price": 0.35266373897525,
             "name": "OCEAN",
-            "price": 0.1223,
-            "score": "Safe",
-            "short": 9.77,
-            "short_price": 0.1351,
-            "short_sell": 9.77,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.41441440533
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0914,
+            "long_price": 0.11129143733,
             "name": "OGN",
-            "price": 0.0971,
-            "score": "Safe",
-            "short": 9.21,
-            "short_price": 0.1071,
-            "short_sell": 9.21,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.12300632547000001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.0331,
+            "long_price": 1.7617255665599998,
             "name": "OMG",
-            "price": 1.092,
-            "score": "Safe",
-            "short": 9.01,
-            "short_price": 1.209,
-            "short_sell": 9.01,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.1122888688
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0125,
+            "long_price": 0.020349297524999997,
             "name": "ONE",
-            "price": 0.0133,
-            "score": "Safe",
-            "short": 8.14,
-            "short_price": 0.0145,
-            "short_sell": 8.14,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0225988526925
         },
         {
-            "funding": "Safe",
-            "long": 7.13,
-            "long_buy": 7.13,
-            "long_price": 0.1553,
+            "long_price": 0.22094761515,
             "name": "ONT",
-            "price": 0.1693,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.1787,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.257405949
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.7859,
+            "long_price": 2.48877849887875,
             "name": "OP",
-            "price": 0.8388,
-            "score": "Safe",
-            "short": 9.66,
-            "short_price": 0.9252,
-            "short_sell": 9.66,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.75075518297125
         },
         {
-            "funding": "Safe",
-            "long": 10.1,
-            "long_buy": 10.1,
-            "long_price": 0.0194,
+            "long_price": 1890.4438747807744,
+            "name": "PAXG",
+            "short_price": 2089.4379668629613
+        },
+        {
+            "long_price": 0.021030663797999997,
             "name": "PEOPLE",
-            "price": 0.0216,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.023,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.023244417882
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 100.0694,
-            "name": "QNT",
-            "price": 104.48,
-            "score": "Safe",
-            "short": 8.18,
-            "short_price": 116.2158,
-            "short_sell": 8.18,
-            "status": 1,
-            "volume": "Not Safe"
-        },
-        {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.89,
+            "long_price": 3.0346368073,
             "name": "QTUM",
-            "price": 2.025,
-            "score": "Safe",
-            "short": 8.73,
-            "short_price": 2.2061,
-            "short_sell": 8.73,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 3.418379398
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0027,
+            "long_price": 0.0026199283615999996,
             "name": "REEF",
-            "price": 0.0029,
-            "score": "Safe",
-            "short": 9.47,
-            "short_price": 0.0032,
-            "short_sell": 9.47,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0028957102944
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0707,
+            "long_price": 0.11116199766875,
             "name": "REN",
-            "price": 0.0744,
-            "score": "Safe",
-            "short": 9.11,
-            "short_price": 0.0828,
-            "short_sell": 9.11,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.12838816095
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.9975,
-            "name": "RLC",
-            "price": 1.0583,
-            "score": "Safe",
-            "short": 9.82,
-            "short_price": 1.1761,
-            "short_sell": 9.82,
-            "status": 1,
-            "volume": "Not Safe"
+            "long_price": 0.08890073666824999,
+            "name": "REQ",
+            "short_price": 0.10914654068774415
         },
         {
-            "funding": "Safe",
-            "long": 7.73,
-            "long_buy": 7.73,
-            "long_price": 0.0405,
+            "long_price": 1.2680562871881502,
+            "name": "RNDR",
+            "short_price": 1.4657756973080003
+        },
+        {
+            "long_price": 0.057217581596999995,
             "name": "ROSE",
-            "price": 0.044,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0468,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.063240484923
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0036,
+            "long_price": 38.550658707,
+            "name": "RPL",
+            "short_price": 43.880058549
+        },
+        {
+            "long_price": 0.0037885912238999997,
             "name": "RSR",
-            "price": 0.0038,
-            "score": "Safe",
-            "short": 9.27,
-            "short_price": 0.0042,
-            "short_sell": 9.27,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0041873903001000004
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.0682,
+            "long_price": 0.149337374655,
+            "name": "RSS3",
+            "short_price": 0.18291574813125
+        },
+        {
+            "long_price": 1.3617065844,
             "name": "RUNE",
-            "price": 1.128,
-            "score": "Safe",
-            "short": 7.13,
-            "short_price": 1.2286,
-            "short_sell": 7.13,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.5050441196000002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0193,
+            "long_price": 0.025760265265,
             "name": "RVN",
-            "price": 0.0203,
-            "score": "Safe",
-            "short": 9,
-            "short_price": 0.0226,
-            "short_sell": 9,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.028471872135
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.5073,
+            "long_price": 0.631597733707875,
             "name": "SAND",
-            "price": 0.5412,
-            "score": "Safe",
-            "short": 8.29,
-            "short_price": 0.5897,
-            "short_sell": 8.29,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.698081705677125
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.4841,
+            "long_price": 0.003834079181625,
+            "name": "SC",
+            "short_price": 0.0044881785922765
+        },
+        {
+            "long_price": 0.6416862330238189,
+            "name": "SCRT",
+            "short_price": 0.73462411711
+        },
+        {
+            "long_price": 0.43530167668749997,
             "name": "SFP",
-            "price": 0.5196,
-            "score": "Safe",
-            "short": 9.64,
-            "short_price": 0.5698,
-            "short_sell": 9.64,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.48112290581250006
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0231,
+            "long_price": 0.01028813151978717,
+            "name": "SHIB1000",
+            "short_price": 0.011371092732396348
+        },
+        {
+            "long_price": 0.038442437286999996,
             "name": "SKL",
-            "price": 0.0245,
-            "score": "Safe",
-            "short": 7.67,
-            "short_price": 0.0267,
-            "short_sell": 7.67,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.043776283017499994
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.537,
+            "long_price": 0.0026532829765232974,
+            "name": "SLP",
+            "short_price": 0.002932575921420487
+        },
+        {
+            "long_price": 2.7290298754124995,
             "name": "SNX",
-            "price": 1.601,
-            "score": "Safe",
-            "short": 9.05,
-            "short_price": 1.7993,
-            "short_sell": 9.05,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 3.0162961780875
         },
         {
-            "funding": "Safe",
-            "long": 6.94,
-            "long_buy": 6.94,
-            "long_price": 11.3005,
+            "long_price": 21.4544268530625,
             "name": "SOL",
-            "price": 11.894,
-            "score": "Safe",
-            "short": 10.45,
-            "short_price": 13.4122,
-            "short_sell": 10.45,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 23.712787574437503
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0006,
+            "long_price": 0.0006744616815125,
             "name": "SPELL",
-            "price": 0.0006,
-            "score": "Safe",
-            "short": 7.59,
-            "short_price": 0.0007,
-            "short_sell": 7.59,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0007454576479875
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.3777,
+            "long_price": 35.78380865462365,
+            "name": "SSV",
+            "short_price": 39.869727181022995
+        },
+        {
+            "long_price": 0.7030562426106,
             "name": "STG",
-            "price": 0.4055,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.4332,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.80448129665016
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0046,
+            "long_price": 0.0056401023194999995,
             "name": "STMX",
-            "price": 0.0049,
-            "score": "Safe",
-            "short": 9.21,
-            "short_price": 0.0054,
-            "short_sell": 9.21,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.00627677522
         },
         {
-            "funding": "Safe",
-            "long": 8.28,
-            "long_buy": 8.28,
-            "long_price": 0.2988,
+            "long_price": 0.350631164865,
             "name": "STORJ",
-            "price": 0.3327,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.3481,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.387539708535
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 1.0807,
+            "long_price": 1.0885983710884801,
+            "name": "STX",
+            "short_price": 1.2031876733083202
+        },
+        {
+            "long_price": 0.006029016566250001,
+            "name": "SUN",
+            "short_price": 0.007266457833920773
+        },
+        {
+            "long_price": 1.1055122123199999,
             "name": "SUSHI",
-            "price": 1.16,
-            "score": "Safe",
-            "short": 7.91,
-            "short_price": 1.252,
-            "short_sell": 7.91,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.2341414504734398
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.213,
+            "long_price": 0.008580802725473837,
+            "name": "SWEAT",
+            "short_price": 0.00965877753582
+        },
+        {
+            "long_price": 0.2643512909125,
             "name": "SXP",
-            "price": 0.2229,
-            "score": "Safe",
-            "short": 9.86,
-            "short_price": 0.2512,
-            "short_sell": 9.86,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.2921777425875
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.7908,
+            "long_price": 0.041184657470000004,
+            "name": "T",
+            "short_price": 0.04631300825854501
+        },
+        {
+            "long_price": 0.9846063993599999,
             "name": "THETA",
-            "price": 0.8384,
-            "score": "Safe",
-            "short": 6.9,
-            "short_price": 0.9076,
-            "short_sell": 6.9,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.0882491782400001
         },
         {
-            "funding": "Safe",
-            "long": 8.14,
-            "long_buy": 8.14,
-            "long_price": 0.2644,
+            "long_price": 0.019102510365536528,
+            "name": "TLM",
+            "short_price": 0.02178177287
+        },
+        {
+            "long_price": 0.53884383952,
             "name": "TOMO",
-            "price": 0.2915,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.3075,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.59556424368
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 10.3396,
+            "long_price": 13.790810931225,
             "name": "TRB",
-            "price": 10.84,
-            "score": "Safe",
-            "short": 9.17,
-            "short_price": 12.1179,
-            "short_sell": 9.17,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 15.288968273790195
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0467,
+            "long_price": 0.083027909329585,
+            "name": "TRU",
+            "short_price": 0.0980348414034
+        },
+        {
+            "long_price": 0.06343337083499999,
             "name": "TRX",
-            "price": 0.0508,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0536,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.070110567765
         },
         {
-            "funding": "Safe",
-            "long": 15.81,
-            "long_buy": 15.81,
-            "long_price": 3.6673,
+            "long_price": 1.1537499334738623,
+            "name": "TWT",
+            "short_price": 1.296392066375
+        },
+        {
+            "long_price": 4.780249620999999,
             "name": "UNFI",
-            "price": 3.886,
-            "score": "Safe",
-            "short": 9.33,
-            "short_price": 4.7624,
-            "short_sell": 9.33,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 5.313957599475001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 5.0312,
+            "long_price": 6.05879294615375,
             "name": "UNI",
-            "price": 5.364,
-            "score": "Safe",
-            "short": 6.99,
-            "short_price": 5.7787,
-            "short_sell": 6.99,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 6.696560624696251
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0168,
+            "long_price": 0.9463675234692525,
+            "name": "USDC",
+            "short_price": 1.0459851575186474
+        },
+        {
+            "long_price": 0.022272999489000002,
             "name": "VET",
-            "price": 0.018,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0192,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.024617525751000003
         },
         {
-            "funding": "Safe",
-            "long": 8.22,
-            "long_buy": 8.22,
-            "long_price": 1.9911,
+            "long_price": 2.1275930682599995,
             "name": "WAVES",
-            "price": 2.185,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 2.318,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 2.3515502333400002
         },
         {
-            "funding": "Safe",
-            "long": 7.05,
-            "long_buy": 7.05,
-            "long_price": 0.1044,
+            "long_price": 0.19715007492224995,
             "name": "WOO",
-            "price": 0.1081,
-            "score": "Safe",
-            "short": 8.77,
-            "short_price": 0.1222,
-            "short_sell": 8.77,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.23541234686999998
         },
         {
-            "funding": "Safe",
-            "long": 7.91,
-            "long_buy": 7.91,
-            "long_price": 0.031,
+            "long_price": 0.0038908158051125102,
+            "name": "XCN",
+            "short_price": 0.0054673188795
+        },
+        {
+            "long_price": 0.0377037045,
             "name": "XEM",
-            "price": 0.0344,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.036,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.0416725155
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0804,
+            "long_price": 0.08922932681564999,
             "name": "XLM",
-            "price": 0.0859,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 0.0922,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.09946259756999999
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 121.9892,
+            "long_price": 145.33345338449996,
             "name": "XMR",
-            "price": 131.05,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 139.9308,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 160.63171163549998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.3352,
+            "long_price": 0.7821314071057576,
+            "name": "XNO",
+            "short_price": 0.8475202522065449
+        },
+        {
+            "long_price": 0.42206655275799,
             "name": "XRP",
-            "price": 0.3512,
-            "score": "Safe",
-            "short": 7.86,
-            "short_price": 0.3881,
-            "short_sell": 7.86,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.47632795875
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.9036,
+            "long_price": 1.11568645145,
             "name": "XTZ",
-            "price": 0.952,
-            "score": "Safe",
-            "short": 7.27,
-            "short_price": 1.0405,
-            "short_sell": 7.27,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 1.2374286205000002
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 5723.4155,
+            "long_price": 8334.530394549998,
             "name": "YFI",
-            "price": 5992,
-            "score": "Safe",
-            "short": 8.58,
-            "short_price": 6671.4809,
-            "short_sell": 8.58,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 9211.84938345
         },
         {
-            "funding": "Safe",
-            "long": 6.95,
-            "long_buy": 6.95,
-            "long_price": 35.6195,
+            "long_price": 0.2812075532650675,
+            "name": "YGG",
+            "short_price": 0.3373501915725
+        },
+        {
+            "long_price": 33.991905255,
             "name": "ZEC",
-            "price": 38.29,
-            "score": "Safe",
-            "short": 6.85,
-            "short_price": 40.9022,
-            "short_sell": 6.85,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 37.570000545000006
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 8.145,
+            "long_price": 9.9598993624,
             "name": "ZEN",
-            "price": 8.501,
-            "score": "Safe",
-            "short": 7.66,
-            "short_price": 9.4138,
-            "short_sell": 7.66,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 11.008309821600001
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.0199,
+            "long_price": 0.026930296579499996,
             "name": "ZIL",
-            "price": 0.021,
-            "score": "Safe",
-            "short": 8.79,
-            "short_price": 0.0233,
-            "short_sell": 8.79,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.029765064640499998
         },
         {
-            "funding": "Safe",
-            "long": 6.85,
-            "long_buy": 6.85,
-            "long_price": 0.1716,
+            "long_price": 0.22334783099999997,
             "name": "ZRX",
-            "price": 0.1811,
-            "score": "Safe",
-            "short": 8.99,
-            "short_price": 0.2008,
-            "short_sell": 8.99,
-            "status": 1,
-            "volume": "Not Safe"
+            "short_price": 0.246858129
         }
     ],
-    "total": 147
+    "total": 202
 }
