@@ -74,13 +74,17 @@ wsClient.on('update', (data) => {
 
     //get blacklisted pairs
     const blacklist = [];
-    process.env.BLACKLIST.split(', ').forEach(item => {
+    var blacklist_all = process.env.BLACKLIST;
+    blacklist_all = blacklist_all.replaceAll(" ", "");
+    blacklist_all.split(',').forEach(item => {
         blacklist.push(item);
     });
 
     // get whitelisted pairs
     const whitelist = [];
-    process.env.USE_WHITELIST.split(', ').forEach(item => {
+    var whitelist_all = process.env.WHITELIST;
+    whitelist_all = whitelist_all.replaceAll(" ", "");
+    whitelist_all.split(',').forEach(item => {
         whitelist.push(item);
     });
 
