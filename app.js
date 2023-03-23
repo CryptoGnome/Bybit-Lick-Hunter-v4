@@ -262,7 +262,7 @@ async function getBalance() {
         var percentGain = (diff / startingBalance) * 100;
 
         //check for gain to safe amount to spot
-        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "false"){
+        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "true"){
             transferFunds(diff)
             console.log("Moved " + diff + " to SPOT")
         }
