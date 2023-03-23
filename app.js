@@ -1138,17 +1138,17 @@ function orderWebhook(symbol, amount, side, position, pnl, qty) {
         }
         var dir = "";
         if (side === "Buy") {
-            dir = "✅Long / ❌Short";
+            dir = "✅Long";
             var color = '#00ff00';
         } else {
-            dir = "❌Long / ✅Short";
+            dir = "❌Short";
             var color = '#ff0000';
         }
         const embed = new MessageBuilder()
             .setTitle('New Liquidation | ' + symbol.toString() + ' | ' + dir)
             .addField('Symbol: ', symbol.toString(), true)
             .addField('Amount: ', amount.toString(), true)
-            .addField('Liq. Vol.: ', qty.toString(), true)
+            .addField('Liq. Vol.: ', qty.toFixed(0), true)
             .addField('Side: ', dir, true)
             .setColor(color)
             .setTimestamp();
