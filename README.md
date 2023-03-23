@@ -82,11 +82,17 @@ pm2 monit
 ```
 API_KEY = apikeyhere  /// Bybit API Key
 API_SECRET = apisecrether /// Bybit API Key
+WITHDRAW_ADDRESS = withdrawladdresshere
+WITHDRAW_ACCOUNT = SPOT
+WITHDRAW_COIN = USDT
+WITHDRAW_CHAIN = SOL
+TRANSFER_TO_SPOT = false       // set to true for auto funds transfer to spot account
 LEVERAGE = 10 // Default Leverage to use
 MAX_POSITION_SIZE_PERCENT = 1 // Max Position a single pair can use in equity
 MAX_OPEN_POSITIONS = 10 // Max Amount of Positions the bot will open
 PERCENT_ORDER_SIZE = 0.01 // Deafult order size the bot will use, if this is not bigger than minimum bot will use min order size (START WITH SMALL %  TO TEST!!!)
 MIN_LIQUIDATION_VOLUME = 500 // the min liquidation amount in USDT in a period of 5s that the bot will trade on (bot will count up over multiple liquidations)
+USE_DCA_FEATURE = true  
 TAKE_PROFIT_PERCENT = 0.886 // take profit limit, will be adjust based on average entry price
 STOP_LOSS_PERCENT = 20 // stop loss  will be adjusted based on avg entry price
 USE_STOPLOSS = true // bool for using stop loss
@@ -95,8 +101,11 @@ UPDATE_MIN_ORDER_SIZING = true // this will auto create order sizing for you bas
 USE_SET_LEVERAGE = true // set leverage of every pair on bot start, you only need to use this when you change leverage
 RISK_LEVEL = 2 // 1-5 this will adjust risk by ajusting offsets of the the Smart settings 1 = conservative 5 = very risky
 BLACKLIST = ETHUSDT, BTCUSDT, C98USDT // Place symbols you do not want to trade here
+USE_WHITELIST = false   // if true only pairs in WHITELIST will be traded
+WHITELIST = ETHUSDT, ETCUSDT, BTCUSDT, BCHUSDT, LINKUSDT, LTCUSDT, FTMUSDT, MANAUSDT, MAGICUSDT, ADAUSDT, AAVEUSDT, SOLUSDT, FILUSDT
 USE_DISCORD = false // if you want to use discord webhooks make this true and add link to channel below
 DISCORD_URL = webhook_url_here //webhook url for discord channel here
+DISCORD_REPORT_INTERVALL = */5 * * * *  // cron style timeing for the report send to discord webhook - ex.  */5 * * * * will send every 5 seconds; 00 */1 * * * * will send every hout at 00:00 01:00 02:00 and so on..
 ```
 <br>
 

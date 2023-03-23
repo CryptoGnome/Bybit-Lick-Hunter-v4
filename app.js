@@ -7,6 +7,15 @@ import chalk from 'chalk';
 import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 import moment from 'moment';
+import * as cron from 'node-cron'
+
+// Discord report cron tasks
+if (process.env.USE_DISCORD == "true") {
+    const cronTaskDiscordPositionReport = cron.schedule(process.env.DISCORD_REPORT_INTERVALL, () => {
+        console.log("Discord report send on " + moment().toString());
+        reportWebhook();
+        });
+}
 
 // used to calculate bot runtime
 const timestampBotStart = moment();
@@ -209,16 +218,7 @@ async function getServerTime() {
     const data = await linearClient.fetchServerTime();
     var serverTime = new Date(data * 1000);
     var serverTimeGmt = serverTime.toGMTString()+'\n' + serverTime.toLocaleString();
-
-    //cehck when last was more than 5 minutes ago
-    if (Date.now() - lastReport > 300000) {
-        //send report
-        reportWebhook();
-        //checkCommit();
-        lastReport = Date.now();
-    }
     return serverTimeGmt;
-
 }
 
 //Get margin
@@ -226,16 +226,7 @@ async function getMargin() {
     const data = await linearClient.getWalletBalance();
     var usedBalance = data.result['USDT'].used_margin;
     var balance = usedBalance;
-
-    //cehck when last was more than 5 minutes ago
-    if (Date.now() - lastReport > 300000) {
-        //send report
-        reportWebhook();
-        //checkCommit();
-        lastReport = Date.now();
-    }
     return balance;
-
 }
 
 //get account balance
@@ -282,14 +273,6 @@ async function getBalance() {
         else {
             console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
-        }
-
-        //cehck when last was more than 5 minutes ago
-        if (Date.now() - lastReport > 300000) {
-            //send report
-            reportWebhook();
-            //checkCommit();
-            lastReport = Date.now();
         }
         return balance;
     }
@@ -1317,6 +1300,7 @@ async function reportWebhook() {
 
 async function main() {
     console.log("Starting Lick Hunter!");
+    reportWebhook();
     try{
         pairs = await getSymbols();
 
