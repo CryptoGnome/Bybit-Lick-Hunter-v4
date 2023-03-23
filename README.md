@@ -41,7 +41,7 @@ n stable
 
 
 ```
-apt install gh
+apt install git
 ```
 
 ```
