@@ -207,8 +207,8 @@ async function generateTransferId() {
 //Get server time
 async function getServerTime() {
     const data = await linearClient.fetchServerTime();
-    var usedBalance = new Date(data *1000);
-    var balance = usedBalance.toGMTString()+'\n'+usedBalance.toLocaleString();
+    var serverTime = new Date(data * 1000);
+    var serverTimeGmt = serverTime.toGMTString()+'\n' + serverTime.toLocaleString();
 
     //cehck when last was more than 5 minutes ago
     if (Date.now() - lastReport > 300000) {
@@ -217,7 +217,7 @@ async function getServerTime() {
         //checkCommit();
         lastReport = Date.now();
     }
-    return balance;
+    return serverTimeGmt;
 
 }
 
