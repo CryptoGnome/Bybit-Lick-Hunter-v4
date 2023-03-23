@@ -7,6 +7,15 @@ import chalk from 'chalk';
 import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 import moment from 'moment';
+import * as cron from 'node-cron'
+
+// Discord report cron tasks
+if (process.env.USE_DISCORD == "true") {
+    const cronTaskDiscordPositionReport = cron.schedule(process.env.DISCORD_REPORT_INTERVALL, () => {
+        console.log("Discord report send on " + moment().toString());
+        reportWebhook();
+        });
+}
 
 // used to calculate bot runtime
 const timestampBotStart = moment();
@@ -207,18 +216,9 @@ async function generateTransferId() {
 //Get server time
 async function getServerTime() {
     const data = await linearClient.fetchServerTime();
-    var usedBalance = new Date(data *1000);
-    var balance = usedBalance.toGMTString()+'\n'+usedBalance.toLocaleString();
-
-    //cehck when last was more than 5 minutes ago
-    if (Date.now() - lastReport > 300000) {
-        //send report
-        reportWebhook();
-        //checkCommit();
-        lastReport = Date.now();
-    }
-    return balance;
-
+    var serverTime = new Date(data * 1000);
+    var serverTimeGmt = serverTime.toGMTString()+'\n' + serverTime.toLocaleString();
+    return serverTimeGmt;
 }
 
 //Get margin
@@ -226,16 +226,7 @@ async function getMargin() {
     const data = await linearClient.getWalletBalance();
     var usedBalance = data.result['USDT'].used_margin;
     var balance = usedBalance;
-
-    //cehck when last was more than 5 minutes ago
-    if (Date.now() - lastReport > 300000) {
-        //send report
-        reportWebhook();
-        //checkCommit();
-        lastReport = Date.now();
-    }
     return balance;
-
 }
 
 //get account balance
@@ -262,7 +253,7 @@ async function getBalance() {
         var percentGain = (diff / startingBalance) * 100;
 
         //check for gain to safe amount to spot
-        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "false"){
+        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "true"){
             transferFunds(diff)
             console.log("Moved " + diff + " to SPOT")
         }
@@ -282,14 +273,6 @@ async function getBalance() {
         else {
             console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
-        }
-
-        //cehck when last was more than 5 minutes ago
-        if (Date.now() - lastReport > 300000) {
-            //send report
-            reportWebhook();
-            //checkCommit();
-            lastReport = Date.now();
         }
         return balance;
     }
@@ -1138,17 +1121,17 @@ function orderWebhook(symbol, amount, side, position, pnl, qty) {
         }
         var dir = "";
         if (side === "Buy") {
-            dir = "✅Long / ❌Short";
+            dir = "✅Long";
             var color = '#00ff00';
         } else {
-            dir = "❌Long / ✅Short";
+            dir = "❌Short";
             var color = '#ff0000';
         }
         const embed = new MessageBuilder()
             .setTitle('New Liquidation | ' + symbol.toString() + ' | ' + dir)
             .addField('Symbol: ', symbol.toString(), true)
             .addField('Amount: ', amount.toString(), true)
-            .addField('Liq. Vol.: ', qty.toString(), true)
+            .addField('Liq. Vol.: ', qty.toFixed(0), true)
             .addField('Side: ', dir, true)
             .setColor(color)
             .setTimestamp();
@@ -1317,6 +1300,7 @@ async function reportWebhook() {
 
 async function main() {
     console.log("Starting Lick Hunter!");
+    reportWebhook();
     try{
         pairs = await getSymbols();
 
