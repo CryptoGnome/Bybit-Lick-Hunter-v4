@@ -224,7 +224,13 @@ binanceClient.on('formattedMessage', (data) => {
         }
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-            scalp(pair, index, liquidationOrders[index].qty);
+                
+            if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                scalp(pair, index, liquidationOrders[index].qty);
+            } else {
+                console.log(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            }
+
         }
         else {
             console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
