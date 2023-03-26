@@ -28,6 +28,7 @@ if (process.env.USE_DISCORD == "true") {
 
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
+const stopLossCoins = new Map();
 var rateLimit = 2000;
 var baseRateLimit = 2000;
 var lastReport = 0;
@@ -68,76 +69,94 @@ const spotClient = new SpotClientV3({
 
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
-    var pair = data.data.symbol;
-    var price = parseFloat(data.data.price);
-    var side = data.data.side;
-    //convert to float
-    var qty = parseFloat(data.data.qty) * price;
-    //create timestamp
-    var timestamp = Math.floor(Date.now() / 1000);
-    //find what index of liquidationOrders array is the pair
-    var index = liquidationOrders.findIndex(x => x.pair === pair);
 
-    var dir = "";
-    if (side === "Buy") {
-        dir = "Long";
+    const topic = data.topic;
+
+    if (topic === "stop_order") {
+        const order_data = data.data;
+        //check for stoploss trigger
+        if (order_data[0].stop_order_type === "StopLoss" && order_data[0].order_status === "Triggered"){
+            //add coin to timeout
+            addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
+        }
     } else {
-        dir = "Short";
-    }
-
-    //get blacklisted pairs
-    const blacklist = [];
-    var blacklist_all = process.env.BLACKLIST;
-    blacklist_all = blacklist_all.replaceAll(" ", "");
-    blacklist_all.split(',').forEach(item => {
-        blacklist.push(item);
-    });
-
-    // get whitelisted pairs
-    const whitelist = [];
-    var whitelist_all = process.env.WHITELIST;
-    whitelist_all = whitelist_all.replaceAll(" ", "");
-    whitelist_all.split(',').forEach(item => {
-        whitelist.push(item);
-    });
-
-    //if pair is not in liquidationOrders array and not in blacklist, add it
-    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
-        liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
-        index = liquidationOrders.findIndex(x => x.pair === pair);
-    }
-    //if pair is in liquidationOrders array, update it
-    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
-        //check if timesstamp is withing 5 seconds of previous timestamp
-        if (timestamp - liquidationOrders[index].timestamp <= 5) {
-            liquidationOrders[index].price = price;
-            liquidationOrders[index].side = side;
-            //add qty to existing qty and round to 2 decimal places
-            liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
-            liquidationOrders[index].timestamp = timestamp;
-            liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
-
+        var pair = data.data.symbol;
+        var price = parseFloat(data.data.price);
+        var side = data.data.side;
+        //convert to float
+        var qty = parseFloat(data.data.qty) * price;
+        //create timestamp
+        var timestamp = Math.floor(Date.now() / 1000);
+        //find what index of liquidationOrders array is the pair
+        var index = liquidationOrders.findIndex(x => x.pair === pair);
+    
+        var dir = "";
+        if (side === "Buy") {
+            dir = "Long";
+        } else {
+            dir = "Short";
         }
-        //if timestamp is more than 5 seconds from previous timestamp, overwrite
+    
+        //get blacklisted pairs
+        const blacklist = [];
+        var blacklist_all = process.env.BLACKLIST;
+        blacklist_all = blacklist_all.replaceAll(" ", "");
+        blacklist_all.split(',').forEach(item => {
+            blacklist.push(item);
+        });
+    
+        // get whitelisted pairs
+        const whitelist = [];
+        var whitelist_all = process.env.WHITELIST;
+        whitelist_all = whitelist_all.replaceAll(" ", "");
+        whitelist_all.split(',').forEach(item => {
+            whitelist.push(item);
+        });
+    
+        //if pair is not in liquidationOrders array and not in blacklist, add it
+        if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+            liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
+            index = liquidationOrders.findIndex(x => x.pair === pair);
+        }
+        //if pair is in liquidationOrders array, update it
+        else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+            //check if timesstamp is withing 5 seconds of previous timestamp
+            if (timestamp - liquidationOrders[index].timestamp <= 5) {
+                liquidationOrders[index].price = price;
+                liquidationOrders[index].side = side;
+                //add qty to existing qty and round to 2 decimal places
+                liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
+                liquidationOrders[index].timestamp = timestamp;
+                liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
+    
+            }
+            //if timestamp is more than 5 seconds from previous timestamp, overwrite
+            else {
+                liquidationOrders[index].price = price;
+                liquidationOrders[index].side = side;
+                liquidationOrders[index].qty = qty;
+                liquidationOrders[index].timestamp = timestamp;
+                liquidationOrders[index].amount = 1;
+            }
+    
+            if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+                
+                if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                    scalp(pair, index, liquidationOrders[index].qty);
+                } else {
+                    console.log(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                }
+    
+            }
+            else {
+                console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+                console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+            }
+    
+        }
         else {
-            liquidationOrders[index].price = price;
-            liquidationOrders[index].side = side;
-            liquidationOrders[index].qty = qty;
-            liquidationOrders[index].timestamp = timestamp;
-            liquidationOrders[index].amount = 1;
+            console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
         }
-
-        if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-            scalp(pair, index, liquidationOrders[index].qty);
-        }
-        else {
-            console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-            console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
-        }
-
-    }
-    else {
-        console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
     }
 });
 binanceClient.on('formattedMessage', (data) => {
@@ -256,6 +275,8 @@ binanceClient.on('error', (data) => {
     console.log('ws saw error ', data?.wsKey);
 });
 
+//subscribe to stop_order to see when we hit stop-loss
+wsClient.subscribe('stop_order')
 
 //run websocket
 async function liquidationEngine(pairs) {
@@ -1250,6 +1271,22 @@ function calculateBotUptime(uptimeSeconds) {
     var elapsedSeconds = restSeconds % 60;
     var times = [parseInt(elapsedDays), parseInt(elapsedHours), parseInt(elapsedMinutes), parseInt(elapsedSeconds)];
     return times;
+}
+
+//add coins to a timeout if stop-loss is met
+function addCoinToTimeout(coin, time) {
+    if (stopLossCoins.has(coin)) {
+        clearTimeout(stopLossCoins.get(coin));
+        stopLossCoins.delete(coin);
+    }
+
+    const timerId = setTimeout(() => {
+        stopLossCoins.delete(coin);
+        console.log(`Coin ${coin} removed from timeout`);
+    }, time);
+
+    stopLossCoins.set(coin, timerId);
+    console.log(`Added coin ${coin} to timeout for ${time}ms`);
 }
 
 //message webhook
