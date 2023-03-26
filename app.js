@@ -254,7 +254,16 @@ async function getMargin() {
 async function getBalance() {
     try{
         const data = await linearClient.getWalletBalance();
+        if (data.ret_code != 0) {
+            console.log(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
+            process.exit(1);
+        }
         const spotBal = await spotClient.getBalances();
+
+        if (spotBal.retCode != 0) {
+            console.log(chalk.redBright("Error fetching spot balance. err: " + spotBal.retCode + "; msg: " + spotBal.retMsg));
+            process.exit(1);
+        }
         var availableBalance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
