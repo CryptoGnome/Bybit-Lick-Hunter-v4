@@ -1131,6 +1131,10 @@ async function getMinTradingSize() {
             var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
             //get price of pair from tickers
             var priceFetch = tickers.result.find(x => x.symbol === data.result[i].name);
+            if (!priceFetch) {
+              console.log("Ignore Pair: " + data.result[i].name + " as ticker was not found");
+              continue;
+            }
             var price = priceFetch.last_price;
             //get usd value of min order size
             var usdValue = (minOrderSize * price);
