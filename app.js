@@ -196,7 +196,7 @@ wsClient.on('update', (data) => {
     
             }
             else {
-                console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
                 console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
             }
     
@@ -283,7 +283,7 @@ binanceClient.on('formattedMessage', (data) => {
 
         }
         else {
-            console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
             console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
         }
 
@@ -1509,21 +1509,8 @@ async function reportWebhook() {
     console.log("Wird abgerufen..")
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
-
-        //get current timestamp and calculate bot uptime
-        const timestampNow = moment();
-        const timeUptimeInSeconds = timestampNow.diff(timestampBotStart, 'seconds');
-        const times = calculateBotUptime(timeUptimeInSeconds);
-
-        //fetch balance
-        var balance = await getBalance();
-        var diff = balance - startingBalance;
-        var percentGain = (diff / startingBalance) * 100;
-        var percentGain = percentGain.toFixed(6);
-        var diff = diff.toFixed(6);
-        var balance = balance.toFixed(2);
-
         //check if starting balance is set
+        var balance = await getBalance();
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
             fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
@@ -1533,6 +1520,17 @@ async function reportWebhook() {
             var startingBalance = settings.startingBalance;
         }
 
+        //get current timestamp and calculate bot uptime
+        const timestampNow = moment();
+        const timeUptimeInSeconds = timestampNow.diff(timestampBotStart, 'seconds');
+        const times = calculateBotUptime(timeUptimeInSeconds);
+
+        //fetch balance
+        var diff = balance - startingBalance;
+        var percentGain = (diff / startingBalance) * 100;
+        var percentGain = percentGain.toFixed(6);
+        var diff = diff.toFixed(6);
+        var balance = balance.toFixed(2);
         //fetch positions
         var positions = await linearClient.getPosition();
         var positionList = [];
