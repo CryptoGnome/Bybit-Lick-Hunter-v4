@@ -1088,7 +1088,7 @@ async function getMinTradingSize() {
             else {
                 //convert min orderSizeUSD to pair value
                 var minOrderSizePair = (minOrderSizeUSD / price);
-                var tradeable = false
+                var tradeable = true
             }
             try{
                 //find pair ion positions
@@ -1509,15 +1509,6 @@ async function reportWebhook() {
     console.log("Wird abgerufen..")
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
-        //check if starting balance is set
-        if (settings.startingBalance === 0) {
-            settings.startingBalance = balance;
-            fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
-            var startingBalance = settings.startingBalance;
-        }
-        else {
-            var startingBalance = settings.startingBalance;
-        }
 
         //get current timestamp and calculate bot uptime
         const timestampNow = moment();
@@ -1531,6 +1522,17 @@ async function reportWebhook() {
         var percentGain = percentGain.toFixed(6);
         var diff = diff.toFixed(6);
         var balance = balance.toFixed(2);
+
+        //check if starting balance is set
+        if (settings.startingBalance === 0) {
+            settings.startingBalance = balance;
+            fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
+            var startingBalance = settings.startingBalance;
+        }
+        else {
+            var startingBalance = settings.startingBalance;
+        }
+
         //fetch positions
         var positions = await linearClient.getPosition();
         var positionList = [];
@@ -1633,7 +1635,7 @@ async function reportWebhook() {
 
 async function main() {
     console.log(getLogTimesStamp() + " ::  Starting Lick Hunter!");
-    //reportWebhook();
+    reportWebhook();
     try{
         pairs = await getSymbols();
 
