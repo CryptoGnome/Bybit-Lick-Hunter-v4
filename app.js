@@ -40,6 +40,7 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
+const apikey = process.env.LIQUIDATION_KEY;
 const stopLossCoins = new Map();
 var rateLimit = 2000;
 var baseRateLimit = 2000;
@@ -1297,7 +1298,7 @@ async function updateSettings() {
                     'X-RapidAPI-Host': 'liquidation-report.p.rapidapi.com'
                 }
             };
-            fetch(url),options
+            fetch(url,options)
             .then(res => res.json())
             .then((out) => {
                 //create settings.json file with multiple pairs
@@ -1632,7 +1633,7 @@ async function reportWebhook() {
 
 async function main() {
     console.log(getLogTimesStamp() + " ::  Starting Lick Hunter!");
-    reportWebhook();
+    //reportWebhook();
     try{
         pairs = await getSymbols();
 
