@@ -82,17 +82,17 @@ pm2 monit
 ```
 API_KEY = apikeyhere  /// Bybit API Key
 API_SECRET = apisecrether /// Bybit API Key
-WITHDRAW_ADDRESS = withdrawladdresshere
-WITHDRAW_ACCOUNT = SPOT
-WITHDRAW_COIN = USDT
-WITHDRAW_CHAIN = SOL
+WITHDRAW_ADDRESS = withdrawladdresshere // Set your withdrawl address, make sure its set on trusted on bybit before, also you need to set your IP whitelisted
+WITHDRAW_ACCOUNT = SPOT // Wallet to withdraw from (SPOT/FUND)
+WITHDRAW_COIN = USDT // Coin to withdraw
+WITHDRAW_CHAIN = SOL // Chain to withdraw from, make sure to select the right chain for specific coin. You can see more information on bybit on manual withdraw window
 TRANSFER_TO_SPOT = false       // set to true for auto funds transfer to spot account
 LEVERAGE = 10 // Default Leverage to use
 MAX_POSITION_SIZE_PERCENT = 1 // Max Position a single pair can use in equity
 MAX_OPEN_POSITIONS = 10 // Max Amount of Positions the bot will open
 PERCENT_ORDER_SIZE = 0.01 // Deafult order size the bot will use, if this is not bigger than minimum bot will use min order size (START WITH SMALL %  TO TEST!!!)
 MIN_LIQUIDATION_VOLUME = 500 // the min liquidation amount in USDT in a period of 5s that the bot will trade on (bot will count up over multiple liquidations)
-USE_DCA_FEATURE = true  
+USE_DCA_FEATURE = true // If another liquidation happens but the position is already open, the PERCENT_ORDER_SIZE will be opened as a DCA order 
 TAKE_PROFIT_PERCENT = 0.886 // take profit limit, will be adjust based on average entry price
 STOP_LOSS_PERCENT = 20 // stop loss  will be adjusted based on avg entry price
 USE_STOPLOSS = true // bool for using stop loss
@@ -115,7 +115,15 @@ DISCORD_REPORT_INTERVALL = */5 * * * *  // cron style timeing for the report sen
 
 ![image](https://i.imgur.com/cpqyDat.png)
 
+<br>
 
+*API settings for all features*
+
+To prevent error with fetch balance and similar you should check the API settings so that all features of the bot can be used. If you have the error 10004 = signing error, you should simply create a new API data
+
+USDC Contracts and Account History rights may be for later features. An IP whitelist is also necessary for the withdraw function
+
+![image](https://cdn.discordapp.com/attachments/685258964266647564/1089987475654586589/api.png)
 
 <br>
 
