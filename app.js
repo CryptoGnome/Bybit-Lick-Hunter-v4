@@ -12,7 +12,7 @@ import * as cron from 'node-cron'
 // Discord report cron tasks
 if (process.env.USE_DISCORD == "true") {
     const cronTaskDiscordPositionReport = cron.schedule(process.env.DISCORD_REPORT_INTERVALL, () => {
-        console.log("Discord report send on " + moment().toString());
+        console.log(getLogTimesStamp() + " ::  Discord report send!");
         reportWebhook();
         });
 }
@@ -140,18 +140,18 @@ wsClient.on('update', (data) => {
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     scalp(pair, index, liquidationOrders[index].qty);
                 } else {
-                    console.log(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 }
     
             }
             else {
-                console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-                console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+                console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
             }
     
         }
         else {
-            console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
+            console.log(getLogTimesStamp() + " ::  " + chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
         }
     }
 });
@@ -160,23 +160,23 @@ wsClient.on('open', (data,) => {
     //console.log('connection opened open:', data.wsKey);
     //catch error
     if (data.wsKey === WS_KEY_MAP.WS_KEY_ERROR) {
-        console.log('error', data);
+        console.log('error', getLogTimesStamp() + " ::  " + data);
         return;
     }
-    //console.log("Connection opened");
+    //console.log(getLogTimesStamp() + " ::  Connection opened");
 });
 wsClient.on('response', (data) => {
     if (data.wsKey === WS_KEY_MAP.WS_KEY_ERROR) {
-        console.log('error', data);
+        console.log('error', getLogTimesStamp() + " ::  " + data);
         return;
     }
-    //console.log("Connection opened");
+    //console.log(getLogTimesStamp() + " ::  Connection opened");
 });
 wsClient.on('reconnect', ({ wsKey }) => {
-    console.log('ws automatically reconnecting.... ', wsKey);
+    console.log(getLogTimesStamp() + " ::  " + 'ws automatically reconnecting.... ', wsKey);
 });
 wsClient.on('reconnected', (data) => {
-    console.log('ws has reconnected ', data?.wsKey);
+    console.log(getLogTimesStamp() + " ::  " + 'ws has reconnected ', data?.wsKey);
 });
 
 //subscribe to stop_order to see when we hit stop-loss
@@ -214,9 +214,9 @@ async function withdrawFunds() {
             }
         );
 
-        console.log("Withdrawl completed!")
+        console.log(getLogTimesStamp() + " ::  Withdrawl completed!")
     } else {
-        console.log("Would withdrawl, but it's not active..")
+        console.log(getLogTimesStamp() + " ::  Would withdrawl, but it's not active..")
     }
 
 }
@@ -255,20 +255,22 @@ async function getBalance() {
     try{
         const data = await linearClient.getWalletBalance();
         if (data.ret_code != 0) {
-            console.log(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
+            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
             process.exit(1);
         }
         const spotBal = await spotClient.getBalances();
 
         if (spotBal.retCode != 0) {
-            console.log(chalk.redBright("Error fetching spot balance. err: " + spotBal.retCode + "; msg: " + spotBal.retMsg));
+            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Error fetching spot balance. err: " + spotBal.retCode + "; msg: " + spotBal.retMsg));
             process.exit(1);
         }
         var availableBalance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
+
         //load settings.json
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+
         //check if starting balance is set
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
@@ -285,7 +287,7 @@ async function getBalance() {
         //check for gain to safe amount to spot
         if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "true"){
             transferFunds(diff)
-            console.log("Moved " + diff + " to SPOT")
+            console.log(getLogTimesStamp() + " ::  Moved " + diff + " to SPOT")
         }
 
         //check spot balance to withdraw
@@ -293,15 +295,15 @@ async function getBalance() {
 
         if (withdrawCoin.total >= settings.BalanceToWithdraw && settings.Withdraw == true){
             withdrawFunds();
-            console.log("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
+            console.log(getLogTimesStamp() + " ::  Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
         }
-
+        
         //if positive diff then log green
         if (diff >= 0) {
-            console.log(chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.greenBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + " | " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
         }
         else {
-            console.log(chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
         }
         return balance;
@@ -324,7 +326,7 @@ async function getPosition(pair, side) {
             if (positions.result[index].data.size >= 0) {
                 //console.log(positions.result[index].data);
                 if(positions.result[index].data.size > 0){
-                    console.log(chalk.blueBright("Open position found for " + positions.result[index].data.symbol + " with a size of " + positions.result[index].data.size + " contracts" + " with profit of " + positions.result[index].data.realised_pnl + " USDT"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.blueBright("Open position found for " + positions.result[index].data.symbol + " with a size of " + positions.result[index].data.size + " contracts" + " with profit of " + positions.result[index].data.realised_pnl + " USDT"));
                     var profit = positions.result[index ].data.unrealised_pnl;
                     //calculate the profit % change in USD
                     var margin = positions.result[index ].data.position_value/process.env.LEVERAGE;
@@ -338,19 +340,19 @@ async function getPosition(pair, side) {
             }
             else {
                 // adding this for debugging purposes
-                console.log("Error: getPostion invalid for " + pair + " size parameter is returning " + positions.result[index].data.size);
+                console.log(getLogTimesStamp() + " ::  Error: getPostion invalid for " + pair + " size parameter is returning " + positions.result[index].data.size);
                 messageWebhook("Error: getPostion invalid for " + pair + " size parameter is returning " + positions.result[index].data.size);
                 return {side: null, entryPrice: null, size: null, percentGain: null};
             }
         }
         else {
-            console.log("Open positions response is null");
+            console.log(getLogTimesStamp() + " ::  Open positions response is null");
             return {side: null, entryPrice: null, size: null, percentGain: null};
         }
 
     }
     else {
-        console.log("Open positions response is null");
+        console.log(getLogTimesStamp() + " ::  Open positions response is null");
         return {side: null, entryPrice: null, size: null, percentGain: null};
     }
 
@@ -412,10 +414,10 @@ async function takeProfit(symbol, position) {
                         take_profit: price.toFixed(decimalPlaces),
                         stop_loss: stopLoss.toFixed(decimalPlaces),
                     });
-                    console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
                 }
                 else {
-                    console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 4)));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 4)));
                 }
 
             }
@@ -430,10 +432,10 @@ async function takeProfit(symbol, position) {
                     //console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
                 }
                 else if (order.ret_code === 130027 || order.ret_code === 130030) {
-                    console.log(chalk.cyanBright("TAKE PROFIT FAILED PRICING MOVING FAST!! TRYING TO PLACE ABOVE CURRENT PRICE!!"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.cyanBright("TAKE PROFIT FAILED PRICING MOVING FAST!! TRYING TO PLACE ABOVE CURRENT PRICE!!"));
                     //find current price
                     var priceFetch = await linearClient.getTickers({symbol: symbol});
-                    console.log("Current price: " + JSON.stringify(priceFetch, null, 4));
+                    console.log(getLogTimesStamp() + " ::  Current price: " + JSON.stringify(priceFetch, null, 4));
                     var price = priceFetch.result[0].last_price;
                     //if side is sell add 1 tick to price
                     if (side === "Sell") {
@@ -442,25 +444,25 @@ async function takeProfit(symbol, position) {
                     else {
                         price = priceFetch.result[0].bid_price
                     }
-                    console.log("Price for symbol " + symbol + " is " + price);
+                    console.log(getLogTimesStamp() + " ::  Price for symbol " + symbol + " is " + price);
                     const order = await linearClient.setTradingStop({
                         symbol: symbol,
                         side: side,
                         take_profit: price,
                     });
-                    console.log(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST, TRYING TO FILL AT BID/ASK!!"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST, TRYING TO FILL AT BID/ASK!!"));
                 }
                 else {
-                    console.log(chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.red("TAKE PROFIT ERROR: ", JSON.stringify(order, null, 2)));
                 }
             }
         }
         else {
-            console.log("No take profit to set for " + symbol);
+            console.log(getLogTimesStamp() + " ::  No take profit to set for " + symbol);
         }
     }
     catch (e) {
-        console.log(chalk.red("Error setting take profit: " + e + " for symbol " + symbol));
+        console.log(getLogTimesStamp() + " ::  " + chalk.red("Error setting take profit: " + e + " for symbol " + symbol));
     }
 
 }
@@ -490,7 +492,7 @@ async function totalOpenPositions() {
 async function scalp(pair, index, trigger_qty) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
-    console.log("Open positions: " + openPositions);
+    console.log(getLogTimesStamp() + " ::  Open positions: " + openPositions);
 
     //make sure openPositions is less than max open positions and not null
     if (openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
@@ -523,8 +525,8 @@ async function scalp(pair, index, trigger_qty) {
                                 reduce_only: false,
                                 close_on_trigger: false
                             });
-                            //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                            console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                            //console.log(getLogTimesStamp() + " ::  Order placed: " + JSON.stringify(order, null, 2));
+                            console.log(getLogTimesStamp() + " ::  " + chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
                             }
@@ -549,34 +551,34 @@ async function scalp(pair, index, trigger_qty) {
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
-                                //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                                console.log(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                //console.log(getLogTimesStamp() + " ::  Order placed: " + JSON.stringify(order, null, 2));
+                                console.log(getLogTimesStamp() + " ::  " + chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
                                 }
                             }
                             else {
                                 //max position size reached
-                                console.log("Max position size reached for " + pair);
+                                console.log(getLogTimesStamp() + " ::  Max position size reached for " + pair);
                                 messageWebhook("Max position size reached for " + pair);
                                 
                             }
                         }
                         else {
-                            console.log(chalk.redBright("Order size is greaer than max position size for " + pair));
+                            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Order size is greaer than max position size for " + pair));
                         }
                     }
                     else {
-                        console.log(chalk.redBright("Error getting position for " + pair));
+                        console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Error getting position for " + pair));
                     }
 
                 }
                 else {
-                    console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
                 }
             }
             else {
-                console.log(chalk.bgRedBright( pair + " does not exist in settings.json"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.bgRedBright( pair + " does not exist in settings.json"));
             }
 
         }
@@ -606,8 +608,8 @@ async function scalp(pair, index, trigger_qty) {
                                 reduce_only: false,
                                 close_on_trigger: false
                             });
-                            //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                            console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                            //console.log(getLogTimesStamp() + " ::  Order placed: " + JSON.stringify(order, null, 2));
+                            console.log(getLogTimesStamp() + " ::  " + chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
                                 orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
                             }
@@ -631,38 +633,38 @@ async function scalp(pair, index, trigger_qty) {
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
-                                //console.log("Order placed: " + JSON.stringify(order, null, 2));
-                                console.log(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                //console.log(getLogTimesStamp() + " ::  Order placed: " + JSON.stringify(order, null, 2));
+                                console.log(getLogTimesStamp() + " ::  " + chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
                                 }
                             }
                             else {
                                 //max position size reached
-                                console.log("Max position size reached for " + pair);
+                                console.log(getLogTimesStamp() + " ::  Max position size reached for " + pair);
                                 messageWebhook("Max position size reached for " + pair);
                             }
                         }
                         else {
-                            console.log(chalk.redBright("Order size is greater than max position size for " + pair));
+                            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Order size is greater than max position size for " + pair));
                         }
                     }
                     else {
-                        console.log(chalk.redBright("Error getting position for " + pair));
+                        console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Error getting position for " + pair));
                     }
 
                 }
                 else {
-                    console.log(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
                 }
             }
             else {
-                console.log(chalk.bgCyan(pair + " does not exist in settings.json"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.bgCyan(pair + " does not exist in settings.json"));
             }
         }
     }
     else {
-        console.log(chalk.redBright("Max Open Positions Reached!"));
+        console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Max Open Positions Reached!"));
     }
 
 }
@@ -682,10 +684,10 @@ async function setLeverage(pairs, leverage) {
         try{
             var currentLeverage = await checkLeverage(pair);
             if (currentLeverage.toString() === leverage) {
-                console.log("Leverage for " + pair + " is set to " + leverage);
+                console.log(getLogTimesStamp() + " ::  Leverage for " + pair + " is set to " + leverage);
             }
             else {
-                console.log(chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
                 //remove pair from settings.json
                 const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
                 var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
@@ -699,7 +701,7 @@ async function setLeverage(pairs, leverage) {
 
         }
         catch (e) {
-            console.log(chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
+            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
             await sleep(1000);
         }
 
@@ -716,15 +718,15 @@ async function setPositionMode() {
     });
     //log responses
     if (set.ret_msg === "OK") {
-        console.log("Position mode set");
+        console.log(getLogTimesStamp() + " ::  Position mode set");
         return true;
     }
     else if (set.ret_msg === "Partial symbols switched successfully, excluding symbols with open orders or positions.") {
-        console.log("Position mode set for symbols without  positions");
+        console.log(getLogTimesStamp() + " ::  Position mode set for symbols without  positions");
         return false;
     }
     else {
-        console.log(chalk.redBright("Unable to set position mode"));
+        console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Unable to set position mode"));
         return false;
     }
     
@@ -742,32 +744,32 @@ async function checkOpenPositions() {
     //check rate_limit_status
     if (positions.rate_limit_status > 100) {
         rateLimit = baseRateLimit;
-        console.log("Rate limit status: " + chalk.green(positions.rate_limit_status));
+        console.log(getLogTimesStamp() + " ::  Rate limit status: " + chalk.green(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 75) {
         rateLimit = rateLimit + 500;
-        console.log("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
+        console.log(getLogTimesStamp() + " ::  Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 50) {
         rateLimit = rateLimit + 1000;
-        console.log("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
+        console.log(getLogTimesStamp() + " ::  Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
     }
     else if (positions.rate_limit_status > 25) {
         rateLimit = rateLimit + 2000;
-        console.log("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
+        console.log(getLogTimesStamp() + " ::  Rate limit status: " + chalk.yellow(positions.rate_limit_status));
     }
     else {
         rateLimit = rateLimit + 200;
-        console.log("Rate limit status: " + chalk.red(positions.rate_limit_status));
+        console.log(getLogTimesStamp() + " ::  Rate limit status: " + chalk.red(positions.rate_limit_status));
     }
 
-    //console.log("Positions: " + JSON.stringify(positions, null, 2));
+    //console.log(getLogTimesStamp() + " ::  Positions: " + JSON.stringify(positions, null, 2));
     var totalPositions = 0;
     var postionList = [];
     if (positions.result !== null) {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
-                //console.log("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
+                //console.log(getLogTimesStamp() + " ::  Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
                
                 takeProfit(positions.result[i].data.symbol, positions.result[i].data);
    
@@ -790,11 +792,11 @@ async function checkOpenPositions() {
         }
     }
     else {
-        console.log("Open positions response is null");
+        console.log(getLogTimesStamp() + " ::  Open positions response is null");
     }
-    console.log("----------------------------------------------------");
-    console.log("------------------ OPEN POSITIONS ------------------");
-    console.log("----------------------------------------------------");
+    console.log(getLogTimesStamp() + " ::  ----------------------------------------------------");
+    console.log(getLogTimesStamp() + " ::  ------------------ OPEN POSITIONS ------------------");
+    console.log(getLogTimesStamp() + " ::  ----------------------------------------------------");
     console.table(postionList);
 
 }
@@ -810,9 +812,9 @@ async function getMinTradingSize() {
         var positions = await linearClient.getPosition();
 
         var minOrderSizes = [];
-        console.log("Fetching min Trading Sizes for pairs, this could take a minute...");
+        console.log(getLogTimesStamp() + " ::  Fetching min Trading Sizes for pairs, this could take a minute...");
         for (var i = 0; i < data.result.length; i++) {
-            console.log("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
+            console.log(getLogTimesStamp() + " ::  Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
             //check if min_trading_qty usd value is less than process.env.MIN_ORDER_SIZE
             var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
             //get price of pair from tickers
@@ -820,10 +822,10 @@ async function getMinTradingSize() {
             var price = priceFetch.last_price;
             //get usd value of min order size
             var usdValue = (minOrderSize * price);
-            //console.log("USD value of " + data.result[i].name + " is " + usdValue);
+            //console.log(getLogTimesStamp() + " ::  USD value of " + data.result[i].name + " is " + usdValue);
             //find usd valie of process.env.MIN_ORDER_SIZE
             var minOrderSizeUSD = (balance * process.env.PERCENT_ORDER_SIZE/100) * process.env.LEVERAGE;
-            //console.log("USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
+            //console.log(getLogTimesStamp() + " ::  USD value of " + process.env.PERCENT_ORDER_SIZE + " is " + minOrderSizeUSD);
             if (minOrderSizeUSD < usdValue) {
                 //use min order size
                 var minOrderSizePair = minOrderSize;
@@ -880,7 +882,7 @@ async function getMinTradingSize() {
         }
     }
     else {
-        console.log("Error fetching balance");
+        console.log(getLogTimesStamp() + " ::  Error fetching balance");
     }
 
 }
@@ -913,7 +915,7 @@ async function getSymbols() {
         return symbols;
     }
     catch{
-        console.log("Error fetching symbols");
+        console.log(getLogTimesStamp() + " ::  Error fetching symbols");
         return null;
     }
 }
@@ -934,7 +936,7 @@ async function createSettings() {
         var settings = {};
         settings["pairs"] = [];
         for (var i = 0; i < out.data.length; i++) {
-            //console.log("Adding Smart Settings for " + out.data[i].name + " to settings.json");
+            //console.log(getLogTimesStamp() + " ::  Adding Smart Settings for " + out.data[i].name + " to settings.json");
             //if name contains 1000 or does not end in USDT, skip
             if (out.data[i].name.includes("1000")) {
                 continue;
@@ -1031,7 +1033,7 @@ async function updateSettings() {
                     var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
                     var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
                     if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
-                        //console.log("Skipping " + out.data[i].name + "USDT");
+                        //console.log(getLogTimesStamp() + " ::  Skipping " + out.data[i].name + "USDT");
                     }
                     else {
                         //set risk then update long_price and short_price
@@ -1074,7 +1076,7 @@ async function updateSettings() {
             //if error load research.json file and update settings.json file
             }).catch(
                 err => {
-                    console.log(chalk.red("Reaseach API down Attempting to load research.json file, if this continues please contact @Crypt0gnoe or @Atsutane in Discord"));
+                    console.log(getLogTimesStamp() + " ::  " + chalk.red("Reaseach API down Attempting to load research.json file, if this continues please contact @Crypt0gnoe or @Atsutane in Discord"));
                     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
                     var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
                     var researchFile = JSON.parse(fs.readFileSync('research.json'));
@@ -1086,7 +1088,7 @@ async function updateSettings() {
                         var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === researchFile.data[i].name + "USDT");
                         try{
                             if (index === -1 || settingsIndex === 'undefined' || researchFile.data[i].name.includes("1000")) {
-                                //console.log("Skipping " + researchFile.data[i].name + "USDT");
+                                //console.log(getLogTimesStamp() + " ::  Skipping " + researchFile.data[i].name + "USDT");
                             }
                             else {
                                 //set risk then update long_price and short_price
@@ -1126,7 +1128,7 @@ async function updateSettings() {
                             }
                         }
                         catch(err){
-                            console.log("Error updating " + researchFile.data[i].name + "USDT, this is likely due to not having this pair active in your settings.json file");
+                            console.log(getLogTimesStamp() + " ::  Error updating " + researchFile.data[i].name + "USDT, this is likely due to not having this pair active in your settings.json file");
                         }
 
 
@@ -1169,7 +1171,7 @@ function orderWebhook(symbol, amount, side, position, pnl, qty) {
             hook.send(embed);
         }
         catch (err) {
-            console.log(chalk.red("Discord Webhook Error"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.red("Discord Webhook Error"));
         }
     }
 }
@@ -1185,6 +1187,10 @@ function calculateBotUptime(uptimeSeconds) {
     return times;
 }
 
+function getLogTimesStamp() {
+    return moment().local().toString();
+}
+
 //add coins to a timeout if stop-loss is met
 function addCoinToTimeout(coin, time) {
     if (stopLossCoins.has(coin)) {
@@ -1194,11 +1200,11 @@ function addCoinToTimeout(coin, time) {
 
     const timerId = setTimeout(() => {
         stopLossCoins.delete(coin);
-        console.log(`Coin ${coin} removed from timeout`);
+        console.log(getLogTimesStamp() + " ::  " + `Coin ${coin} removed from timeout`);
     }, time);
 
     stopLossCoins.set(coin, timerId);
-    console.log(`Added coin ${coin} to timeout for ${time}ms`);
+    console.log(getLogTimesStamp() + " ::  " + `Added coin ${coin} to timeout for ${time}ms`);
 }
 
 //message webhook
@@ -1213,7 +1219,7 @@ function messageWebhook(message) {
             hook.send(embed);
         }
         catch (err) {
-            console.log(chalk.red("Discord Webhook Error"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.red("Discord Webhook Error"));
         }
     }
 }
@@ -1338,14 +1344,14 @@ async function reportWebhook() {
             hook.send(embed);
         }
         catch (err) {
-            console.log(chalk.red("Discord Webhook Error"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.red("Discord Webhook Error"));
         }
     }
 }
 
 
 async function main() {
-    console.log("Starting Lick Hunter!");
+    console.log(getLogTimesStamp() + " ::  Starting Lick Hunter!");
     reportWebhook();
     try{
         pairs = await getSymbols();
@@ -1366,7 +1372,7 @@ async function main() {
             await getMinTradingSize();
         }
         if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
-            console.log("Updating settings.json with smart settings");
+            console.log(getLogTimesStamp() + " ::  Updating settings.json with smart settings");
             await createSettings();
         }
         if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
@@ -1375,7 +1381,7 @@ async function main() {
         }
     }
     catch (err) {
-        console.log(chalk.red("Error in main()"));
+        console.log(getLogTimesStamp() + " ::  " + chalk.red("Error in main()"));
 
         if (process.env.USE_DISCORD == "true")
             messageWebhook(err);
@@ -1406,7 +1412,7 @@ try {
     main();
 }
 catch (error) {
-    console.log(chalk.red("Error: ", error));
+    console.log(getLogTimesStamp() + " ::  " + chalk.red("Error: ", error));
 
     if (process.env.USE_DISCORD == "true")
         messageWebhook(error);
