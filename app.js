@@ -180,7 +180,7 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].timestamp = timestamp;
                 liquidationOrders[index].amount = 1;
             }
-    
+            
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
@@ -270,18 +270,18 @@ binanceClient.on('formattedMessage', (data) => {
             if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 scalp(pair, index, liquidationOrders[index].qty);
             } else {
-                console.log(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                console.log(getLogTimesStamp() + " ::  " + chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             }
 
         }
         else {
-            console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-            console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+            console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
         }
 
     }
     else {
-        console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
+        console.log(getLogTimesStamp() + " ::  " + chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
     }
 });
 
@@ -314,13 +314,13 @@ binanceClient.on('reply', (data) => {
     //console.log("Connection opened");
 });
 binanceClient.on('reconnecting', ({ wsKey }) => {
-    console.log('ws automatically reconnecting.... ', wsKey);
+    console.log(getLogTimesStamp() + " ::  " + 'ws automatically reconnecting.... ', wsKey);
 });
 binanceClient.on('reconnected', (data) => {
-    console.log('ws has reconnected ', data?.wsKey);
+    console.log(getLogTimesStamp() + " ::  " + 'ws has reconnected ', data?.wsKey);
 });
 binanceClient.on('error', (data) => {
-    console.log('ws saw error ', data?.wsKey);
+    console.log(getLogTimesStamp() + " ::  " + 'ws saw error ', data?.wsKey);
 });
 
 //subscribe to stop_order to see when we hit stop-loss
