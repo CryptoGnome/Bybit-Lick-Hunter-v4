@@ -83,7 +83,6 @@
       switch (data.type) {
         case 'data':
           document.getElementById("balance").textContent = data.data.balance;
-          document.getElementById("balance").textContent = data.data.balance;
           document.getElementById("leverage").textContent = data.data.leverage;
           document.getElementById("inposi").textContent = data.data.totalUSDT;
           document.getElementById("profitusdt").innerHTML = '<p style="color:' + (data.data.profitUSDT < 0 ? "red" : "green") + ';">' + data.data.profitUSDT + '</p>';
