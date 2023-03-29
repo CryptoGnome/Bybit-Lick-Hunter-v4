@@ -1,13 +1,19 @@
 import pkg from 'bybit-api-gnome';
 const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
-import { config } from 'dotenv';
-config();
+import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import express from 'express';
+import path from 'path';
 import chalk from 'chalk';
 import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
+import { env } from 'process';
+import http from 'http';
+import WebSocket from 'ws';
+import { networkInterfaces } from 'os';
 import moment from 'moment';
-import * as cron from 'node-cron'
+
+dotenv.config();
 
 // Discord report cron tasks
 if (process.env.USE_DISCORD == "true") {
@@ -25,6 +31,11 @@ if (process.env.USE_DISCORD == "true") {
     hook = new Webhook(process.env.DISCORD_URL);
 }
 
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+const PORT = process.env.PORT || 3000;
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
@@ -35,7 +46,38 @@ var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
 
+app.use(express.static('gui'));
+let _wsClient;
 
+app.get('/', (req, res) => {
+    const filePath = path.join(__dirname, 'gui', 'index.html');
+    res.sendFile(filePath);
+});
+
+wss.on('connection', (ws) => {
+
+    // global client
+    _wsClient = ws;
+
+    //got message from client
+    ws.on('message', (message) => {
+      console.log('Message from client: ' + message);
+    });
+});
+
+
+server.listen(PORT, () => {
+    const interfaces = networkInterfaces();
+    const addresses = [];
+    for (const iface of Object.values(interfaces)) {
+        for (const addr of iface) {
+            if (addr.family === 'IPv4' && !addr.internal) {
+                addresses.push(addr.address);
+            }
+        }
+    }
+    console.log(`GUI running on http://${addresses[0]}:${PORT}`);
+});
 
 //create ws client
 const wsClient = new WebsocketClient({
@@ -306,6 +348,107 @@ async function getBalance() {
             console.log(getLogTimesStamp() + " ::  " + chalk.redBright.bold("Profit: " + diff.toFixed(4) + " USDT" + " (" + percentGain.toFixed(2) + "%)") + "  " + chalk.magentaBright.bold("Balance: " + balance.toFixed(4) + " USDT"));
 
         }
+
+        // create the gui data
+        var percentGain = percentGain.toFixed(6);
+        var diff = diff.toFixed(6);
+        //fetch positions
+        var positions = await linearClient.getPosition();
+        var positionList = [];
+        var openPositions = await totalOpenPositions();
+        if(openPositions === null) {
+            openPositions = 0;
+        }
+        var marg = await getMargin();
+        var time = await getServerTime();
+        //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
+        for (var i = 0; i < positions.result.length; i++) {
+            if (positions.result[i].data.size > 0) {
+                
+                var pnl1 = positions.result[i].data.unrealised_pnl;
+                var pnl = pnl1.toFixed(6);
+                var symbol = positions.result[i].data.symbol;
+                var size = positions.result[i].data.size;
+                var liq = positions.result[i].data.liq_price;
+                var size = size.toFixed(4);
+                var ios = positions.result[i].data.is_isolated;
+
+                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var test = priceFetch.result[0].last_price;
+
+                let side = positions.result[i].data.side;
+                var dir = "";
+                if (side === "Buy") {
+                    dir = "✅ Long / ❌ Short";
+                } else {
+                    dir = "❌ Short / ✅ Short";
+                }
+
+                var stop_loss = positions.result[i].data.stop_loss;
+                var take_profit = positions.result[i].data.take_profit;
+                var price = positions.result[i].data.entry_price;
+                var fee = positions.result[i].data.occ_closing_fee;
+                var price = price.toFixed(4);
+                
+                //calulate size in USDT
+                var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                var position = {
+                    "symbol": symbol,
+                    "size": size,
+                    "side": dir,
+                    "sizeUSD": usdValue.toFixed(3),
+                    "pnl": pnl,
+                    "liq": liq,
+                    "price": price,
+                    "stop_loss": stop_loss,
+                    "take_profit": take_profit,
+                    "iso": ios,
+                    "test": test,
+                    "fee": fee.toFixed(3)
+                }
+                positionList.push(position);
+            }
+        }
+        //create data payload
+        const posidata = { 
+            balance: balance.toFixed(2).toString(),
+            leverage: process.env.LEVERAGE.toString(),
+            totalUSDT: marg.toFixed(2).toString(),
+            profitUSDT: diff.toString(),
+            profit: percentGain.toString(),
+            servertime: time.toString(),
+            positioncount: openPositions.toString()
+        };
+        //send data to gui
+        sendToClient('data', posidata);
+
+        const positionsData = [];
+
+        //for each position in positionList add field only 7 fields per embed
+        for(var i = 0; i < positionList.length; i++) {
+            positionsData.push({
+                symbol: positionList[i].symbol,
+                isolated: positionList[i].iso,
+                closing_fee: positionList[i].fee,
+                size: positionList[i].size,
+                sizeUSD: positionList[i].sizeUSD,
+                pnl: positionList[i].pnl,
+                side: positionList[i].side,
+                price: positionList[i].test,
+                entry_price: positionList[i].price,
+                stop_loss: positionList[i].stop_loss,
+                take_profit: positionList[i].take_profit,
+                liq_price: positionList[i].liq
+            });
+        }
+
+        sendToClient('positions', positionsData);
+
+
+
+
+
+
         return balance;
     }
     catch (e) {
@@ -923,6 +1066,13 @@ async function getSymbols() {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+//send data to gui
+function sendToClient(type, data) {
+    if (_wsClient) {
+      const message = JSON.stringify({ type, data });
+      _wsClient.send(message);
+    }
+}
 //auto create settings.json file
 async function createSettings() {
     await getMinTradingSize();
@@ -1226,6 +1376,7 @@ function messageWebhook(message) {
 
 //report webhook
 async function reportWebhook() {
+    console.log("Wird abgerufen..")
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //check if starting balance is set
