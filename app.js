@@ -1,5 +1,6 @@
 import pkg from 'bybit-api-gnome';
 const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
+import { WebsocketClient as binanceWS } from 'binance';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import express from 'express';
@@ -85,6 +86,9 @@ const wsClient = new WebsocketClient({
     secret: secret,
     market: 'linear',
     livenet: true,
+});
+const binanceClient = new binanceWS({
+    beautify: true,
 });
 //create linear client
 const linearClient = new LinearClient({
@@ -197,6 +201,89 @@ wsClient.on('update', (data) => {
         }
     }
 });
+binanceClient.on('formattedMessage', (data) => {
+    //console.log('raw message received ', JSON.stringify(data, null, 2));
+    var pair = data.liquidationOrder.symbol;
+    var price = parseFloat(data.liquidationOrder.price);
+    var oside = data.liquidationOrder.side;
+    //convert to float
+    var qty = parseFloat(data.liquidationOrder.quantity) * price;
+    //create timestamp
+    var timestamp = Math.floor(Date.now() / 1000);
+    //find what index of liquidationOrders array is the pair
+    var index = liquidationOrders.findIndex(x => x.pair === pair);
+
+    var dir = "";
+    var side = "";
+    if (oside === "BUY") {
+        dir = "Long";
+        side = "Sell";
+    } else {
+        dir = "Short";
+        side = "Buy";
+    }
+
+    //get blacklisted pairs
+    const blacklist = [];
+    var blacklist_all = process.env.BLACKLIST;
+    blacklist_all = blacklist_all.replaceAll(" ", "");
+    blacklist_all.split(',').forEach(item => {
+        blacklist.push(item);
+    });
+
+    // get whitelisted pairs
+    const whitelist = [];
+    var whitelist_all = process.env.WHITELIST;
+    whitelist_all = whitelist_all.replaceAll(" ", "");
+    whitelist_all.split(',').forEach(item => {
+        whitelist.push(item);
+    });
+
+    //if pair is not in liquidationOrders array and not in blacklist, add it
+    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
+        index = liquidationOrders.findIndex(x => x.pair === pair);
+    }
+    //if pair is in liquidationOrders array, update it
+    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        //check if timesstamp is withing 5 seconds of previous timestamp
+        if (timestamp - liquidationOrders[index].timestamp <= 5) {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            //add qty to existing qty and round to 2 decimal places
+            liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
+
+        }
+        //if timestamp is more than 5 seconds from previous timestamp, overwrite
+        else {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            liquidationOrders[index].qty = qty;
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = 1;
+        }
+
+        if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+                
+            if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                scalp(pair, index, liquidationOrders[index].qty);
+            } else {
+                console.log(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            }
+
+        }
+        else {
+            console.log(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            console.log(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+        }
+
+    }
+    else {
+        console.log(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
+    }
+});
 
 wsClient.on('open', (data,) => {
     //console.log('connection opened open:', data.wsKey);
@@ -220,6 +307,21 @@ wsClient.on('reconnect', ({ wsKey }) => {
 wsClient.on('reconnected', (data) => {
     console.log(getLogTimesStamp() + " ::  " + 'ws has reconnected ', data?.wsKey);
 });
+binanceClient.on('open', (data,) => {
+    //console.log('connection opened open:', data.wsKey);
+});
+binanceClient.on('reply', (data) => {
+    //console.log("Connection opened");
+});
+binanceClient.on('reconnecting', ({ wsKey }) => {
+    console.log('ws automatically reconnecting.... ', wsKey);
+});
+binanceClient.on('reconnected', (data) => {
+    console.log('ws has reconnected ', data?.wsKey);
+});
+binanceClient.on('error', (data) => {
+    console.log('ws saw error ', data?.wsKey);
+});
 
 //subscribe to stop_order to see when we hit stop-loss
 wsClient.subscribe('stop_order')
@@ -227,6 +329,7 @@ wsClient.subscribe('stop_order')
 //run websocket
 async function liquidationEngine(pairs) {
     wsClient.subscribe(pairs);
+    binanceClient.subscribeAllLiquidationOrders('usdm');
 }
 
 async function transferFunds(amount) {
