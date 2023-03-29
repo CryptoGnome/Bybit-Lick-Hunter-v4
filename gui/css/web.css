@@ -115,7 +115,7 @@ body {
   padding: 2px;
 }
 .logo {
-  background: url("/logo.png");
+  background: url("img/logo.png");
   margin-left: auto;
   margin-right: auto;
   width: 250px;
