@@ -14,6 +14,8 @@ import WebSocket from 'ws';
 import { networkInterfaces } from 'os';
 import moment from 'moment';
 import * as cron from 'node-cron'
+import bodyParser from 'body-parser'
+import session from 'express-session';
 
 dotenv.config();
 
@@ -48,13 +50,34 @@ var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
-
-app.use(express.static('gui'));
 let _wsClient;
 
-app.get('/', (req, res) => {
-    const filePath = path.join(__dirname, 'gui', 'index.html');
-    res.sendFile(filePath);
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/css', express.static('gui/css'));
+app.use('/img', express.static('gui/img'));
+
+app.use(session({
+    secret: process.env.GUI_SESSION_PASSWORD,
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.get('/login', (req, res) => {
+    res.sendFile('login.html', { root: 'gui' });
+});
+  
+app.post('/login', (req, res) => {
+    const password = req.body.password;
+    if (password === process.env.GUI_PASSWORD) {
+      req.session.isLoggedIn = true;
+      res.redirect('/');
+    } else {
+      res.status(401).send('Wrong password');
+    }
+});
+  
+app.get('/', isAuthenticated, (req, res) => {
+    res.sendFile('index.html', { root: 'gui' });
 });
 
 wss.on('connection', (ws) => {
@@ -79,7 +102,7 @@ server.listen(PORT, () => {
             }
         }
     }
-    console.log(`GUI running on http://${addresses[0]}:${PORT}`);
+    console.log(getLogTimesStamp() + " ::  " +  `GUI running on http://${addresses[0]}:${PORT}`);
 });
 
 //create ws client
@@ -770,6 +793,9 @@ async function scalp(pair, index, trigger_qty) {
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                            // set leverage and margin-mode
+                            setLeverage(pair, process.env.LEVERAGE)
+                            // order payload
                             const order = await linearClient.placeActiveOrder({
                                 symbol: pair,
                                 side: "Buy",
@@ -796,6 +822,9 @@ async function scalp(pair, index, trigger_qty) {
                                 var index = tickData.findIndex(x => x.pair === pair);
                                 var tickSize = tickData[index].tickSize;
                                 var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                                // set leverage and margin-mode
+                                setLeverage(pair, process.env.LEVERAGE)
+                                // order payload
                                 const order = await linearClient.placeActiveOrder({
                                     symbol: pair,
                                     side: "Buy",
@@ -853,6 +882,9 @@ async function scalp(pair, index, trigger_qty) {
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                            // set leverage and margin-mode
+                            setLeverage(pair, process.env.LEVERAGE)
+                            // order payload
                             const order = await linearClient.placeActiveOrder({
                                 symbol: pair,
                                 side: "Sell",
@@ -878,6 +910,9 @@ async function scalp(pair, index, trigger_qty) {
                                 var index = tickData.findIndex(x => x.pair === pair);
                                 var tickSize = tickData[index].tickSize;
                                 var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+                                // set leverage and margin-mode
+                                setLeverage(pair, process.env.LEVERAGE)
+                                // order payload
                                 const order = await linearClient.placeActiveOrder({
                                     symbol: pair,
                                     side: "Sell",
@@ -922,45 +957,40 @@ async function scalp(pair, index, trigger_qty) {
     }
 
 }
-//set leverage on all pairs
-async function setLeverage(pairs, leverage) {
-    for (var i = 0; i < pairs.length; i++) {
-        //remove "liquidation." from pair name
-        var pair = pairs[i].replace("liquidation.", "");
 
-        const set = await linearClient.setUserLeverage(
-            {
-                symbol: pair,
-                buy_leverage: leverage,
-                sell_leverage: leverage,
-            }
-        );
-        try{
-            var currentLeverage = await checkLeverage(pair);
-            if (currentLeverage.toString() === leverage) {
-                console.log(getLogTimesStamp() + " ::  Leverage for " + pair + " is set to " + leverage);
-            }
-            else {
-                console.log(getLogTimesStamp() + " ::  " + chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
-                //remove pair from settings.json
-                const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-                var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
-                if(settingsIndex !== -1) {
-                    settings.pairs.splice(settingsIndex, 1);
-                    fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
-                }
-            }
-            
+//set leverage on pair
+async function setLeverage(pair, leverage) {
+    //remove "liquidation." from pair name
+    pair = pair.replace("liquidation.", "");
 
-
-        }
-        catch (e) {
-            console.log(getLogTimesStamp() + " ::  " + chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
-            await sleep(1000);
-        }
-
+    if (process.env.MARGIN == "ISOLATED"){
+        const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
+        const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: true});
+    } else {
+        const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
+        const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: false});
     }
 
+    try{
+        var currentLeverage = await checkLeverage(pair);
+        if (currentLeverage.toString() === leverage) {
+            //console.log(getLogTimesStamp() + " ::  Leverage for " + pair + " is set to " + leverage);
+        }
+        else {
+            console.log(getLogTimesStamp() + " ::  " + chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
+            //remove pair from settings.json
+            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            if(settingsIndex !== -1) {
+                settings.pairs.splice(settingsIndex, 1);
+                fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+            }
+        }
+    }
+    catch (e) {
+        console.log(getLogTimesStamp() + " ::  " + chalk.redBright("ERROR setting leverage for " + pair + " to " + leverage, e));
+        await sleep(1000);
+    }
 }
 
 //set position mode to hedge
@@ -976,10 +1006,13 @@ async function setPositionMode() {
         return true;
     }
     else if (set.ret_msg === "Partial symbols switched successfully, excluding symbols with open orders or positions.") {
-        console.log(getLogTimesStamp() + " ::  Position mode set for symbols without  positions");
+        console.log(getLogTimesStamp() + " ::  Position mode set for symbols without positions");
         return false;
     }
-    else {
+    else if (set.ret_msg === "All symbols switched successfully."){
+        console.log(getLogTimesStamp() + " ::  Position mode set");
+        return false;
+    } else {
         console.log(getLogTimesStamp() + " ::  " + chalk.redBright("Unable to set position mode"));
         return false;
     }
@@ -1471,6 +1504,13 @@ function getLogTimesStamp() {
     return moment().local().toString();
 }
 
+function isAuthenticated(req, res, next) {
+    if (req.session.isLoggedIn) {
+      return next();
+    }
+    res.redirect('/login');
+}
+
 //add coins to a timeout if stop-loss is met
 function addCoinToTimeout(coin, time) {
     if (stopLossCoins.has(coin)) {
@@ -1506,7 +1546,6 @@ function messageWebhook(message) {
 
 //report webhook
 async function reportWebhook() {
-    console.log("Wird abgerufen..")
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //check if starting balance is set
@@ -1655,10 +1694,6 @@ async function main() {
         if (process.env.USE_SMART_SETTINGS.toLowerCase() == "true") {
             console.log(getLogTimesStamp() + " ::  Updating settings.json with smart settings");
             await createSettings();
-        }
-        if (process.env.USE_SET_LEVERAGE.toLowerCase() == "true") {
-            await setLeverage(pairs, process.env.LEVERAGE);
-            
         }
     }
     catch (err) {
