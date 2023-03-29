@@ -82,11 +82,14 @@ pm2 monit
 ```
 API_KEY = apikeyhere  /// Bybit API Key
 API_SECRET = apisecrether /// Bybit API Key
+GUI_PASSWORD = password // Your personal password to access the gui
+GUI_SESSION_PASSWORD = secret // Private signing key for session cookie 
 WITHDRAW_ADDRESS = withdrawladdresshere // Set your withdrawl address, make sure its set on trusted on bybit before, also you need to set your IP whitelisted
 WITHDRAW_ACCOUNT = SPOT // Wallet to withdraw from (SPOT/FUND)
 WITHDRAW_COIN = USDT // Coin to withdraw
 WITHDRAW_CHAIN = SOL // Chain to withdraw from, make sure to select the right chain for specific coin. You can see more information on bybit on manual withdraw window
 TRANSFER_TO_SPOT = false       // set to true for auto funds transfer to spot account
+MARGIN = CROSS // Margin for every trade to use (ISOLATED/CROSS)
 LEVERAGE = 10 // Default Leverage to use
 MAX_POSITION_SIZE_PERCENT = 1 // Max Position a single pair can use in equity
 MAX_OPEN_POSITIONS = 10 // Max Amount of Positions the bot will open
@@ -98,7 +101,6 @@ STOP_LOSS_PERCENT = 20 // stop loss  will be adjusted based on avg entry price
 USE_STOPLOSS = true // bool for using stop loss
 USE_SMART_SETTINGS = true // New feature that will auto setup setting based on AI data from https://liquidation.report/research to find the best offsets
 UPDATE_MIN_ORDER_SIZING = true // this will auto create order sizing for you based on PERCENT_ORDER_SIZE and update it as you balance changes
-USE_SET_LEVERAGE = true // set leverage of every pair on bot start, you only need to use this when you change leverage
 RISK_LEVEL = 2 // 1-5 this will adjust risk by ajusting offsets of the the Smart settings 1 = conservative 5 = very risky
 BLACKLIST = ETHUSDT, BTCUSDT, C98USDT // Place symbols you do not want to trade here
 USE_WHITELIST = false   // if true only pairs in WHITELIST will be traded
@@ -117,7 +119,7 @@ DISCORD_REPORT_INTERVALL = */5 * * * *  // cron style timeing for the report sen
 
 <br>
 
-*API settings for all features*
+### API settings for all features
 
 To prevent error with fetch balance and similar you should check the API settings so that all features of the bot can be used. If you have the error 10004 = signing error, you should simply create a new API data
 
