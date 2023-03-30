@@ -870,7 +870,7 @@ async function scalp(pair, index, trigger_qty, source) {
                                     close_on_trigger: false
                                 });
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgGreenBright("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                logIT(chalk.bgGreenBright.black("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                                 }
@@ -983,7 +983,7 @@ async function scalp(pair, index, trigger_qty, source) {
                 }
             }
             else {
-                logIT(chalk.bgCyan(pair + " does not exist in settings.json"));
+                logIT(chalk.bgCyan.black(pair + " does not exist in settings.json"));
             }
         }
     }
