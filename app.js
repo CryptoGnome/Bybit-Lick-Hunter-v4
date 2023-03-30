@@ -1137,7 +1137,7 @@ async function getMinTradingSize() {
                         "minOrderSize": minOrderSizePair,
                         "maxPositionSize": maxPositionSize,
                         "tickSize": data.result[i].price_filter.tick_size,
-                        "tradeable": tradeable,
+                        "tradeable": tradeable
                     }
                     //add to array
                     minOrderSizes.push(minOrderSizeJson);
@@ -1295,7 +1295,12 @@ async function createSettings() {
                         "long_price": long_risk,
                         "short_price": short_risk
                     }
-                    settings["pairs"].push(pair);
+                    if (minOrderSizes[index].tradeable == "true") {
+                        settings["pairs"].push(pair);
+                    }
+                    else {
+                        continue;
+                    }
                 }
             }
         }
