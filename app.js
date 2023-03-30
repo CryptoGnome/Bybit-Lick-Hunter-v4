@@ -1156,6 +1156,10 @@ async function getMinTradingSize() {
             try{
                 //find pair ion positions
                 var position = positions.result.find(x => x.data.symbol === data.result[i].name);
+                if (position === undefined) {
+                  logIT(chalk.bgRed(`skip ${data.result[i].name} position is undefined`));
+                  continue;
+                }
 
                 //find max position size for pair
                 var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
