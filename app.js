@@ -1295,7 +1295,7 @@ async function createSettings() {
                         "long_price": long_risk,
                         "short_price": short_risk
                     }
-                    if (minOrderSizes[index].tradeable == "true") {
+                    if (minOrderSizes[index].tradeable == true) {
                         settings["pairs"].push(pair);
                     }
                     else {
