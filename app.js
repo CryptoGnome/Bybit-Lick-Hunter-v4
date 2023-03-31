@@ -1000,7 +1000,7 @@ async function getMinTradingSize() {
             try{
                 //find pair ion positions
                 var position = positions.result.find(x => x.data.symbol === data.result[i].name);
-
+                
                 //find max position size for pair
                 var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
                 //save min order size and max position size to json
@@ -1567,7 +1567,17 @@ async function main() {
 
 }
 
+// check for config changes, and update it
+fs.watchFile('.env', (curr, prev) => {
+    console.log(getLogTimesStamp() + " ::  Config has changed!");
+    var newEnv = dotenv.parse(fs.readFileSync('.env'));
 
+    for (const key in newEnv) {
+      process.env[key] = newEnv[key];
+    }
+
+    dotenv.config();
+});
 
 try {
     main();
