@@ -15,7 +15,7 @@
       <a class="logo" href="/"></a>
       <a href="https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4" title="Github"><i class="fa-brands fa-github w3-xxlarge" style="color: #800080;"></i></a>
       <a href="https://discord.com/invite/TTn5Dxg" title="Discord"><i class="fa-brands fa-discord w3-xxlarge" style="color: #800080;"></i></a>
-      <p id="message"></p>
+      <div class="w3-right-align w3-right" id="message"><p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Disconnected</p></div>
     </header>
     <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-third">
       <div class="w3-container w3-center">
@@ -64,7 +64,8 @@
           this.socket = new WebSocket(`ws://${serverIp}:3000`);
 
           this.socket.addEventListener('open', (event) => {
-              console.log('WebSocket connection established.');
+            document.getElementById("message").innerHTML = '<p class="w3-text-green"><i class="fa-solid fa-signal fa-fade"></i> Connected</p>';
+            console.log('WebSocket connection established.');
           });
       }
 
@@ -80,6 +81,7 @@
     const socket = new WebSocketClient();
 
     socket.addEventListener('open', event => {
+      document.getElementById("message").innerHTML = '<p class="w3-text-green"><i class="fa-solid fa-signal fa-fade"></i> Connected</p>';
       console.log('WebSocket-Connection OK!');
     });
 
@@ -125,10 +127,12 @@
     });
 
     socket.addEventListener('error', event => {
+      document.getElementById("message").innerHTML = '<p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Disconnected</p>';
       console.error('WebSocket-Error:', event);
     });
 
     socket.addEventListener('close', event => {
+      document.getElementById("message").innerHTML = '<p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Disconnected</p>';
       console.log('WebSocket-Connection closed');
     });
 
