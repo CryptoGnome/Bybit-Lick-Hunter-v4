@@ -956,11 +956,12 @@ async function checkOpenPositions() {
     else {
         console.log(getLogTimesStamp() + " ::  Open positions response is null");
     }
-    console.log(getLogTimesStamp() + " ::  ----------------------------------------------------");
-    console.log(getLogTimesStamp() + " ::  ------------------ OPEN POSITIONS ------------------");
-    console.log(getLogTimesStamp() + " ::  ----------------------------------------------------");
-    console.table(postionList);
-
+    if (postionList != 0){
+        console.log("----------------------------------------------------");
+        console.log("------------------ OPEN POSITIONS ------------------");
+        console.log("----------------------------------------------------");
+        console.table(postionList);
+    }
 }
 
 async function getMinTradingSize() {
@@ -999,30 +1000,18 @@ async function getMinTradingSize() {
             try{
                 //find pair ion positions
                 var position = positions.result.find(x => x.data.symbol === data.result[i].name);
-                var leverage = position.data.leverage;
-        
-                if (process.env.LEVERAGE === leverage.toString()) {
-                    //find max position size for pair
-                    var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
-                    //save min order size and max position size to json
-                    var minOrderSizeJson = {
-                        "pair": data.result[i].name,
-                        "minOrderSize": minOrderSizePair,
-                        "maxPositionSize": maxPositionSize,
-                        "tickSize": data.result[i].price_filter.tick_size,
-                    }
-                    //add to array
-                    minOrderSizes.push(minOrderSizeJson);
 
+                //find max position size for pair
+                var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
+                //save min order size and max position size to json
+                var minOrderSizeJson = {
+                    "pair": data.result[i].name,
+                    "minOrderSize": minOrderSizePair,
+                    "maxPositionSize": maxPositionSize,
+                    "tickSize": data.result[i].price_filter.tick_size,
                 }
-                else {
-                    const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-                    var settingsIndex = settings.pairs.findIndex(x => x.symbol === data.result[i].name);
-                    if(settingsIndex !== -1) {
-                        settings.pairs.splice(settingsIndex, 1);
-                        fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
-                    }
-                }
+                //add to array
+                minOrderSizes.push(minOrderSizeJson);
             }
             catch (e) {
                 await sleep(10);
