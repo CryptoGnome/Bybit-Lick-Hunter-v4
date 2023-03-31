@@ -853,28 +853,13 @@ async function setLeverage(pair, leverage) {
     //remove "liquidation." from pair name
     pair = pair.replace("liquidation.", "");
 
-    if (process.env.MARGIN == "ISOLATED"){
-        const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
-        const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: true});
-    } else {
-        const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
-        const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: false});
-    }
-
     try{
-        var currentLeverage = await checkLeverage(pair);
-        if (currentLeverage.toString() === leverage) {
-            //console.log(getLogTimesStamp() + " ::  Leverage for " + pair + " is set to " + leverage);
-        }
-        else {
-            console.log(getLogTimesStamp() + " ::  " + chalk.yellowBright("Unable to set leverage for " + pair + " to " + leverage, "Max leverage is lower than " + leverage + " removing pair from settings.json"));
-            //remove pair from settings.json
-            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
-            if(settingsIndex !== -1) {
-                settings.pairs.splice(settingsIndex, 1);
-                fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
-            }
+        if (process.env.MARGIN == "ISOLATED"){
+            const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
+            const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: true});
+        } else {
+            const setUserLeverage = await linearClient.setUserLeverage({symbol: pair,buy_leverage: leverage,sell_leverage: leverage});
+            const setMarginSwitch = await linearClient.setMarginSwitch({symbol: pair,buy_leverage: leverage,sell_leverage: leverage,is_isolated: false});
         }
     }
     catch (e) {
