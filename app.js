@@ -515,7 +515,7 @@ async function getBalance() {
                 if (side === "Buy") {
                     dir = "✅ Long / ❌ Short";
                 } else {
-                    dir = "❌ Short / ✅ Short";
+                    dir = "❌ Long / ✅ Short";
                 }
 
                 var stop_loss = positions.result[i].data.stop_loss;
