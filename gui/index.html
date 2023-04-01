@@ -4,64 +4,66 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Lick-Hunter Bot</title>
-    <link rel="stylesheet" type="text/css" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link class="theme" rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <link rel="stylesheet" href="/css/web.css" />
     <link rel="icon" type="image/x-icon" href="/img/icon.ico" />
   </head>
-  <body class="w3-theme-l1 w3-content">
-    <div class="w3-container">
-      <h1 class="w3-container w3-center">
+  <body>
+
+<!--  
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    
+    <div class="menu" id="menu">
+      <ul>
+        <li class="active"><a href="#">Dashboard</a></li>
+        <li><a href="#">Settings</a></li>
+        <li><a href="#">Statistics</a></li>
+      </ul>
+    </div> -->
+
+    <div class="mid">
+      <header>
         <a class="logo" href="/"></a>
-      </h1>
-      <h3 class="w3-half w3-left-align">
-        <a href="#" title="Dashboard"><i class="fa-solid fa-chalkboard" style="color: #800080;"></i></a>
-        <a href="#" title="Settings"><i class="fa-solid fa-gear" style="color: #800080;"></i></a>
-        <a href="https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4" title="Github"><i class="fa-brands fa-github" style="color: #800080;"></i></a>
-        <a href="https://discord.com/invite/TTn5Dxg" title="Discord"><i class="fa-brands fa-discord" style="color: #800080;"></i></a>
-      </h3>
-      <div class="w3-half w3-right-align" id="websoc_status"><p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Websocket Disconnected</p></div>
-    </div>
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-third">
-      <div class="w3-container w3-center">
-        <h4>Balance</h4>
-        <p id="balance"></p>
+        <p id="message"></p>
+      </header>
+      <div class="fields">
+        <div class="field">
+          <div class="fieldName">Balance</div>
+          <div class="fieldValue">
+            <pre id="balance"><div class="lds-ripple"><div></div><div></div></div></pre>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fieldName">Leverage</div>
+          <div class="fieldValue"><pre id="leverage"><div class="lds-ripple"><div></div><div></div></div></pre></div>
+        </div>
+        <div class="field">
+          <div class="fieldName">Total USDT in Posi</div>
+          <div class="fieldValue">
+            <pre id="inposi"><div class="lds-ripple"><div></div><div></div></div></pre>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fieldName">Profit USDT</div>
+          <div class="fieldValue">
+            <pre id="profitusdt"><div class="lds-ripple"><div></div><div></div></div></pre>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fieldName">Profit %</div>
+          <div class="fieldValue"><pre id="profit"><div class="lds-ripple"><div></div><div></div></div></pre></div>
+        </div>
+      </div>
+      <br /><br />
+      <div class="posifields" id="openpositions">
+        No open Positions
+      </div>
+      <div class="footer" id="footer">
       </div>
     </div>
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-third">
-      <div class="w3-container w3-center">
-        <h4>Leverage</h4>
-        <p id="leverage"></p>
-      </div>
-    </div>
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-third">
-      <div class="w3-container w3-center">
-        <h4>Total USDT in Positions</h4>
-        <p id="inposi"></p>
-      </div>
-    </div>    
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-half">
-      <div class="w3-container w3-center">
-        <h4>Profit USDT</h4>
-        <p id="profitusdt"></p>
-      </div>
-    </div>
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-half">
-      <div class="w3-container w3-center">
-        <h4>Profit %</h4>
-        <p id="profit"></p>
-      </div>
-    </div>
-
-    <div class="w3-row" id="openpositions"></div>
-
-    <div class="w3-panel w3-leftbar w3-border-purple w3-card w3-row">
-      <div class="w3-container w3-center">
-        <p id="footer"></p>
-      </div>
-    </div>
-
     <script>
 
     class WebSocketClient {
@@ -70,8 +72,7 @@
           this.socket = new WebSocket(`ws://${serverIp}:3000`);
 
           this.socket.addEventListener('open', (event) => {
-            document.getElementById("websoc_status").innerHTML = '<p class="w3-text-green"><i class="fa-solid fa-signal fa-fade"></i> Websocket Connected</p>';
-            console.log('WebSocket connection established.');
+              console.log('WebSocket connection established.');
           });
       }
 
@@ -87,7 +88,6 @@
     const socket = new WebSocketClient();
 
     socket.addEventListener('open', event => {
-      document.getElementById("websoc_status").innerHTML = '<p class="w3-text-green"><i class="fa-solid fa-signal fa-fade"></i> Websocket Connected</p>';
       console.log('WebSocket-Connection OK!');
     });
 
@@ -107,25 +107,26 @@
         case 'positions':
           var posis = "";
           for (let i in data.data){
-            posis += '<div class=\"w3-panel w3-leftbar w3-border-' + (data.data[i].pnl < 0 ? "red" : "green") + ' w3-card w3-third\"><div class=\"w3-container\">' +
-            '<div class=\"w3-center\"><p>' + data.data[i].side + '</p> '+ data.data[i].symbol +'</div>' +
-            '<p><b>Isolated:</b> <span class=\"w3-right-align\">' + data.data[i].isolated + '</span></p>' +
-            '<p><b>Closing Fee:</b> <span class=\"w3-right-align\">' + data.data[i].closing_fee + '</span></p>' +
-            '<p><b>Size:</b> <span class=\"w3-right-align\">' + data.data[i].size + '</span></p>' +
-            '<p><b>Value in $:</b> <span class=\"w3-right-align\">' + data.data[i].sizeUSD + '</span></p>' +
-            '<p><b>Liq Price:</b> <span class=\"w3-right-align\">' + data.data[i].liq_price + '</span></p>' +
-            '<p><b>Price:</b> <span class=\"w3-right-align\">' + data.data[i].price + '</span></p>' +
-            '<p><b>Entry Price:</b> <span class=\"w3-right-align\">' + data.data[i].entry_price + '</span></p>' +
-            '<p><b>Stop Loss:</b> <span class=\"w3-right-align\">' + data.data[i].stop_loss + '</span></p>' +
-            '<p><b>Take Profit:</b> <span class=\"w3-right-align\">' + data.data[i].take_profit + '</span></p>' +
-            '<p><b>PnL:</b> <span class=\"w3-right-align\" style="color:' + (data.data[i].pnl < 0 ? "red" : "green") + ';">' + data.data[i].pnl + '</span></p>' +
+            posis += '<div class=\"posifield\"><div class=\"posifieldValue\">' +
+            '<div class=\"fieldName\" style=\"text-align: center;\">' +
+            '<p class=\"test\">' + data.data[i].side + '</p> '+ data.data[i].symbol +'</div><pre>' +
+            '<b>Isolated</b> <p class=\"value\">' + data.data[i].isolated + '</p><br>' +
+            '<b>Closing Fee</b> <p class=\"value\">' + data.data[i].closing_fee + '</p><br>' +
+            '<b>Size</b> <p class=\"value\">' + data.data[i].size + '</p><br>' +
+            '<b>Value in $</b> <p class=\"value\">' + data.data[i].sizeUSD + '</p><br>' +
+            '<b>Liq Price</b> <p class=\"value\">' + data.data[i].liq_price + '</p><br></pre><pre>' +
+            '<b>Price</b> <p class=\"value\">' + data.data[i].price + '</p><br>' +
+            '<b>Entry Price</b> <p class=\"value\">' + data.data[i].entry_price + '</p><br>' +
+            '<b>Stop Loss</b> <p class=\"value\">' + data.data[i].stop_loss + '</p><br>' +
+            '<b>Take Profit</b> <p class=\"value\">' + data.data[i].take_profit + '</p><br><br>' +
+            '<b>PnL</b> <p class="value" style="color:' + (data.data[i].pnl < 0 ? "red" : "green") + ';">' + data.data[i].pnl + '</p><br></pre>' +
             '</div></div>';
             i++;
           }
           if (posis != 0)
             document.getElementById("openpositions").innerHTML = posis;
           else 
-            document.getElementById("openpositions").innerHTML = '<div class=\"w3-panel w3-leftbar w3-border-purple w3-card w3-row\">No open Positions</div>';
+            document.getElementById("openpositions").innerHTML = "No open Positions";
           break;
         default:
           console.warn('Unknown message: ', event.data.type);
@@ -133,15 +134,20 @@
     });
 
     socket.addEventListener('error', event => {
-      document.getElementById("websoc_status").innerHTML = '<p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Websocket Disconnected</p>';
       console.error('WebSocket-Error:', event);
     });
 
     socket.addEventListener('close', event => {
-      document.getElementById("websoc_status").innerHTML = '<p class="w3-text-red"><i class="fa-solid fa-signal fa-fade"></i> Websocket Disconnected</p>';
       console.log('WebSocket-Connection closed');
     });
 
+    function toggleMenu() {
+      var menu = document.getElementById("menu");
+      menu.classList.toggle("active");
+
+      var hamburger = document.getElementsByClassName("hamburger")[0];
+      hamburger.classList.toggle("active");
+    }
     </script>
   </body>
 </html>
