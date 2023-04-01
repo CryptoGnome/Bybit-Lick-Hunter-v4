@@ -78,6 +78,29 @@ pm2 monit
 
 *Using pm2 will allow the bot to catch restarts and run after you close the server, if you are familiar with linux and would prefer to use screen you could also do that.*
 
+### Using the dockerfile:
+
+To run the bot as docker container just do it this way
+
+```
+docker build -t lick-hunter .
+```
+
+```
+docker run -p 3000:3000 --name lick-hunter-container lick-hunter
+```
+
+*Dont forget to set your api inside the dockerfile*
+
+```
+
+# Set environment variables for .env file
+ENV API_KEY=apikeyhere
+ENV API_SECRET=apisecrethere
+ENV GUI_PASSWORD=password
+ENV FIRST_START=false
+```
+
 ### Settings Explained:
 ```
 API_KEY = apikeyhere  /// Bybit API Key
