@@ -310,18 +310,18 @@ binanceClient.on('formattedMessage', (data) => {
             if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 scalp(pair, index, liquidationOrders[index].qty);
             } else {
-                console.log(getLogTimesStamp() + " ::  " + chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             }
 
         }
         else {
-            console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-            console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+            logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
         }
 
     }
     else {
-        console.log(getLogTimesStamp() + " ::  " + chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
+        logIT(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
     }
 });
 
