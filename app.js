@@ -1,5 +1,6 @@
 import pkg from 'bybit-api-gnome';
 const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
+import { WebsocketClient as binanceWS } from 'binance';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import express from 'express';
@@ -50,6 +51,7 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
+const apikey = process.env.LIQUIDATION_KEY;
 const stopLossCoins = new Map();
 var rateLimit = 2000;
 var baseRateLimit = 2000;
@@ -118,6 +120,9 @@ const wsClient = new WebsocketClient({
     secret: secret,
     market: 'linear',
     livenet: true,
+});
+const binanceClient = new binanceWS({
+    beautify: true,
 });
 //create linear client
 const linearClient = new LinearClient({
@@ -209,8 +214,11 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].timestamp = timestamp;
                 liquidationOrders[index].amount = 1;
             }
-    
-            if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+            
+            //Load min volume from settings.json
+            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
                 
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     scalp(pair, index, liquidationOrders[index].qty);
@@ -220,7 +228,7 @@ wsClient.on('update', (data) => {
     
             }
             else {
-                logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+                logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
                 logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
             }
     
@@ -228,6 +236,92 @@ wsClient.on('update', (data) => {
         else {
             logIT(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
         }
+    }
+});
+binanceClient.on('formattedMessage', (data) => {
+    //console.log('raw message received ', JSON.stringify(data, null, 2));
+    var pair = data.liquidationOrder.symbol;
+    var price = parseFloat(data.liquidationOrder.price);
+    var oside = data.liquidationOrder.side;
+    //convert to float
+    var qty = parseFloat(data.liquidationOrder.quantity) * price;
+    //create timestamp
+    var timestamp = Math.floor(Date.now() / 1000);
+    //find what index of liquidationOrders array is the pair
+    var index = liquidationOrders.findIndex(x => x.pair === pair);
+
+    var dir = "";
+    var side = "";
+    if (oside === "BUY") {
+        dir = "Long";
+        side = "Sell";
+    } else {
+        dir = "Short";
+        side = "Buy";
+    }
+
+    //get blacklisted pairs
+    const blacklist = [];
+    var blacklist_all = process.env.BLACKLIST;
+    blacklist_all = blacklist_all.replaceAll(" ", "");
+    blacklist_all.split(',').forEach(item => {
+        blacklist.push(item);
+    });
+
+    // get whitelisted pairs
+    const whitelist = [];
+    var whitelist_all = process.env.WHITELIST;
+    whitelist_all = whitelist_all.replaceAll(" ", "");
+    whitelist_all.split(',').forEach(item => {
+        whitelist.push(item);
+    });
+
+    //if pair is not in liquidationOrders array and not in blacklist, add it
+    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
+        index = liquidationOrders.findIndex(x => x.pair === pair);
+    }
+    //if pair is in liquidationOrders array, update it
+    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        //check if timesstamp is withing 5 seconds of previous timestamp
+        if (timestamp - liquidationOrders[index].timestamp <= 5) {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            //add qty to existing qty and round to 2 decimal places
+            liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
+
+        }
+        //if timestamp is more than 5 seconds from previous timestamp, overwrite
+        else {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            liquidationOrders[index].qty = qty;
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = 1;
+        }
+
+        //Load min volume from settings.json
+        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+        if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
+                
+            if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                scalp(pair, index, liquidationOrders[index].qty);
+            } else {
+                console.log(getLogTimesStamp() + " ::  " + chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            }
+
+        }
+        else {
+            console.log(getLogTimesStamp() + " ::  " + chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            console.log(getLogTimesStamp() + " ::  " + chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+        }
+
+    }
+    else {
+        console.log(getLogTimesStamp() + " ::  " + chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
     }
 });
 
@@ -253,6 +347,21 @@ wsClient.on('reconnect', ({ wsKey }) => {
 wsClient.on('reconnected', (data) => {
     logIT('ws has reconnected ', data?.wsKey);
 });
+binanceClient.on('open', (data,) => {
+    //console.log('connection opened open:', data.wsKey);
+});
+binanceClient.on('reply', (data) => {
+    //console.log("Connection opened");
+});
+binanceClient.on('reconnecting', ({ wsKey }) => {
+    console.log(getLogTimesStamp() + " ::  " + 'ws automatically reconnecting.... ', wsKey);
+});
+binanceClient.on('reconnected', (data) => {
+    console.log(getLogTimesStamp() + " ::  " + 'ws has reconnected ', data?.wsKey);
+});
+binanceClient.on('error', (data) => {
+    console.log(getLogTimesStamp() + " ::  " + 'ws saw error ', data?.wsKey);
+});
 
 //subscribe to stop_order to see when we hit stop-loss
 wsClient.subscribe('stop_order')
@@ -260,6 +369,7 @@ wsClient.subscribe('stop_order')
 //run websocket
 async function liquidationEngine(pairs) {
     wsClient.subscribe(pairs);
+    binanceClient.subscribeAllLiquidationOrders('usdm');
 }
 
 async function transferFunds(amount) {
@@ -414,7 +524,7 @@ async function getBalance() {
                 if (side === "Buy") {
                     dir = "✅ Long / ❌ Short";
                 } else {
-                    dir = "❌ Short / ✅ Short";
+                    dir = "❌ Long / ✅ Short";
                 }
 
                 var stop_loss = positions.result[i].data.stop_loss;
@@ -1001,10 +1111,12 @@ async function getMinTradingSize() {
             if (minOrderSizeUSD < usdValue) {
                 //use min order size
                 var minOrderSizePair = minOrderSize;
+                var tradeable = false
             }
             else {
                 //convert min orderSizeUSD to pair value
                 var minOrderSizePair = (minOrderSizeUSD / price);
+                var tradeable = true
             }
             try{
                 //find pair ion positions
@@ -1095,8 +1207,15 @@ async function createSettings() {
     await getMinTradingSize();
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
     //get info from https://api.liquidation.report/public/research
-    const url = "https://liquidation.report/api/lickhunter";
-    fetch(url)
+    const url = "https://liquidation-report.p.rapidapi.com/lickhunterpro";
+    const options = {
+        method: 'GET',
+        headers: {
+            'X-RapidAPI-Key': apikey,
+            'X-RapidAPI-Host': 'liquidation-report.p.rapidapi.com'
+        }
+    };
+    fetch(url,options)
     .then(res => res.json())
     .then((out) => {
         //create settings.json file with multiple pairs
@@ -1150,7 +1269,7 @@ async function createSettings() {
                     var pair = {
                         "symbol": out.data[i].name + "USDT",
                         "leverage": process.env.LEVERAGE,
-                        "min_volume": process.env.MIN_LIQUIDATION_VOLUME,
+                        "min_volume": out.data[i].liq_volume,
                         "take_profit": process.env.TAKE_PROFIT_PERCENT,
                         "stop_loss": process.env.STOP_LOSS_PERCENT,
                         "order_size": minOrderSizes[index].minOrderSize,
@@ -1158,7 +1277,12 @@ async function createSettings() {
                         "long_price": long_risk,
                         "short_price": short_risk
                     }
-                    settings["pairs"].push(pair);
+                    if (minOrderSizes[index].tradeable == true) {
+                        settings["pairs"].push(pair);
+                    }
+                    else {
+                        continue;
+                    }
                 }
             }
         }
@@ -1186,8 +1310,15 @@ async function updateSettings() {
             }
             var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
             var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
-            const url = "https://liquidation.report/api/lickhunter";
-            fetch(url)
+            const url = "https://liquidation-report.p.rapidapi.com/lickhunterpro";
+            const options = {
+                method: 'GET',
+                headers: {
+                    'X-RapidAPI-Key': apikey,
+                    'X-RapidAPI-Host': 'liquidation-report.p.rapidapi.com'
+                }
+            };
+            fetch(url,options)
             .then(res => res.json())
             .then((out) => {
                 //create settings.json file with multiple pairs
@@ -1237,6 +1368,7 @@ async function updateSettings() {
                         //updated settings.json file
                         settingsFile.pairs[settingsIndex].long_price = long_risk;
                         settingsFile.pairs[settingsIndex].short_price = short_risk;
+                        settingsFile.pairs[settingsIndex].min_volume = out.data[i].liq_volume;
                     }
                 }
                 fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
@@ -1292,6 +1424,7 @@ async function updateSettings() {
                                 //updated settings.json file
                                 settingsFile.pairs[settingsIndex].long_price = long_risk;
                                 settingsFile.pairs[settingsIndex].short_price = short_risk;
+                                settingsFile.pairs[settingsIndex].min_volume = researchFile.data[i].liq_volume;
                             }
                         }
                         catch(err){
@@ -1412,6 +1545,7 @@ async function reportWebhook() {
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //check if starting balance is set
+        var balance = await getBalance();
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
             fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
@@ -1427,7 +1561,6 @@ async function reportWebhook() {
         const times = calculateBotUptime(timeUptimeInSeconds);
 
         //fetch balance
-        var balance = await getBalance();
         var diff = balance - startingBalance;
         var percentGain = (diff / startingBalance) * 100;
         var percentGain = percentGain.toFixed(6);

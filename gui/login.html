@@ -4,16 +4,28 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Login - Lick-Hunter Bot</title>
+    <link rel="stylesheet" type="text/css" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link class="theme" rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <link rel="stylesheet" href="/css/web.css" />
     <link rel="icon" type="image/x-icon" href="/img/icon.ico" />
   </head>
-  <body>
-    <div class="middle">
-        <form method="post" action="/login">
+  <body class="w3-theme-l1 w3-content">   
+    <div class="w3-display-middle">
+      <h3 class="w3-row w3-center">
+        <a class="logo" href="/"></a>
+        <a href="https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4" title="Github"><i class="fa-brands fa-github" style="color: #800080;"></i></a>
+        <a href="https://discord.com/invite/TTn5Dxg" title="Discord"><i class="fa-brands fa-discord" style="color: #800080;"></i></a>
+      </h3>
+      <div class="w3-panel w3-leftbar w3-border-purple w3-card">
+        <div class="w3-container w3-center w3-padding" style="width: 300px;">
+          <form method="post" action="/login">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
-            <button type="submit">Login</button>
-        </form>
+            <input class="w3-section" type="password" id="password" name="password" required>
+            <button class="w3-button w3-purple w3-hover-purple" type="submit">Login</button>
+          </form>
+        </div>
+      </div>
     </div>
   </body>
 </html>
