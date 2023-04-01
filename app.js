@@ -9,6 +9,7 @@ import fs from 'fs';
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 import { env } from 'process';
 import http from 'http';
+import https from 'https';
 import WebSocket from 'ws';
 import { networkInterfaces } from 'os';
 import moment from 'moment';
@@ -23,8 +24,16 @@ if (process.env.USE_DISCORD == "true") {
     const cronTaskDiscordPositionReport = cron.schedule(process.env.DISCORD_REPORT_INTERVALL, () => {
         logIT("Discord report send!");
         reportWebhook();
-        });
+    });
 }
+// Update function
+if (process.env.FIRST_START === 'false') {
+    updateLastDeploymentDateTime(new Date());
+    changeENV('FIRST_START', 'true');
+    dotenv.config();
+}
+// Check for updates
+checkForUpdates()
 
 // used to calculate bot runtime
 const timestampBotStart = moment();
@@ -1114,7 +1123,7 @@ async function createSettings() {
                         var short_risk = out.data[i].short_price * 0.995
                     }
                     else if (riskLevel == 2) {
-                        //calculate price 1% below current price and1% above current price
+                        //calculate price 1% below current price and 1% above current price
                         var long_risk = out.data[i].long_price * 1.01
                         var short_risk = out.data[i].short_price * 0.99
                     }
@@ -1574,8 +1583,63 @@ async function main() {
             rateLimit = rateLimit + 1000;
         }
     }
-
 }
+
+// check for updates since first use
+function getLastDeploymentDateTime() {
+    return new Promise((resolve, reject) => {
+      fs.readFile("deployment", 'utf8', (error, data) => {
+        if (error) {
+          reject(error);
+        } else {
+          const dateTime = new Date(data.trim());
+          resolve(dateTime);
+        }
+      });
+    });
+}
+
+function updateLastDeploymentDateTime(dateTime) {
+    fs.writeFile("deployment", dateTime.toISOString(), (error) => {
+        if (error) {
+            console.error(error);
+        } else {
+            console.log('Datum und Uhrzeit des letzten Deployments aktualisiert:', dateTime.toLocaleString());
+        }
+    });
+}
+
+async function checkForUpdates() {
+    const lastDeploymentDateTime = await getLastDeploymentDateTime();
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/CryptoGnome/Bybit-Lick-Hunter-v4/commits?since=${lastDeploymentDateTime.toISOString()}`,
+      headers: {
+        'User-Agent': 'Node.js'
+      }
+    };
+  
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        const commits = JSON.parse(data);
+        if (commits.length > 0) {
+          logIT(chalk.red(`There is a new update available!` + 'https://github.com/CryptoGnome/Bybit-Lick-Hunter-v4'));
+        } else {
+          logIT(chalk.green('You are on the newest version of Lick-Hunter!'));
+        }
+      });
+    });
+  
+    req.on('error', (error) => {
+      logIT(error);
+    });
+  
+    req.end();
+  }
 
 // check for config changes, and update it
 fs.watchFile('.env', (curr, prev) => {
@@ -1588,6 +1652,16 @@ fs.watchFile('.env', (curr, prev) => {
 
     dotenv.config();
 });
+
+// change the .env the right way
+function changeENV(variable, value) {
+    const env = dotenv.parse(fs.readFileSync('.env'));
+    env[variable] = value;
+    const envString = Object.keys(env).map(key => `${key}=${env[key]}`).join('\n');
+    fs.writeFileSync('.env', envString);
+
+    dotenv.config();
+}
 
 try {
     main();
