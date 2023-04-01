@@ -8,12 +8,27 @@
     <link rel="icon" type="image/x-icon" href="/img/icon.ico" />
   </head>
   <body>
-    <header class="container">
-      <a class="logo" href="/"></a>
-      <p id="message"></p>
-    </header>
 
-    <div class="container message">
+<!--  
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    
+    <div class="menu" id="menu">
+      <ul>
+        <li class="active"><a href="#">Dashboard</a></li>
+        <li><a href="#">Settings</a></li>
+        <li><a href="#">Statistics</a></li>
+      </ul>
+    </div> -->
+
+    <div class="mid">
+      <header>
+        <a class="logo" href="/"></a>
+        <p id="message"></p>
+      </header>
       <div class="fields">
         <div class="field">
           <div class="fieldName">Balance</div>
@@ -126,6 +141,13 @@
       console.log('WebSocket-Connection closed');
     });
 
+    function toggleMenu() {
+      var menu = document.getElementById("menu");
+      menu.classList.toggle("active");
+
+      var hamburger = document.getElementsByClassName("hamburger")[0];
+      hamburger.classList.toggle("active");
+    }
     </script>
   </body>
 </html>

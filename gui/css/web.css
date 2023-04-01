@@ -115,7 +115,7 @@ body {
   padding: 2px;
 }
 .logo {
-  background: url("img/logo.png");
+  background: url("/img/logo.png");
   margin-left: auto;
   margin-right: auto;
   width: 250px;
@@ -190,6 +190,11 @@ b {
   align-items: center;
   height: 100vh;
 }
+.mid {
+  /* margin-left: 200px; */
+  display: grid;
+  place-items: center;
+}
 form {
   display: flex;
   flex-direction: column;
@@ -223,4 +228,120 @@ button {
 }
 button:hover {
   background-color: #3e8e41;
+}
+/* Styles for the menu */
+.menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: #222;
+  color: #fff;
+  overflow-y: auto;
+  width: 200px;
+  z-index: 1;
+  padding: 5px;
+}
+
+.menu ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 50px;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 3px;
+}
+
+.menu li.active {
+  background-color: #36393F;
+}
+
+.menu li:hover {
+  background-color: #36393F;
+}
+
+.menu a {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Hamburger menu */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.hamburger span,
+.hamburger span:before,
+.hamburger span:after {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: #fff;
+  margin-bottom: 5px;
+  transition: transform 0.3s ease-out;
+}
+
+.hamburger span:before {
+  transform-origin: left center;
+}
+
+.hamburger span:after {
+  transform-origin: left center;
+}
+
+.hamburger.active span {
+  transform: rotate(45deg);
+}
+
+.hamburger.active span:before {
+  transform: translateX(5px) rotate(-45deg);
+}
+
+.hamburger.active span:after {
+  transform: translateX(5px) rotate(45deg);
+}
+
+/* Styles for the page content */
+.container {
+  margin-left: 200px; /* width of the menu */
+  padding: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  /* Hide the menu by default */
+  .menu {
+    transform: translateX(-200px);
+  }
+
+  .mid {
+    margin-left: 0px;
+    display: grid;
+    place-items: center;
+  }
+  
+  /* Show the hamburger menu */
+  .hamburger {
+    display: block;
+  }
+  
+  /* Hide the page content */
+  .container {
+    margin-left: 0;
+  }
+  
+  /* Show the menu when the hamburger is clicked */
+  .menu.active {
+    transform: translateX(0);
+  }
 }
