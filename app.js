@@ -1604,7 +1604,7 @@ function updateLastDeploymentDateTime(dateTime) {
         if (error) {
             console.error(error);
         } else {
-            console.log('Datum und Uhrzeit des letzten Deployments aktualisiert:', dateTime.toLocaleString());
+            console.log('Updated last change: ', dateTime.toLocaleString());
         }
     });
 }
