@@ -1001,10 +1001,13 @@ async function getMinTradingSize() {
             if (minOrderSizeUSD < usdValue) {
                 //use min order size
                 var minOrderSizePair = minOrderSize;
+                //not tradeable since our percent order size is much lower than min order size value
+                var tradeable = false
             }
             else {
                 //convert min orderSizeUSD to pair value
                 var minOrderSizePair = (minOrderSizeUSD / price);
+                var tradeable = true
             }
             try{
                 //find pair ion positions
@@ -1018,6 +1021,7 @@ async function getMinTradingSize() {
                     "minOrderSize": minOrderSizePair,
                     "maxPositionSize": maxPositionSize,
                     "tickSize": data.result[i].price_filter.tick_size,
+                    "tradeable": tradeable
                 }
                 //add to array
                 minOrderSizes.push(minOrderSizeJson);
@@ -1158,7 +1162,12 @@ async function createSettings() {
                         "long_price": long_risk,
                         "short_price": short_risk
                     }
-                    settings["pairs"].push(pair);
+                    if (minOrderSizes[index].tradeable == true) {
+                        settings["pairs"].push(pair);
+                    }
+                    else {
+                        continue;
+                    }
                 }
             }
         }
