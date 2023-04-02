@@ -221,14 +221,14 @@ wsClient.on('update', (data) => {
             if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
                 
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                    scalp(pair, index, liquidationOrders[index].qty);
+                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit');
                 } else {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 }
     
             }
             else {
-                logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+                logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " @Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
                 logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
             }
     
@@ -308,14 +308,14 @@ binanceClient.on('formattedMessage', (data) => {
         if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
                 
             if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                scalp(pair, index, liquidationOrders[index].qty);
+                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
             } else {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             }
 
         }
         else {
-            logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + "@Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " @Binance with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
             logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
         }
 
@@ -775,7 +775,7 @@ async function totalOpenPositions() {
     }
 }
 //against trend
-async function scalp(pair, index, trigger_qty) {
+async function scalp(pair, index, trigger_qty, source) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
     logIT("Open positions: " + openPositions);
@@ -817,7 +817,7 @@ async function scalp(pair, index, trigger_qty) {
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                             }
                             
             
@@ -846,7 +846,7 @@ async function scalp(pair, index, trigger_qty) {
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                                 }
                             }
                             else {
@@ -906,7 +906,7 @@ async function scalp(pair, index, trigger_qty) {
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                             }
     
                         }
@@ -934,7 +934,7 @@ async function scalp(pair, index, trigger_qty) {
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                                 }
                             }
                             else {
@@ -1444,7 +1444,7 @@ async function updateSettings() {
 }
 
 //discord webhook
-function orderWebhook(symbol, amount, side, position, pnl, qty) {
+function orderWebhook(symbol, amount, side, position, pnl, qty, source) {
     if(process.env.USE_DISCORD == "true") {
         if (side == "Buy") {
             var color = '#00ff00';
@@ -1467,6 +1467,7 @@ function orderWebhook(symbol, amount, side, position, pnl, qty) {
             .addField('Amount: ', amount.toString(), true)
             .addField('Liq. Vol.: ', qty.toFixed(0), true)
             .addField('Side: ', dir, true)
+            .addField('Source: ', source, true)
             .setColor(color)
             .setTimestamp();
         try {
