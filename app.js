@@ -1111,6 +1111,7 @@ async function getMinTradingSize() {
             if (minOrderSizeUSD < usdValue) {
                 //use min order size
                 var minOrderSizePair = minOrderSize;
+                //not tradeable since our percent order size is much lower than min order size value
                 var tradeable = false
             }
             else {
@@ -1545,6 +1546,8 @@ function messageWebhook(message) {
 async function reportWebhook() {
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+        //fetch balance first if not startingBalance will be null
+        var balance = await getBalance();
         //check if starting balance is set
         var balance = await getBalance();
         if (settings.startingBalance === 0) {
