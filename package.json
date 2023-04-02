@@ -8,6 +8,7 @@
     "accepts": "^1.3.8",
     "array-flatten": "^1.1.1",
     "axios": "^0.21.4",
+    "binance": "^2.4.1",
     "body-parser": "^1.20.1",
     "bybit-api-gnome": "^3.3.2",
     "bytes": "^3.1.2",
