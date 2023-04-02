@@ -1411,6 +1411,8 @@ function messageWebhook(message) {
 async function reportWebhook() {
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
+        //fetch balance first if not startingBalance will be null
+        var balance = await getBalance();
         //check if starting balance is set
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
@@ -1427,7 +1429,6 @@ async function reportWebhook() {
         const times = calculateBotUptime(timeUptimeInSeconds);
 
         //fetch balance
-        var balance = await getBalance();
         var diff = balance - startingBalance;
         var percentGain = (diff / startingBalance) * 100;
         var percentGain = percentGain.toFixed(6);
