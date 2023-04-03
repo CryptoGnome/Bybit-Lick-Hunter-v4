@@ -51,6 +51,7 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
+const apikey = process.env.LIQUIDATION_KEY;
 const stopLossCoins = new Map();
 var rateLimit = 2000;
 var baseRateLimit = 2000;
@@ -214,10 +215,13 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].amount = 1;
             }
             
-            if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+            //Load min volume from settings.json
+            const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+            var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+            if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
                 
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                    scalp(pair, index, liquidationOrders[index].qty);
+                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit');
                 } else {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 }
@@ -298,10 +302,13 @@ binanceClient.on('formattedMessage', (data) => {
             liquidationOrders[index].amount = 1;
         }
 
-        if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+        //Load min volume from settings.json
+        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        var settingsIndex = settings.pairs.findIndex(x => x.symbol === pair);
+        if (settingsIndex !== -1 && liquidationOrders[index].qty > settings.pairs[settingsIndex].min_volume) {
                 
             if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                scalp(pair, index, liquidationOrders[index].qty);
+                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
             } else {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             }
@@ -776,7 +783,7 @@ async function totalOpenPositions() {
     }
 }
 //against trend
-async function scalp(pair, index, trigger_qty) {
+async function scalp(pair, index, trigger_qty, source) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
     logIT("Open positions: " + openPositions);
@@ -818,7 +825,7 @@ async function scalp(pair, index, trigger_qty) {
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                             }
                             
             
@@ -847,7 +854,7 @@ async function scalp(pair, index, trigger_qty) {
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                                 }
                             }
                             else {
@@ -907,7 +914,7 @@ async function scalp(pair, index, trigger_qty) {
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
+                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                             }
     
                         }
@@ -935,7 +942,7 @@ async function scalp(pair, index, trigger_qty) {
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty);
+                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                                 }
                             }
                             else {
@@ -1210,8 +1217,15 @@ async function createSettings() {
     await getMinTradingSize();
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
     //get info from https://api.liquidation.report/public/research
-    const url = "https://liquidation.report/api/lickhunter";
-    fetch(url)
+    const url = "https://liquidation-report.p.rapidapi.com/lickhunterpro";
+    const options = {
+        method: 'GET',
+        headers: {
+            'X-RapidAPI-Key': apikey,
+            'X-RapidAPI-Host': 'liquidation-report.p.rapidapi.com'
+        }
+    };
+    fetch(url,options)
     .then(res => res.json())
     .then((out) => {
         //create settings.json file with multiple pairs
@@ -1265,7 +1279,7 @@ async function createSettings() {
                     var pair = {
                         "symbol": out.data[i].name + "USDT",
                         "leverage": process.env.LEVERAGE,
-                        "min_volume": process.env.MIN_LIQUIDATION_VOLUME,
+                        "min_volume": out.data[i].liq_volume,
                         "take_profit": process.env.TAKE_PROFIT_PERCENT,
                         "stop_loss": process.env.STOP_LOSS_PERCENT,
                         "order_size": minOrderSizes[index].minOrderSize,
@@ -1306,8 +1320,15 @@ async function updateSettings() {
             }
             var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
             var settingsFile = JSON.parse(fs.readFileSync('settings.json'));
-            const url = "https://liquidation.report/api/lickhunter";
-            fetch(url)
+            const url = "https://liquidation-report.p.rapidapi.com/lickhunterpro";
+            const options = {
+                method: 'GET',
+                headers: {
+                    'X-RapidAPI-Key': apikey,
+                    'X-RapidAPI-Host': 'liquidation-report.p.rapidapi.com'
+                }
+            };
+            fetch(url,options)
             .then(res => res.json())
             .then((out) => {
                 //create settings.json file with multiple pairs
@@ -1357,6 +1378,7 @@ async function updateSettings() {
                         //updated settings.json file
                         settingsFile.pairs[settingsIndex].long_price = long_risk;
                         settingsFile.pairs[settingsIndex].short_price = short_risk;
+                        settingsFile.pairs[settingsIndex].min_volume = out.data[i].liq_volume;
                     }
                 }
                 fs.writeFileSync('settings.json', JSON.stringify(settingsFile, null, 4));
@@ -1412,6 +1434,7 @@ async function updateSettings() {
                                 //updated settings.json file
                                 settingsFile.pairs[settingsIndex].long_price = long_risk;
                                 settingsFile.pairs[settingsIndex].short_price = short_risk;
+                                settingsFile.pairs[settingsIndex].min_volume = researchFile.data[i].liq_volume;
                             }
                         }
                         catch(err){
@@ -1429,7 +1452,7 @@ async function updateSettings() {
 }
 
 //discord webhook
-function orderWebhook(symbol, amount, side, position, pnl, qty) {
+function orderWebhook(symbol, amount, side, position, pnl, qty, source) {
     if(process.env.USE_DISCORD == "true") {
         if (side == "Buy") {
             var color = '#00ff00';
@@ -1452,6 +1475,7 @@ function orderWebhook(symbol, amount, side, position, pnl, qty) {
             .addField('Amount: ', amount.toString(), true)
             .addField('Liq. Vol.: ', qty.toFixed(0), true)
             .addField('Side: ', dir, true)
+            .addField('Source: ', source, true)
             .setColor(color)
             .setTimestamp();
         try {
@@ -1534,6 +1558,7 @@ async function reportWebhook() {
         //fetch balance first if not startingBalance will be null
         var balance = await getBalance();
         //check if starting balance is set
+        var balance = await getBalance();
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
             fs.writeFileSync('account.json', JSON.stringify(settings, null, 4));
