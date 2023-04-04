@@ -53,6 +53,11 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
+
+// tradesStat store metric about current trade
+const tradesStat = new Map();
+// globalTradesStats store global metric
+var globalTradesStats = {count: 0, max_loss_prc : 0};
 var rateLimit = 2000;
 var baseRateLimit = 2000;
 var lastReport = 0;
@@ -162,7 +167,6 @@ wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
     const topic = data.topic;
-
     if (topic === "stop_order") {
         const order_data = data.data;
         //check for stoploss trigger
@@ -229,7 +233,7 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].timestamp = timestamp;
                 liquidationOrders[index].amount = 1;
             }
-            
+
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
                 if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
@@ -581,6 +585,40 @@ async function getBalance() {
                 positionList.push(position);
             }
         }
+
+        // handle trade stats
+        const positionList_symbols = positionList.map(el => el.symbol);
+        const removedKeys = Array.from(tradesStat.keys()).filter(value => positionList_symbols.includes(value) == false);
+        removedKeys.forEach(el => {
+          let info = tradesStat.get(el);
+          tradesStat.delete(el);
+          globalTradesStats.count += 1;
+          globalTradesStats.max_loss_prc = Math.min(globalTradesStats.max_loss_prc, info.max_loss_prc);
+          logIT(`#trade_stats:close# ${el}: ${JSON.stringify(info)}`);
+          logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+        });
+
+        positionList.forEach( el => {
+          let info = tradesStat.get(el.symbol)
+
+          // get liquidation info
+          let liquidationOrderQty = 0;
+          let liquidationOrderIx = liquidationOrders.findIndex(liq_el => liq_el.pair == el.symbol);
+          if (liquidationOrderIx != -1)
+            liquidationOrderQty = liquidationOrders[liquidationOrderIx].qty
+
+          // add new symbol
+          if (info === undefined) {
+            tradesStat.set(el.symbol, {side: el.side, qty: el.size, max_loss_prc: 0, pnl: el.pnl, liquidation_size: liquidationOrderQty} );
+          } else {
+            // update
+            info.max_loss_prc = Math.min(el.pnl, info.max_loss_prc);
+            info.qty = el.size;
+            info.pnl = el.pnl;
+            info.liquidation_size = liquidationOrderQty;
+          }
+        });
+
         //create data payload
         const posidata = { 
             balance: balance.toFixed(2).toString(),
