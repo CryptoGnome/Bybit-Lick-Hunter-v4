@@ -18,6 +18,7 @@ import * as cron from 'node-cron'
 import bodyParser from 'body-parser'
 import session from 'express-session';
 import { Server } from 'socket.io'
+import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
 
 dotenv.config();
 
@@ -55,6 +56,20 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
+
+// tradesStat store metric about current trade
+const tradesHistory = new Map();
+// globalTradesStats store global metric
+var globalTradesStats = {
+  trade_count: 0,
+  max_loss : 0,
+  losses_count: 0,
+  wins_count: 0,
+  consecutive_losses :0,
+  consecutive_wins :0,
+  max_consecutive_losses: 0,
+  max_consecutive_wins: 0
+};
 var rateLimit = 2000;
 var baseRateLimit = 2000;
 var lastReport = 0;
@@ -163,7 +178,6 @@ wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
     const topic = data.topic;
-
     if (topic === "stop_order") {
         const order_data = data.data;
         //check for stoploss trigger
@@ -172,6 +186,49 @@ wsClient.on('update', (data) => {
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
             messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
         }
+    } else if (topic === "order") {
+      let close_position = false;
+      const filled_orders = data.data.filter(el => el.order_status == 'Filled');
+      filled_orders.forEach( order => {
+        let trade_info = tradesHistory.get(order.symbol);
+
+        switch(order.create_type) {
+          case 'CreateByUser':
+            // new trade
+            if (trade_info === undefined) {
+              const position = newPosition(order);
+              tradesHistory.set(order.symbol, position);
+            } else {
+              incrementPosition(trade_info, order, {_dca_count: trade_info._dca_count + 1});
+            }
+            break;
+          case 'CreateByStopLoss':
+            close_position = true;
+            globalTradesStats.consecutive_wins = 0;
+            globalTradesStats.consecutive_losses += 1;
+            globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
+            globalTradesStats.losses_count += 1;
+            break;
+          case 'CreateByTakeProfit':
+            close_position = true;
+            globalTradesStats.consecutive_losses = 0;
+            globalTradesStats.consecutive_wins += 1;
+            globalTradesStats.max_consecutive_wins = Math.max(globalTradesStats.max_consecutive_wins, globalTradesStats.consecutive_wins);
+            globalTradesStats.wins_count += 1;
+            break;
+          default:
+            // NOP
+        }
+
+        if (close_position) {
+          globalTradesStats.trade_count += 1;
+          globalTradesStats.max_loss = Math.min(globalTradesStats.max_loss, trade_info._max_loss);
+          closePosition(trade_info, order);
+          logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
+          logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+          tradesHistory.delete(order.symbol);
+        }
+      });
     } else {
         var pair = data.data.symbol;
         var price = parseFloat(data.data.price);
@@ -231,7 +288,7 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].timestamp = timestamp;
                 liquidationOrders[index].amount = 1;
             }
-            
+
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
                 if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
@@ -377,6 +434,9 @@ binanceClient.on('error', (data) => {
 
 //subscribe to stop_order to see when we hit stop-loss
 wsClient.subscribe('stop_order')
+
+//subscribe to order to see when orders where executed
+wsClient.subscribe('order')
 
 //run websocket
 async function liquidationEngine(pairs) {
@@ -588,9 +648,22 @@ async function getBalance() {
                     "test": test,
                     "fee": fee.toFixed(3)
                 }
+
+                let trade = tradesHistory.get(symbol);
+                // handle existing orders when app starts
+                if (trade === undefined) {
+                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
+                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                } else {
+                  updatePosition(trade, position);
+                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                }
+
                 positionList.push(position);
             }
         }
+
         //create data payload
         const posidata = { 
             balance: balance.toFixed(2).toString(),
