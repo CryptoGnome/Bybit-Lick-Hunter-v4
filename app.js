@@ -34,7 +34,8 @@ if (process.env.FIRST_START === 'false') {
     dotenv.config();
 }
 // Check for updates
-checkForUpdates()
+if (process.env.CHECK_FOR_UPDATE === 'true')
+  checkForUpdates()
 
 // used to calculate bot runtime
 const timestampBotStart = moment();
