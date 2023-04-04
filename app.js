@@ -126,17 +126,13 @@ const linearClient = new LinearClient({
     livenet: true,
 });
 //account client
-const accountClient = new AccountAssetClient({
-    key: key,
-    secret: secret,
-    livenet: true,
-});
-//spot client
-const spotClient = new SpotClientV3({
-    key: key,
-    secret: secret,
-    livenet: true,
-});
+if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
+    const accountClient = new AccountAssetClient({
+        key: key,
+        secret: secret,
+        livenet: true,
+    });
+}
 
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
@@ -277,14 +273,14 @@ async function transferFunds(amount) {
 async function withdrawFunds() {
     const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
 
-    if (settings.Withdraw == true){
+    if (process.env.WITHDRAW == "true"){
 
         const withdraw = await accountClient.submitWithdrawal(
             {
                 coin: process.env.WITHDRAW_COIN,
                 chain: process.env.WITHDRAW_CHAIN,
                 address: process.env.WITHDRAW_ADDRESS,
-                amount: String(settings.BalanceToWithdraw).toFixed(2),
+                amount: String(process.env.AMOUNT_TO_WITHDRAW).toFixed(2),
                 account_type: process.env.WITHDRAW_ACCOUNT
             }
         );
@@ -333,12 +329,7 @@ async function getBalance() {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
             process.exit(1);
         }
-        const spotBal = await spotClient.getBalances();
 
-        if (spotBal.retCode != 0) {
-            logIT(chalk.redBright("Error fetching spot balance. err: " + spotBal.retCode + "; msg: " + spotBal.retMsg));
-            process.exit(1);
-        }
         var availableBalance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
@@ -360,17 +351,34 @@ async function getBalance() {
         var percentGain = (diff / startingBalance) * 100;
 
         //check for gain to safe amount to spot
-        if (diff >= settings.BalanceToSpot && settings.BalanceToSpot > 0 && process.env.TRANSFER_TO_SPOT == "true"){
+        if (diff >= process.env.AMOUNT_TO_SPOT && process.env.AMOUNT_TO_SPOT > 0 && process.env.TRANSFER_TO_SPOT == "true"){
             transferFunds(diff)
             logIT("Moved " + diff + " to SPOT")
         }
 
         //check spot balance to withdraw
-        var withdrawCoin = spotBal.result.balances.find(item => item.coin === process.env.WITHDRAW_COIN);
 
-        if (withdrawCoin.total >= settings.BalanceToWithdraw && settings.Withdraw == true){
-            withdrawFunds();
-            logIT("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
+        //spot client
+        if (process.env.TRANSFER_TO_SPOT == "true" || process.env.WITHDRAW == "true"){
+            const spotClient = new SpotClientV3({
+                key: key,
+                secret: secret,
+                livenet: true,
+            });
+    
+            const spotBal = await spotClient.getBalances();
+    
+            if (spotBal.retCode != 0) {
+                logIT(chalk.redBright("Error fetching spot balance. err: " + spotBal.retCode + "; msg: " + spotBal.retMsg));
+                process.exit(1);
+            }
+    
+            var withdrawCoin = spotBal.result.balances.find(item => item.coin === process.env.WITHDRAW_COIN);
+    
+            if (withdrawCoin.total >= process.env.AMOUNT_TO_WITHDRAW && process.env.WITHDRAW == "true"){
+                withdrawFunds();
+                logIT("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
+            }
         }
         
         //if positive diff then log green
