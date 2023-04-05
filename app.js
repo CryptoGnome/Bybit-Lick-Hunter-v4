@@ -235,8 +235,7 @@ wsClient.on('update', (data) => {
             }
 
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-                
-                if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                if (process.env.USE_STOP_LOSS_TIMEOUT == "false" || (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true")) {
                     scalp(pair, index, liquidationOrders[index].qty, 'Bybit');
                 } else {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
