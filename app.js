@@ -65,6 +65,7 @@ var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
 let _wsClient;
+const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
@@ -163,6 +164,19 @@ if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
     });
 }
 
+function handleTakeProfit(order_data) {
+  // ban symbol that have a drawdown greater than a threshold
+  if (drawdownThreshold > 0) {
+    let info = tradesStat.get(order_data.symbol);
+    if (info == undefined)
+      logIT(`handleTakeProfit::Error trade stats for ${order_data.symbol} not found`);
+    else if (info.max_drawdown > drawdownThreshold) {
+      addCoinToTimeout(order_data.symbol, process.env.STOP_LOSS_TIMEOUT);
+      logIT(`handleTakeProfit::addCoinToTimeout for ${order_data.symbol} as have had a big drawdown`);
+    }
+  }
+}
+
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
@@ -173,6 +187,9 @@ wsClient.on('update', (data) => {
         if (order_data[0].stop_order_type === "StopLoss" && order_data[0].order_status === "Triggered"){
             //add coin to timeout
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
+        }
+        else if (order_data[0].stop_order_type === "TakeProfit" && order_data[0].order_status === "Triggered") {
+          handleTakeProfit(order_data[0]);
         }
     } else {
         var pair = data.data.symbol;
