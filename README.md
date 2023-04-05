@@ -117,6 +117,7 @@ TRANSFER_TO_SPOT = false       // set to true for auto funds transfer to spot ac
 AMOUNT_TO_SPOT=10 // Here you can set the amount transferred to spot
 MARGIN = CROSS // Margin for every trade to use (ISOLATED/CROSS)
 LEVERAGE = 10 // Default Leverage to use
+LIQ_SOURCE = bybit  /// Options = bybit, binance, both
 MAX_POSITION_SIZE_PERCENT = 1 // Max Position a single pair can use in equity
 MAX_OPEN_POSITIONS = 10 // Max Amount of Positions the bot will open
 PERCENT_ORDER_SIZE = 0.01 // Deafult order size the bot will use, if this is not bigger than minimum bot will use min order size (START WITH SMALL %  TO TEST!!!)
