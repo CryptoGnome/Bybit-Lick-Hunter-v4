@@ -674,12 +674,18 @@ async function getBalance() {
 async function getPosition(pair, side) {
     //gor through all pairs and getPosition()
     var positions = await linearClient.getPosition(pair);
-
-    if (positions.result !== null) {
+    const error_result = {side: null, entryPrice: null, size: null, percentGain: null};
+    if (positions.result == null)
+      logIT("Open positions response is null");
+    else if (!Array.isArray(positions.result))
+      logIT(`Open positions bad results: array type was expected: positions.result = ${positions.result}`);
+    else {
         //look for pair in positions with the same side
         var index = positions.result.findIndex(x => x.data.symbol === pair && x.data.side === side);
         //make sure index is not -1
-        if (index !== -1) {
+        if (index == -1)
+          logIT(`Open positions bad response: symbol ${pair} not found`);
+        else {
             if (positions.result[index].data.size >= 0) {
                 //console.log(positions.result[index].data);
                 if(positions.result[index].data.size > 0){
@@ -702,17 +708,10 @@ async function getPosition(pair, side) {
                 return {side: null, entryPrice: null, size: null, percentGain: null};
             }
         }
-        else {
-            logIT("Open positions response is null");
-            return {side: null, entryPrice: null, size: null, percentGain: null};
-        }
-
-    }
-    else {
-        logIT("Open positions response is null");
-        return {side: null, entryPrice: null, size: null, percentGain: null};
     }
 
+    // return on error
+    return {side: null, entryPrice: null, size: null, percentGain: null};
 }
 //take profit
 async function takeProfit(symbol, position) {
