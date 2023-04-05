@@ -76,6 +76,7 @@ var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
+const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
@@ -214,7 +215,11 @@ wsClient.on('update', (data) => {
             globalTradesStats.consecutive_losses = 0;
             globalTradesStats.consecutive_wins += 1;
             globalTradesStats.max_consecutive_wins = Math.max(globalTradesStats.max_consecutive_wins, globalTradesStats.consecutive_wins);
-            globalTradesStats.wins_count += 1;
+            globalTradesStats.wins_count += 1;            
+            if (drawdownThreshold > 0 && trade_info._max_loss > drawdownThreshold) {
+                addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
+                logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
+            }
             break;
           default:
             // NOP
