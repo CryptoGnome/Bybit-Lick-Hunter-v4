@@ -457,14 +457,18 @@ async function getMargin() {
 }
 
 //get account balance
+var getBalanceTryCount = 0;
 async function getBalance() {
     try{
         const data = await linearClient.getWalletBalance();
         if (data.ret_code != 0) {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
-            process.exit(1);
+            getBalanceTryCount++;
+            if (getBalanceTryCount == 3)
+              process.exit(1);
+            return;
         }
-
+        getBalanceTryCount = 0
         var availableBalance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
