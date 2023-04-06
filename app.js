@@ -88,6 +88,14 @@ app.get('/', isAuthenticated, (req, res) => {
     res.sendFile('index.html', { root: 'gui' });
 });
 
+app.get('/settings', isAuthenticated, (req, res) => {
+    res.sendFile('settings.html', { root: 'gui' });
+});
+
+app.get('/stats', isAuthenticated, (req, res) => {
+    res.sendFile('stats.html', { root: 'gui' });
+});
+
 wss.on('connection', (ws) => {
 
     // global client
@@ -95,7 +103,18 @@ wss.on('connection', (ws) => {
 
     //got message from client
     ws.on('message', (message) => {
-      console.log('Message from client: ' + message);
+        const data = JSON.parse(message);
+
+        switch (data.type) {
+          case 'setting':
+            changeENV(data.data.set, data.data.val)
+            break;
+          case 'sendsettings':
+            getSettings()
+            break;
+          default:
+            console.warn('Unknown message: ', data.type);
+        }
     });
 });
 
@@ -679,7 +698,7 @@ async function takeProfit(symbol, position) {
         var tickSize = tickData[index].tickSize;
         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-        if (positions.size > 0 && positions.take_profit === 0 || takeProfit !== positions.take_profit) {
+        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit !== positions.take_profit.toFixed(decimalPlaces)) {
             if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
@@ -754,6 +773,8 @@ async function takeProfit(symbol, position) {
         }
         else {
             logIT("No take profit to set for " + symbol);
+            console.log("takeProfit " + takeProfit)
+            console.log("positions.take_profit " + positions.take_profit)
         }
     }
     catch (e) {
@@ -1781,6 +1802,7 @@ fs.watchFile('.env', (curr, prev) => {
     }
 
     dotenv.config();
+    getSettings()
 });
 
 // change the .env the right way
@@ -1791,6 +1813,18 @@ function changeENV(variable, value) {
     fs.writeFileSync('.env', envString);
 
     dotenv.config();
+}
+
+// get settings and send to gui
+function getSettings(){
+    const env = dotenv.parse(fs.readFileSync('.env'));
+    const json = {};
+
+    for (const key in env) {
+        json[key] = process.env[key];
+    }
+
+    sendToClient('settings', json);
 }
 
 try {

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lick-Hunter Bot</title>
+    <link rel="stylesheet" href="/css/web.css" />
+    <link rel="icon" type="image/x-icon" href="/img/icon.ico" />
+  </head>
+  <body>
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="menu" id="menu">
+      <ul>
+        <li><a href="/">Dashboard</a></li>
+        <li class="active"><a href="/settings">Settings</a></li>
+        <!-- <li><a href="/stats">Statistics</a></li> -->
+      </ul>
+    </div>
+
+    <div class="mid">
+      <header>
+        <a class="logo" href="/"></a>
+        <p id="message"></p>
+      </header>
+      <div>
+        <div class="settingsfield">
+          <br />
+          <h2>Account Settings</h2>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">API KEY</label>
+            </div>
+            <div class="input-field right">
+              <input type="password" id="textbox" name="API_KEY" />
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">API SECRET</label>
+            </div>
+            <div class="input-field right">
+              <input type="password" id="textbox" name="API_SECRET" />
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE WITHDRAW</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch1"
+                class="switch"
+                name="WITHDRAW"
+              />
+              <label for="switch1" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">WITHDRAW ADDRESS</label>
+            </div>
+            <div class="input-field right">
+              <input type="textbox" id="textbox" name="WITHDRAW_ADDRESS" />
+            </div>
+          </div>
+          <div class="discord-form-container">
+            <label for="listbox" class="discord-form-label"
+              >WITHDRAW ACCOUNT</label
+            >
+            <div class="right">
+              <select
+                id="listbox"
+                name="WITHDRAW_ACCOUNT"
+                class="discord-form-listbox"
+              >
+                <option value="SPOT">SPOT</option>
+                <option value="CONTRACT">CONTRACT</option>
+                <option value="FUND">FUND</option>
+              </select>
+            </div>
+          </div>
+          <br />
+          <div class="discord-form-container">
+            <label for="listbox" class="discord-form-label"
+              >WITHDRAW COIN</label
+            >
+            <div class="right">
+              <select
+                id="listbox"
+                name="WITHDRAW_COIN"
+                class="discord-form-listbox">
+                <option value="USDT">USDT</option>
+              </select>
+            </div>
+          </div>
+          <br />
+          <div class="discord-form-container">
+            <label for="listbox" class="discord-form-label">WITHDRAW CHAIN</label>
+            <div class="right">
+              <select
+                id="listbox"
+                name="WITHDRAW_CHAIN"
+                class="discord-form-listbox">
+                <option value="SOL">SOL</option>
+                <option value="ERC20">ERC20</option>
+                <option value="TRC20">TRC20</option>
+                <option value="BSC">BSC (BEP20)</option>
+                <option value="AVAXC">AVAXC</option>
+                <option value="MATIC">MATIC</option>
+                <option value="Optimism">Optimism</option>
+              </select>
+            </div>
+          </div>
+          <br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">AMOUNT TO WITHDRAW</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="AMOUNT_TO_WITHDRAW"/>
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE TRANSFER TO SPOT</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch2"
+                class="switch"
+                name="TRANSFER_TO_SPOT"/>
+              <label for="switch2" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">AMOUNT TO SPOT</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="AMOUNT_TO_SPOT"/>
+            </div>
+          </div>
+        </div>
+        <br />
+        <div class="settingsfield">
+          <br />
+          <h2>Position Settings</h2>
+          <br /><br />
+          <div class="discord-form-container">
+            <label for="listbox" class="discord-form-label">MARGIN</label>
+            <div class="right">
+              <select id="listbox" name="MARGIN" class="discord-form-listbox">
+                <option value="ISOLATED">ISOLATED</option>
+                <option value="CROSS">CROSS</option>
+              </select>
+            </div>
+          </div>
+          <br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">LEVERAGE</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="LEVERAGE"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">PERCENT ORDER SIZE</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="PERCENT_ORDER_SIZE"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">MAX POSITION SIZE PERCENT</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="MAX_POSITION_SIZE_PERCENT"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">MAX OPEN POSITIONS</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="MAX_OPEN_POSITIONS"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">TAKE PROFIT PERCENT</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="TAKE_PROFIT_PERCENT"/>
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE STOPLOSS</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch2"
+                class="switch"
+                name="USE_STOPLOSS"/>
+              <label for="switch2" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">STOP LOSS PERCENT</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="STOP_LOSS_PERCENT"/>
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE STOP LOSS TIMEOUT</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch4"
+                class="switch"
+                name="USE_STOP_LOSS_TIMEOUT"/>
+              <label for="switch4" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">STOP LOSS TIMEOUT</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="STOP_LOSS_TIMEOUT"/>
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE DCA FEATURE</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch5"
+                class="switch"
+                name="USE_DCA_FEATURE"/>
+              <label for="switch5" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="settingsValue">
+            <p class="left">UPDATE MIN ORDER SIZING</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch7"
+                class="switch"
+                name="UPDATE_MIN_ORDER_SIZING"/>
+              <label for="switch7" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+        </div>
+        <br />
+        <div class="settingsfield">
+          <br />
+          <h2>Liquidation Settings</h2>
+          <br /><br />
+          <div class="discord-form-container">
+            <label for="listbox" class="discord-form-label">LIQ SOURCE</label>
+            <div class="right">
+              <select id="listbox" name="LIQ_SOURCE" class="discord-form-listbox">
+                <option value="BYBIT">BYBIT</option>
+                <option value="BINANCE">BINANCE</option>
+                <option value="BOTH">BOTH</option>
+              </select>
+            </div>
+          </div>
+          <br>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">MIN LIQUIDATION VOLUME</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="MIN_LIQUIDATION_VOLUME"/>
+            </div>
+          </div>
+          <div class="settingsValue">
+            <p class="left">USE SMART SETTINGS</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch6"
+                class="switch"
+                name="USE_SMART_SETTINGS"/>
+              <label for="switch6" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">RISK LEVEL</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                class="form-control"
+                name="RISK_LEVEL"/>
+            </div>
+          </div>
+        </div>
+        <br />
+        <div class="settingsfield">
+          <br />
+          <h2>Coin Settings</h2>
+          <br /><br />
+          <div class="settingsValue">
+            <p class="left">USE WHITELIST</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch8"
+                class="switch"
+                name="USE_WHITELIST"/>
+              <label for="switch8" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">WHITELIST</label>
+            </div>
+            <div class="input-field right">
+              <input type="textbox" id="textbox" name="WHITELIST" />
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">BLACKLIST</label>
+            </div>
+            <div class="input-field right">
+              <input type="textbox" id="textbox" name="BLACKLIST" />
+            </div>
+          </div>
+          <br />
+        </div>
+
+        <br />
+        <div class="settingsfield">
+          <br />
+          <h2>Misc Settings</h2>
+          <br /><br />
+          <div class="settingsValue">
+            <p class="left">USE LOG</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch9"
+                class="switch"
+                name="USE_LOG"/>
+              <label for="switch9" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="settingsValue">
+            <p class="left">USE DISCORD</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch10"
+                class="switch"
+                name="USE_DISCORD"/>
+              <label for="switch10" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="settingsValue">
+            <p class="left">CHECK FOR UPDATE</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch11"
+                class="switch"
+                name="CHECK_FOR_UPDATE"/>
+              <label for="switch11" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">DISCORD URL</label>
+            </div>
+            <div class="input-field right">
+              <input type="textbox" id="textbox" name="DISCORD_URL" />
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">DISCORD REPORT INTERVALL</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="textbox"
+                id="textbox"
+                name="DISCORD_REPORT_INTERVALL"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">GUI PASSWORD</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="password"
+                id="textbox"
+                name="GUI_PASSWORD"/>
+            </div>
+          </div>
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">GUI SESSION PASSWORD</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="password"
+                id="textbox"
+                name="GUI_SESSION_PASSWORD"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <br /><br />
+      <div class="footer" id="footer"></div>
+    </div>
+    <script>
+      class WebSocketClient {
+        constructor() {
+          const serverIp = window.location.hostname;
+          this.socket = new WebSocket(`ws://${serverIp}:3000`);
+
+          this.socket.addEventListener("open", (event) => {
+            console.log("WebSocket connection established.");
+          });
+        }
+
+        send(type, data) {
+            const message = JSON.stringify({ type, data });
+            this.socket.send(message);
+        }
+
+        addEventListener(event, callback) {
+          this.socket.addEventListener(event, callback);
+        }
+      }
+
+      const socket = new WebSocketClient();
+
+      socket.addEventListener("open", (event) => {
+        console.log("WebSocket-Connection OK!");
+      });
+
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case "settings":
+            for (let key in data.data) {
+              //console.log(`${key}: ${data.data[key]}`);
+              if (data.data[key] === "true" || data.data[key] === "false") {
+                const elements = document.getElementsByTagName("input");
+                for (let i = 0; i < elements.length; i++) {
+                  const element = elements[i];
+                  if (element.getAttribute("name") === key) {
+                    console.log(data.data[key]);
+                    element.checked = false;
+                    if (data.data[key] == "true"){
+                      element.checked = true;
+                    } else {
+                      element.checked = false;
+                    }
+                  }
+                }
+              } else {
+                const elements = document.getElementsByTagName("input");
+                for (let i = 0; i < elements.length; i++) {
+                  const element = elements[i];
+                  if (element.getAttribute("name") === key) {
+                    element.value = data.data[key];
+                  }
+                }
+              }
+            }
+            break;
+          default:
+            console.warn("Unknown message: ", event.data);
+        }
+      });
+
+      socket.addEventListener("error", (event) => {
+        console.error("WebSocket-Error:", event);
+      });
+
+      socket.addEventListener("close", (event) => {
+        console.log("WebSocket-Connection closed");
+      });
+
+      function toggleMenu() {
+        var menu = document.getElementById("menu");
+        menu.classList.toggle("active");
+
+        var hamburger = document.getElementsByClassName("hamburger")[0];
+        hamburger.classList.toggle("active");
+      }
+
+      // get all switch changes
+      document.querySelectorAll(".switch").forEach((switchButton) => {
+        switchButton.addEventListener("change", (event) => {
+          const switchName = event.target.getAttribute("name");
+          if (event.target.checked) {
+            console.log(`${switchName} is On`);
+            socket.send('setting', {set: switchName, val: true})
+          } else {
+            console.log(`${switchName} is Off`);
+            socket.send('setting', {set: switchName, val: false})
+          }
+        });
+      });
+
+      // get all numeric changes
+      document.querySelectorAll("#numberbox").forEach((switchButton) => {
+        switchButton.addEventListener("change", (event) => {
+          const switchName = event.target.getAttribute("name");
+          console.log(`${switchName} is ` + event.target.value);
+          socket.send('setting', {set: switchName, val: event.target.value})
+        });
+      });
+
+      // get all select changes
+      document.querySelectorAll("#listbox").forEach((switchButton) => {
+        switchButton.addEventListener("change", (event) => {
+          const switchName = event.target.getAttribute("name");
+          console.log(`${switchName} is ` + event.target.value);
+          socket.send('setting', {set: switchName, val: event.target.value})
+        });
+      });
+
+      // get all text changes
+      document.querySelectorAll("#textbox").forEach((switchButton) => {
+        switchButton.addEventListener("change", (event) => {
+          const switchName = event.target.getAttribute("name");
+          console.log(`${switchName} is ` + event.target.value);
+          socket.send('setting', {set: switchName, val: event.target.value})
+        });
+      });
+
+      window.onload = function () {
+        socket.send('sendsettings', {})
+      }
+    </script>
+  </body>
+</html>
