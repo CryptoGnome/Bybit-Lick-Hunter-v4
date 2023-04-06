@@ -62,6 +62,24 @@ body {
   color: #ffffff;
   padding: 2px;
 }
+.settingsfield {
+  flex: 1;
+  padding: 20px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 200px;
+  background-color: #2f3136;
+  border-radius: 5px;
+}
+.textset {
+  margin-top: 10px !important;
+}
+.settingsValue {
+  width: 100%;
+}
+.settingsValue p {
+  margin-top: 1px;
+}
 .posifieldValue {
   font-size: 14px;
   margin-bottom: 5px;
@@ -125,6 +143,12 @@ body {
 b {
   color: violet;
   float: left;
+}
+.left {
+  float: left;
+}
+.right {
+  float: right;
 }
 .value {
   float: right;
@@ -204,11 +228,6 @@ form {
   border-radius: 10px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
-label {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
 input {
   padding: 10px;
   margin-bottom: 20px;
@@ -219,7 +238,7 @@ input {
 }
 button {
   padding: 10px 20px;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 5px;
@@ -259,11 +278,11 @@ button:hover {
 }
 
 .menu li.active {
-  background-color: #36393F;
+  background-color: #36393f;
 }
 
 .menu li:hover {
-  background-color: #36393F;
+  background-color: #36393f;
 }
 
 .menu a {
@@ -303,7 +322,6 @@ button:hover {
 .hamburger.active span {
   transform: rotate(45deg);
 }
-
 .hamburger.active span:before {
   transform: translateX(5px) rotate(-45deg);
 }
@@ -329,19 +347,90 @@ button:hover {
     display: grid;
     place-items: center;
   }
-  
+
   /* Show the hamburger menu */
   .hamburger {
     display: block;
   }
-  
+
   /* Hide the page content */
   .container {
     margin-left: 0;
   }
-  
+
   /* Show the menu when the hamburger is clicked */
   .menu.active {
     transform: translateX(0);
   }
+}
+.switch-container {
+  display: inline-block;
+  position: relative;
+  width: 50px;
+  height: 24px;
+}
+.switch {
+  display: none;
+}
+.label {
+  display: block;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-bottom: 0px;
+  background-color: #7289da;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+.label::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+.switch:checked + .label {
+  background-color: #43b581;
+}
+
+.switch:checked + .label::before {
+  transform: translateX(26px);
+}
+.input-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.input-label {
+  margin-right: 10px;
+  text-align: left;
+}
+.input-label label {
+  display: block;
+  vertical-align: middle;
+  line-height: normal;
+}
+.discord-form-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.discord-form-listbox {
+  padding: 10px;
+  border-radius: 5px;
+  width: 190px;
+  height: 39px;
+  border: none;
+  background-color: #fff;
+}
+h2 {
+  text-align: center;
 }
