@@ -61,6 +61,10 @@
           <div class="fieldName">Profit %</div>
           <div class="fieldValue"><pre id="profit"><div class="lds-ripple"><div></div><div></div></div></pre></div>
         </div>
+        <div class="field">
+          <div class="fieldName">Status</div>
+          <div class="fieldValue"><pre id="status"><div class="lds-ripple"><div></div><div></div></div></pre></div>
+        </div>
       </div>
       <br /><br />
       <div class="posifields" id="openpositions">
@@ -86,6 +90,8 @@
       document.getElementById("inposi").textContent = msg.totalUSDT;
       document.getElementById("profitusdt").innerHTML = '<p style="color:' + (msg.profitUSDT < 0 ? "red" : "green") + ';">' + msg.profitUSDT + '</p>';
       document.getElementById("profit").innerHTML = '<p style="color:' + (msg.profit < 0 ? "red" : "green") + ';">' + msg.profit + '</p>';
+      document.getElementById("status").innerHTML = '<p><a href="' + (data.data.runningStatus == "Running" ? "runningStatus?set=pause" : "runningStatus?set=run") +
+        '" style="color:' + (data.data.runningStatus == "Running" ? "green" : "red") + '">' + data.data.runningStatus + '</a></p>';
       document.getElementById("footer").innerHTML = "Ping: <span style='color:" + ping_color + ";'>" + msg.ping + "ms</span> " + "Positions: " + msg.positioncount + "<br>Servertime: " + msg.servertime;
     });
 

@@ -99,6 +99,16 @@ app.get('/stats', isAuthenticated, (req, res) => {
     res.sendFile('stats.html', { root: 'gui' });
 });
 
+const runningStatus_UNDEFINED = 0;
+const runningStatus_RUN = 1;
+const runningStatus_PAUSE = 2;
+const runningStatus_Label = ["Undefined", "Running", "Paused"];
+var runningStatus = runningStatus_UNDEFINED
+app.get('/runningStatus', getRunningStatus, (req, res) => {
+  res.sendFile('index.html', { root: 'gui' });
+});
+
+
 io.on('connection', (socket) => {
 
 	socket.on('setting', (msg) => {
@@ -227,7 +237,8 @@ wsClient.on('update', (data) => {
                 if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 } else {
-                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit'); 
+                    if (runningStatus == runningStatus_RUN)
+                      scalp(pair, index, liquidationOrders[index].qty, 'Bybit'); 
                 }
     
             }
@@ -589,7 +600,8 @@ async function getBalance() {
             profit: percentGain.toString(),
             servertime: time.toString(),
             positioncount: openPositions.toString(),
-            ping: elapsed
+            ping: elapsed,
+            runningStatus: runningStatus_Label[runningStatus].toString()
         };
         //send data to gui
         io.sockets.emit("data", posidata);
@@ -1522,6 +1534,34 @@ function logIT(msg) {
     }
 }
 
+function getRunningStatus(req, res, next) {
+  const old_runningStatus = runningStatus;
+
+  if (!req.session.isLoggedIn) {
+    res.redirect('/login');
+  }
+
+  if (req.query.set !== undefined) {
+    switch(req.query.set.toLowerCase())
+    {
+      case "run":
+        runningStatus = runningStatus_RUN;
+        break;
+      case "pause":
+        runningStatus = runningStatus_PAUSE;
+        break;
+      default:
+        logIT(`get running status request bad value ${req.query.status}`)
+    }
+  }
+
+  if (old_runningStatus == runningStatus)
+    logIT(`running status is ${runningStatus_Label[runningStatus]}`);
+  else
+    logIT(`running status switch from  ${runningStatus_Label[old_runningStatus]} to ${runningStatus_Label[runningStatus]}`);
+  next();
+}
+
 function isAuthenticated(req, res, next) {
     if (req.session.isLoggedIn) {
       return next();
@@ -1692,6 +1732,7 @@ async function reportWebhook() {
 async function main() {
     //logIT("Starting Lick Hunter!");
     logIT("Starting Lick Hunter!");
+    runningStatus = runningStatus_RUN;
     reportWebhook();
     try{
         pairs = await getSymbols();
