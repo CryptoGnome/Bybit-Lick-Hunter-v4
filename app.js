@@ -168,6 +168,7 @@ wsClient.on('update', (data) => {
         if (order_data[0].stop_order_type === "StopLoss" && order_data[0].order_status === "Triggered"){
             //add coin to timeout
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
+            messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
         }
     } else {
         var pair = data.data.symbol;
