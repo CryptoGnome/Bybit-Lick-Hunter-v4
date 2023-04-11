@@ -455,7 +455,10 @@ async function getMargin() {
 //get account balance
 async function getBalance() {
     try{
+        // get ping
+        var started = Date.now();
         const data = await linearClient.getWalletBalance();
+        var elapsed = (Date.now() - started);
         if (data.ret_code != 0) {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
             process.exit(1);
@@ -589,7 +592,8 @@ async function getBalance() {
             profitUSDT: diff.toString(),
             profit: percentGain.toString(),
             servertime: time.toString(),
-            positioncount: openPositions.toString()
+            positioncount: openPositions.toString(),
+            ping: elapsed
         };
         //send data to gui
         sendToClient('data', posidata);
@@ -1089,14 +1093,18 @@ async function checkOpenPositions() {
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
 
-                        
+                var profit = positions.result[i].data.unrealised_pnl;
+                //calculate the profit % change in USD
+                var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
+                var percentGain = (profit / margin) * 100;
+
                 //create object to store in postionList
                 var position = {
                     symbol: positions.result[i].data.symbol,
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
-                    pnl: positions.result[i].data.unrealised_pnl
+                    pnl: positions.result[i].data.unrealised_pnl + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
                 
