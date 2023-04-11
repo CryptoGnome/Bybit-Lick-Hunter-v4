@@ -238,7 +238,7 @@ wsClient.on('update', (data) => {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 } else {
                     if (runningStatus == runningStatus_RUN)
-                      scalp(pair, index, liquidationOrders[index].qty, 'Bybit'); 
+                      scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN); 
                 }
     
             }
@@ -817,7 +817,7 @@ async function totalOpenPositions() {
     }
 }
 //against trend
-async function scalp(pair, index, trigger_qty, source) {
+async function scalp(pair, index, trigger_qty, source, new_trades_disabled = false) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
     logIT("Open positions: " + openPositions);
@@ -839,6 +839,10 @@ async function scalp(pair, index, trigger_qty, source) {
                         //console.log(position);
                         //no open position
                         if (position.side === "Buy" && position.size === 0) {
+                            if (new_trades_disabled) {
+                              logIT("Server is in pause new trades are disabled");
+                              return;
+                            }
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
@@ -928,6 +932,10 @@ async function scalp(pair, index, trigger_qty, source) {
                         //console.log(position);
                         //no open position
                         if (position.side === "Sell" && position.size === 0) {
+                            if (new_trades_disabled) {
+                              logIT("Server is in pause new trades are disabled");
+                              return;
+                            }
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
