@@ -40,8 +40,10 @@ checkForUpdates()
 const timestampBotStart = moment();
 
 var hook;
+var reporthook;		   
 if (process.env.USE_DISCORD == "true") {
     hook = new Webhook(process.env.DISCORD_URL);
+	reporthook = new Webhook(process.env.DISCORD_URL_REPORT);													  
 }
 
 const app = express();
@@ -1676,7 +1678,7 @@ async function reportWebhook() {
             embed.setColor('#9966cc')
             .setTimestamp();
         try {
-            hook.send(embed);
+            reporthook.send(embed);
         }
         catch (err) {
             logIT(chalk.red("Discord Webhook Error"));
