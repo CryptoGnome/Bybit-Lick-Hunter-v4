@@ -69,82 +69,49 @@
       <div class="footer" id="footer">
       </div>
     </div>
+    <script type="text/javascript" src="/node_modules/socket.io.js"></script>
     <script>
 
-    class WebSocketClient {
-      constructor() {
-          const serverIp = window.location.hostname;
-          this.socket = new WebSocket(`ws://${serverIp}:3000`);
+    const socket = io();
 
-          this.socket.addEventListener('open', (event) => {
-              console.log('WebSocket connection established.');
-          });
-      }
-
-      send(data) {
-          this.socket.send(data);
-      }
-
-      addEventListener(event, callback) {
-          this.socket.addEventListener(event, callback);
-      }
-    }
-
-    const socket = new WebSocketClient();
-
-    socket.addEventListener('open', event => {
+    socket.on('connect', (socket) => {
       console.log('WebSocket-Connection OK!');
+      //getData();
     });
 
-    socket.addEventListener('message', event => {
+    socket.on("data", (msg) => {
+      const ping_color = msg.ping < 250 ? 'green' : msg.ping < 500 ? 'yellow' : 'red';
+      document.getElementById("balance").textContent = msg.balance;
+      document.getElementById("leverage").textContent = msg.leverage;
+      document.getElementById("inposi").textContent = msg.totalUSDT;
+      document.getElementById("profitusdt").innerHTML = '<p style="color:' + (msg.profitUSDT < 0 ? "red" : "green") + ';">' + msg.profitUSDT + '</p>';
+      document.getElementById("profit").innerHTML = '<p style="color:' + (msg.profit < 0 ? "red" : "green") + ';">' + msg.profit + '</p>';
+      document.getElementById("footer").innerHTML = "Ping: <span style='color:" + ping_color + ";'>" + msg.ping + "ms</span> " + "Positions: " + msg.positioncount + "<br>Servertime: " + msg.servertime;
+    });
 
-      const data = JSON.parse(event.data);
-
-      switch (data.type) {
-        case 'data':
-        const ping_color = data.data.ping < 50 ? 'green' : data.data.ping < 100 ? 'yellow' : 'red';
-          document.getElementById("balance").textContent = data.data.balance;
-          document.getElementById("leverage").textContent = data.data.leverage;
-          document.getElementById("inposi").textContent = data.data.totalUSDT;
-          document.getElementById("profitusdt").innerHTML = '<p style="color:' + (data.data.profitUSDT < 0 ? "red" : "green") + ';">' + data.data.profitUSDT + '</p>';
-          document.getElementById("profit").innerHTML = '<p style="color:' + (data.data.profit < 0 ? "red" : "green") + ';">' + data.data.profit + '</p>';
-          document.getElementById("footer").innerHTML = "Ping: <span style='color:" + ping_color + ";'>" + data.data.ping + "ms</span> " + "Positions: " + data.data.positioncount + "<br>Servertime: " + data.data.servertime;
-          break;
-        case 'positions':
-          var posis = "";
-          for (let i in data.data){
-            posis += '<div class=\"posifield\"><div class=\"posifieldValue\">' +
-            '<div class=\"fieldName\" style=\"text-align: center;\">' +
-            '<p class=\"test\">' + data.data[i].side + '</p> '+ data.data[i].symbol +'</div><pre>' +
-            '<b>Isolated</b> <p class=\"value\">' + data.data[i].isolated + '</p><br>' +
-            '<b>Closing Fee</b> <p class=\"value\">' + data.data[i].closing_fee + '</p><br>' +
-            '<b>Size</b> <p class=\"value\">' + data.data[i].size + '</p><br>' +
-            '<b>Value in $</b> <p class=\"value\">' + data.data[i].sizeUSD + '</p><br>' +
-            '<b>Liq Price</b> <p class=\"value\">' + data.data[i].liq_price + '</p><br></pre><pre>' +
-            '<b>Price</b> <p class=\"value\">' + data.data[i].price + '</p><br>' +
-            '<b>Entry Price</b> <p class=\"value\">' + data.data[i].entry_price + '</p><br>' +
-            '<b>Stop Loss</b> <p class=\"value\">' + data.data[i].stop_loss + '</p><br>' +
-            '<b>Take Profit</b> <p class=\"value\">' + data.data[i].take_profit + '</p><br><br>' +
-            '<b>PnL</b> <p class="value" style="color:' + (data.data[i].pnl < 0 ? "red" : "green") + ';">' + data.data[i].pnl + '</p><br></pre>' +
-            '</div></div>';
-            i++;
-          }
-          if (posis != 0)
-            document.getElementById("openpositions").innerHTML = posis;
-          else 
-            document.getElementById("openpositions").innerHTML = "No open Positions";
-          break;
-        default:
-          console.warn('Unknown message: ', event.data.type);
+    socket.on("positions", (msg) => {
+      var posis = "";
+      for (let i in msg){
+        posis += '<div class=\"posifield\"><div class=\"posifieldValue\">' +
+        '<div class=\"fieldName\" style=\"text-align: center;\">' +
+        '<p class=\"test\">' + msg[i].side + '</p> '+ msg[i].symbol +'</div><pre>' +
+        '<b>Isolated</b> <p class=\"value\">' + msg[i].isolated + '</p><br>' +
+        '<b>Closing Fee</b> <p class=\"value\">' + msg[i].closing_fee + '</p><br>' +
+        '<b>Size</b> <p class=\"value\">' + msg[i].size + '</p><br>' +
+        '<b>Value in $</b> <p class=\"value\">' + msg[i].sizeUSD + '</p><br>' +
+        '<b>Liq Price</b> <p class=\"value\">' + msg[i].liq_price + '</p><br></pre><pre>' +
+        '<b>Price</b> <p class=\"value\">' + msg[i].price + '</p><br>' +
+        '<b>Entry Price</b> <p class=\"value\">' + msg[i].entry_price + '</p><br>' +
+        '<b>Stop Loss</b> <p class=\"value\">' + msg[i].stop_loss + '</p><br>' +
+        '<b>Take Profit</b> <p class=\"value\">' + msg[i].take_profit + '</p><br><br>' +
+        '<b>PnL</b> <p class="value" style="color:' + (msg[i].pnl < 0 ? "red" : "green") + ';">' + msg[i].pnl + '</p><br></pre>' +
+        '</div></div>';
+        i++;
       }
-    });
-
-    socket.addEventListener('error', event => {
-      console.error('WebSocket-Error:', event);
-    });
-
-    socket.addEventListener('close', event => {
-      console.log('WebSocket-Connection closed');
+      if (posis != 0)
+        document.getElementById("openpositions").innerHTML = posis;
+      else 
+        document.getElementById("openpositions").innerHTML = "No open Positions";
     });
 
     function toggleMenu() {
