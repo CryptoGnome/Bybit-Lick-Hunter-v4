@@ -17,6 +17,7 @@ import moment from 'moment';
 import * as cron from 'node-cron'
 import bodyParser from 'body-parser'
 import session from 'express-session';
+import { Server } from 'socket.io'
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ if (process.env.USE_DISCORD == "true") {
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
@@ -58,11 +60,11 @@ var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
-let _wsClient;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
 app.use('/img', express.static('gui/img'));
+app.use('/node_modules', express.static('node_modules/socket.io/client-dist'));
 
 app.use(session({
     secret: process.env.GUI_SESSION_PASSWORD,
@@ -96,28 +98,17 @@ app.get('/stats', isAuthenticated, (req, res) => {
     res.sendFile('stats.html', { root: 'gui' });
 });
 
-wss.on('connection', (ws) => {
+io.on('connection', (socket) => {
 
-    // global client
-    _wsClient = ws;
-
-    //got message from client
-    ws.on('message', (message) => {
-        const data = JSON.parse(message);
-
-        switch (data.type) {
-          case 'setting':
-            changeENV(data.data.set, data.data.val)
-            break;
-          case 'sendsettings':
-            getSettings()
-            break;
-          default:
-            console.warn('Unknown message: ', data.type);
-        }
+	socket.on('setting', (msg) => {
+        changeENV(msg.set, msg.val)
     });
-});
 
+    socket.on('sendsettings', (msg) => {
+        getSettings()
+    });
+    
+});
 
 server.listen(PORT, () => {
     const interfaces = networkInterfaces();
@@ -232,10 +223,10 @@ wsClient.on('update', (data) => {
             
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
-                if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit');
-                } else {
+                if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                } else {
+                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit'); 
                 }
     
             }
@@ -316,10 +307,10 @@ binanceClient.on('formattedMessage', (data) => {
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
-            if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
-            } else {
+            if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            } else {
+                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
             }
 
         }
@@ -596,7 +587,7 @@ async function getBalance() {
             ping: elapsed
         };
         //send data to gui
-        sendToClient('data', posidata);
+        io.sockets.emit("data", posidata);
 
         const positionsData = [];
 
@@ -617,8 +608,8 @@ async function getBalance() {
                 liq_price: positionList[i].liq
             });
         }
-
-        sendToClient('positions', positionsData);
+        //send data to gui
+        io.sockets.emit("positions", positionsData);
 
 
 
@@ -879,7 +870,7 @@ async function scalp(pair, index, trigger_qty, source) {
                                     close_on_trigger: false
                                 });
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                logIT(chalk.bgGreenBright("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                                 }
@@ -967,7 +958,7 @@ async function scalp(pair, index, trigger_qty, source) {
                                     close_on_trigger: false
                                 });
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                logIT(chalk.bgRedBright("Short DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                                 }
@@ -1235,13 +1226,6 @@ async function getSymbols() {
 //sleep function
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-//send data to gui
-function sendToClient(type, data) {
-    if (_wsClient) {
-      const message = JSON.stringify({ type, data });
-      _wsClient.send(message);
-    }
 }
 //auto create settings.json file
 async function createSettings() {
@@ -1833,7 +1817,7 @@ function getSettings(){
         json[key] = process.env[key];
     }
 
-    sendToClient('settings', json);
+    io.sockets.emit("settings", json);
 }
 
 try {

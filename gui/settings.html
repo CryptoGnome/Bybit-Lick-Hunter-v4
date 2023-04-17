@@ -485,113 +485,89 @@
       <br /><br />
       <div class="footer" id="footer"></div>
     </div>
+    <script type="text/javascript" src="/node_modules/socket.io.js"></script>
     <script>
-      class WebSocketClient {
-        constructor() {
-          const serverIp = window.location.hostname;
-          this.socket = new WebSocket(`ws://${serverIp}:3000`);
 
-          this.socket.addEventListener("open", (event) => {
-            console.log("WebSocket connection established.");
-          });
-        }
+    const socket = io();
 
-        send(type, data) {
-          const message = JSON.stringify({ type, data });
-          if (this.socket.readyState === this.socket.OPEN) {
-            this.socket.send(message);
+    socket.on('connect', (socket) => {
+      console.log('WebSocket-Connection OK!');
+      delay(1000).then(() => getSettings());
+    });
+
+    socket.on('listening', (socket) => {
+        socket.volatile.emit("sendsettings", {})
+    });
+    
+    function delay(time) {
+      return new Promise(resolve => setTimeout(resolve, time));
+    }
+
+    socket.on("settings", (msg) => {
+      console.log(msg)
+      for (const key in msg) {
+        const value = msg[key];
+        const element = document.querySelector(`input[name="${key}"]`);
+        if (element) {
+          if (element.type === "checkbox") {
+            if (value == "true")
+              element.checked = true;
+            else
+              element.checked = false;
           } else {
-            console.error("WebSocket is not open.");
+            element.value = value;
           }
         }
-
-        addEventListener(event, callback) {
-          this.socket.addEventListener(event, callback);
-        }
       }
+    });
 
-      const socket = new WebSocketClient();
+    async function getSettings(){
+      socket.volatile.emit("sendsettings", {})
+    }
 
-      socket.addEventListener("open", (event) => {
-        console.log("WebSocket connection OK!");
-        socket.send('sendsettings', {})
-      });
+    function toggleMenu() {
+      var menu = document.getElementById("menu");
+      menu.classList.toggle("active");
 
-      socket.addEventListener("message", (event) => {
-        const { type, data } = JSON.parse(event.data);
+      var hamburger = document.getElementsByClassName("hamburger")[0];
+      hamburger.classList.toggle("active");
+    }
 
-        switch (type) {
-          case "settings":
-            for (const key in data) {
-              const value = data[key];
-              const element = document.querySelector(`input[name="${key}"]`);
-              if (element) {
-                if (element.type === "checkbox") {
-                  element.checked = value === "true";
-                } else {
-                  element.value = value;
-                }
-              }
-            }
-            break;
-
-          default:
-            console.warn("Unknown message:", event.data);
-            break;
+    // get all switch changes
+    document.querySelectorAll(".switch").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        const switchName = event.target.getAttribute("name");
+        if (event.target.checked) {
+          socket.emit("setting", { set: switchName, val: true })
+        } else {
+          socket.emit("setting", { set: switchName, val: false })
         }
       });
+    });
 
-      socket.addEventListener("error", (event) => {
-        console.error("WebSocket-Error:", event);
+    // get all numeric changes
+    document.querySelectorAll("#numberbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        const switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
       });
+    });
 
-      socket.addEventListener("close", (event) => {
-        console.log("WebSocket-Connection closed");
+    // get all select changes
+    document.querySelectorAll("#listbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        const switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
       });
+    });
 
-      function toggleMenu() {
-        var menu = document.getElementById("menu");
-        menu.classList.toggle("active");
-
-        var hamburger = document.getElementsByClassName("hamburger")[0];
-        hamburger.classList.toggle("active");
-      }
-
-      // get all switch changes
-      document.querySelectorAll(".switch").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          if (event.target.checked) {
-            socket.send('setting', {set: switchName, val: true})
-          } else {
-            socket.send('setting', {set: switchName, val: false})
-          }
-        });
+    // get all text changes
+    document.querySelectorAll("#textbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        const switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
       });
-
-      // get all numeric changes
-      document.querySelectorAll("#numberbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
-
-      // get all select changes
-      document.querySelectorAll("#listbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
-
-      // get all text changes
-      document.querySelectorAll("#textbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
+    });
 
     </script>
   </body>
