@@ -241,10 +241,10 @@
             <div class="switch-container right">
               <input
                 type="checkbox"
-                id="switch2"
+                id="switch02"
                 class="switch"
                 name="USE_STOPLOSS"/>
-              <label for="switch2" class="label"></label>
+              <label for="switch02" class="label"></label>
             </div>
           </div>
           <br /><br />
@@ -536,8 +536,9 @@
     // get all switch changes
     document.querySelectorAll(".switch").forEach((switchButton) => {
       switchButton.addEventListener("change", (event) => {
-        const switchName = event.target.getAttribute("name");
-        if (event.target.checked) {
+        var switchName = event.target.getAttribute("name");
+        console.log("Switch change: " + switchName)
+        if (event.target.checked == true) {
           socket.emit("setting", { set: switchName, val: true })
         } else {
           socket.emit("setting", { set: switchName, val: false })
@@ -548,7 +549,7 @@
     // get all numeric changes
     document.querySelectorAll("#numberbox").forEach((switchButton) => {
       switchButton.addEventListener("change", (event) => {
-        const switchName = event.target.getAttribute("name");
+        var switchName = event.target.getAttribute("name");
         socket.emit("setting", { set: switchName, val: event.target.value })
       });
     });
@@ -556,7 +557,7 @@
     // get all select changes
     document.querySelectorAll("#listbox").forEach((switchButton) => {
       switchButton.addEventListener("change", (event) => {
-        const switchName = event.target.getAttribute("name");
+        var switchName = event.target.getAttribute("name");
         socket.emit("setting", { set: switchName, val: event.target.value })
       });
     });
@@ -564,7 +565,7 @@
     // get all text changes
     document.querySelectorAll("#textbox").forEach((switchButton) => {
       switchButton.addEventListener("change", (event) => {
-        const switchName = event.target.getAttribute("name");
+        var switchName = event.target.getAttribute("name");
         socket.emit("setting", { set: switchName, val: event.target.value })
       });
     });
