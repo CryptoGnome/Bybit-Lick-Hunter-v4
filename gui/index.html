@@ -61,6 +61,10 @@
           <div class="fieldName">Profit %</div>
           <div class="fieldValue"><pre id="profit"><div class="lds-ripple"><div></div><div></div></div></pre></div>
         </div>
+        <div class="field">
+          <div class="fieldName">Status</div>
+          <div class="fieldValue"><pre id="status"><div class="lds-ripple"><div></div><div></div></div></pre></div>
+        </div>
       </div>
       <br /><br />
       <div class="posifields" id="openpositions">
@@ -86,7 +90,10 @@
       document.getElementById("inposi").textContent = msg.totalUSDT;
       document.getElementById("profitusdt").innerHTML = '<p style="color:' + (msg.profitUSDT < 0 ? "red" : "green") + ';">' + msg.profitUSDT + '</p>';
       document.getElementById("profit").innerHTML = '<p style="color:' + (msg.profit < 0 ? "red" : "green") + ';">' + msg.profit + '</p>';
+      document.getElementById("status").innerHTML = '<p><a href="' + (data.data.runningStatus == "Running" ? "runningStatus?set=pause" : "runningStatus?set=run") +
+        '" style="color:' + (data.data.runningStatus == "Running" ? "green" : "red") + '">' + data.data.runningStatus + '</a></p>';
       document.getElementById("footer").innerHTML = "Ping: <span style='color:" + ping_color + ";'>" + msg.ping + "ms</span> " + "Positions: " + msg.positioncount + "<br>Servertime: " + msg.servertime;
+
     });
 
     socket.on("positions", (msg) => {
@@ -104,6 +111,8 @@
         '<b>Entry Price</b> <p class=\"value\">' + msg[i].entry_price + '</p><br>' +
         '<b>Stop Loss</b> <p class=\"value\">' + msg[i].stop_loss + '</p><br>' +
         '<b>Take Profit</b> <p class=\"value\">' + msg[i].take_profit + '</p><br><br>' +
+        '<b>Max loss</b> <p class=\"value\">' + data.data[i].max_loss + '</p><br><br>' +
+        '<b>Dca count</b> <p class=\"value\">' + data.data[i].dca_count + '</p><br><br>' +
         '<b>PnL</b> <p class="value" style="color:' + (msg[i].pnl < 0 ? "red" : "green") + ';">' + msg[i].pnl + '</p><br></pre>' +
         '</div></div>';
         i++;
