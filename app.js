@@ -636,7 +636,18 @@ async function getBalance() {
                 var price = positions.result[i].data.entry_price;
                 var fee = positions.result[i].data.occ_closing_fee;
                 var price = price.toFixed(4);
-                
+
+                let trade = tradesHistory.get(symbol);
+                // handle existing orders when app starts
+                if (trade === undefined) {
+                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
+                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                } else {
+                  updatePosition(trade, position);
+                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                }
+
                 //calulate size in USDT
                 var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
                 var position = {
@@ -651,21 +662,10 @@ async function getBalance() {
                     "take_profit": take_profit,
                     "iso": ios,
                     "test": test,
-                    "fee": fee.toFixed(3)
-                }
-
-                let trade = tradesHistory.get(symbol);
-                // handle existing orders when app starts
-                if (trade === undefined) {
-                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
-                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
-                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
-                } else {
-                  updatePosition(trade, position);
-                  trade._max_loss = Math.min(pnl, trade._max_loss);
-                }
-
-                positionList.push(position);
+                    "fee": fee.toFixed(3),
+                    "dca_count": trade._dca_count,
+                    "max_loss": trade._max_loss.toFixed(3),
+                }                
             }
         }
 
@@ -700,7 +700,9 @@ async function getBalance() {
                 entry_price: positionList[i].price,
                 stop_loss: positionList[i].stop_loss,
                 take_profit: positionList[i].take_profit,
-                liq_price: positionList[i].liq
+                liq_price: positionList[i].liq,
+                max_loss: positionList[i].max_loss,
+                dca_count: positionList[i].dca_count,
             });
         }
         //send data to gui
