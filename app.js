@@ -791,7 +791,7 @@ async function takeProfit(symbol, position) {
         var tickSize = tickData[index].tickSize;
         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit !== positions.take_profit.toFixed(decimalPlaces)) {
+        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit.toFixed(decimalPlaces) !== positions.take_profit.toFixed(decimalPlaces)) {
             if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
