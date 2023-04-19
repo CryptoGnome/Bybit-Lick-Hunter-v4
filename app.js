@@ -665,7 +665,8 @@ async function getBalance() {
                     "fee": fee.toFixed(3),
                     "dca_count": trade._dca_count,
                     "max_loss": trade._max_loss.toFixed(3),
-                }                
+                }
+                positionList.push(position);
             }
         }
 
