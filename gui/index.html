@@ -70,6 +70,8 @@
       <div class="posifields" id="openpositions">
         No open Positions
       </div>
+      <div class="footer">Performance</div>
+      <div class="performance"><pre id="performance"></pre></div>
       <div class="footer" id="footer">
       </div>
     </div>
@@ -84,6 +86,13 @@
     });
 
     socket.on("data", (msg) => {
+      var performanceTxt = "deals: " + (msg.trade_count ?? "0") + "\n" +
+      "max_loss: " + (msg.max_loss ?? 0) + "\n" +
+      "take profit: " + (msg.wins_count ?? 0) + "\n" +
+      "stop loss: " + (msg.loss_count ?? 0) + "\n" +
+      "max in a row: win:" + msg.max_consecutive_wins + "/loss:" +  msg.max_consecutive_losses + "\n" +
+      "win rate: " + (msg.max_consecutive_wins / (msg.trade_count > 0 ? msg.trade_count : 1)*100).toFixed(1) + "%";
+
       const ping_color = msg.ping < 250 ? 'green' : msg.ping < 500 ? 'yellow' : 'red';
       document.getElementById("balance").textContent = msg.balance;
       document.getElementById("leverage").textContent = msg.leverage;
@@ -92,6 +101,7 @@
       document.getElementById("profit").innerHTML = '<p style="color:' + (msg.profit < 0 ? "red" : "green") + ';">' + msg.profit + '</p>';
       document.getElementById("status").innerHTML = '<p><a href="' + (msg.runningStatus == "Running" ? "runningStatus?set=pause" : "runningStatus?set=run") +
         '" style="color:' + (msg.runningStatus == "Running" ? "green" : "red") + '">' + msg.runningStatus + '</a></p>';
+      document.getElementById("performance").textContent = performanceTxt;
       document.getElementById("footer").innerHTML = "Ping: <span style='color:" + ping_color + ";'>" + msg.ping + "ms</span> " + "Positions: " + msg.positioncount + "<br>Servertime: " + msg.servertime;
 
     });

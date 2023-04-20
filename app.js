@@ -679,7 +679,13 @@ async function getBalance() {
             servertime: time.toString(),
             positioncount: openPositions.toString(),
             ping: elapsed,
-            runningStatus: runningStatus_Label[runningStatus].toString()
+            runningStatus: runningStatus_Label[runningStatus].toString(),
+            trade_count: globalTradesStats.trade_count,
+            max_loss: globalTradesStats.max_loss,
+            wins_count: globalTradesStats.wins_count,
+            loss_count: globalTradesStats.loss_count,
+            max_consecutive_wins: globalTradesStats.max_consecutive_wins,
+            max_consecutive_losses: globalTradesStats.max_consecutive_losses,
         };
         //send data to gui
         io.sockets.emit("data", posidata);
