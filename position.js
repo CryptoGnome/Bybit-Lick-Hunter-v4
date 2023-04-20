@@ -22,7 +22,7 @@ export const PositionSchema = {
 export function incrementPosition(position, order, aux = {}) {
   let updated_position = position;
   position.size = order.qty;
-  position.price = order.price;
+  position.price = order.last_exec_price;
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
   Object.entries(aux).forEach( ([k, v]) => position[k] = v );
@@ -31,7 +31,7 @@ export function incrementPosition(position, order, aux = {}) {
 export function closePosition(position, order) {
   let updated_position = position;
   position._end_time= order.create_time;
-  position.price = order.price;
+  position.price = order.last_exec_price;
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
 };
@@ -49,7 +49,7 @@ export function newPosition(order) {
     "sizeUSD": 0,
     "pnl": 0,
     "liq": 0,
-    "price": order.price,
+    "price": order.last_exec_price,
     "stop_loss": order.stop_loss,
     "take_profit": order.take_profit,
     "iso": 0,
@@ -57,7 +57,7 @@ export function newPosition(order) {
     "fee": 0,
     "_max_loss" : 0,
     "_dca_count" : 0,
-    "_start_price" : order.price,
+    "_start_price" : order.last_exec_price,
     "_start_time" : order.create_time,
   };
   const usdValue = position.price * position.size / process.env.LEVERAGE;

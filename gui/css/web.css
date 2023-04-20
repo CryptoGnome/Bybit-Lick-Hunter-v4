@@ -95,6 +95,12 @@ body {
   text-align: center;
   color: #99aab5;
 }
+.performance {
+  margin-top: 10px;
+  font-size: 10px;
+  text-align: left;
+  color: #f1ae04;
+}
 .footer span {
   font-weight: bold;
   color: #ffffff;

@@ -637,17 +637,6 @@ async function getBalance() {
                 var fee = positions.result[i].data.occ_closing_fee;
                 var price = price.toFixed(4);
 
-                let trade = tradesHistory.get(symbol);
-                // handle existing orders when app starts
-                if (trade === undefined) {
-                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
-                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
-                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
-                } else {
-                  updatePosition(trade, position);
-                  trade._max_loss = Math.min(pnl, trade._max_loss);
-                }
-
                 //calulate size in USDT
                 var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
                 var position = {
@@ -663,10 +652,20 @@ async function getBalance() {
                     "iso": ios,
                     "test": test,
                     "fee": fee.toFixed(3),
-                    "dca_count": trade._dca_count,
-                    "max_loss": trade._max_loss.toFixed(3),
                 }
-                positionList.push(position);
+
+                let trade = tradesHistory.get(symbol);
+                // handle existing orders when app starts
+                if (trade === undefined) {
+                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
+                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                } else {
+                  updatePosition(trade, position);
+                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                }
+
+                positionList.push({...position, "dca_count": trade._dca_count, "max_loss": trade._max_loss.toFixed(3)});
             }
         }
 
@@ -680,7 +679,13 @@ async function getBalance() {
             servertime: time.toString(),
             positioncount: openPositions.toString(),
             ping: elapsed,
-            runningStatus: runningStatus_Label[runningStatus].toString()
+            runningStatus: runningStatus_Label[runningStatus].toString(),
+            trade_count: globalTradesStats.trade_count,
+            max_loss: globalTradesStats.max_loss,
+            wins_count: globalTradesStats.wins_count,
+            loss_count: globalTradesStats.loss_count,
+            max_consecutive_wins: globalTradesStats.max_consecutive_wins,
+            max_consecutive_losses: globalTradesStats.max_consecutive_losses,
         };
         //send data to gui
         io.sockets.emit("data", posidata);
