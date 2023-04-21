@@ -1254,8 +1254,8 @@ async function checkOpenPositions() {
                 }
                 postionList.push(position);
 
-                if (globalTradesStats != 0)
-                    console.log(globalTradesStats)
+                //if (globalTradesStats != 0)
+                    //console.log(globalTradesStats)
                 
             }
         }
