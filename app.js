@@ -777,14 +777,13 @@ async function takeProfit(symbol, position) {
 
     if (positions.side === "Buy") {
         var side = "Buy";
-        var takeProfit = positions.entry_price + (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100));
-        var stopLoss = positions.entry_price - (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100));
-
+        var takeProfit = positions.entry_price + (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100) / process.env.LEVERAGE);
+        var stopLoss = positions.entry_price - (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100) / process.env.LEVERAGE);
     }
     else {
         var side = "Sell";
-        var takeProfit = positions.entry_price - (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100));
-        var stopLoss = positions.entry_price + (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100));
+        var takeProfit = positions.entry_price - (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100) / process.env.LEVERAGE);
+        var stopLoss = positions.entry_price + (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100) / process.env.LEVERAGE);
     }
 
     //load min order size json
@@ -796,14 +795,19 @@ async function takeProfit(symbol, position) {
         var tickSize = tickData[index].tickSize;
         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit.toFixed(decimalPlaces) !== positions.take_profit.toFixed(decimalPlaces)) {
+        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit.toFixed(decimalPlaces) !== positions.take_profit.toFixed(decimalPlaces) || stopLoss.toFixed(decimalPlaces) !== positions.stop_loss.toFixed(decimalPlaces)) {
             if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
-                const order = await linearClient.setTradingStop({
+
+                var cfg = {
                     symbol: symbol,
                     side: side,
-                    take_profit: takeProfit.toFixed(decimalPlaces),
                     stop_loss: stopLoss.toFixed(decimalPlaces),
-                });
+                };
+
+                if(process.env.USE_TAKE_PROFIT.toLowerCase() === "true")
+                    cfg['take_profit'] = takeProfit.toFixed(decimalPlaces)
+
+                const order = await linearClient.setTradingStop(cfg);
                 //console.log(JSON.stringify(order, null, 4));
 
                 if (order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code === 10002) {
@@ -820,12 +824,18 @@ async function takeProfit(symbol, position) {
                     else {
                         price = parseFloat(priceFetch.result[0].bid_price);
                     }
-                    const order = await linearClient.setTradingStop({
+
+                    var cfg = {
                         symbol: symbol,
                         side: side,
-                        take_profit: price.toFixed(decimalPlaces),
                         stop_loss: stopLoss.toFixed(decimalPlaces),
-                    });
+                    };
+    
+                    if(process.env.USE_TAKE_PROFIT.toLowerCase() === "true")
+                        cfg['take_profit'] = price.toFixed(decimalPlaces)
+    
+                    const order = await linearClient.setTradingStop(cfg);
+
                     logIT(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
                 }
                 else {
@@ -833,7 +843,7 @@ async function takeProfit(symbol, position) {
                 }
 
             }
-            else {
+            else if (process.env.USE_TAKE_PROFIT.toLowerCase() === "true"){
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
                     side: side,
@@ -871,8 +881,8 @@ async function takeProfit(symbol, position) {
         }
         else {
             logIT("No take profit to set for " + symbol);
-            console.log("takeProfit " + takeProfit)
-            console.log("positions.take_profit " + positions.take_profit)
+            console.log("takeProfit " + takeProfit.toFixed(decimalPlaces))
+            console.log("positions.take_profit " + positions.take_profit.toFixed(decimalPlaces))
         }
     }
     catch (e) {
@@ -934,18 +944,32 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+
+                            //get current price
+                            var priceFetch = await linearClient.getTickers({symbol: pair});
+                            var price = priceFetch.result[0].last_price;
+
                             // set leverage and margin-mode
                             setLeverage(pair, process.env.LEVERAGE)
                             // order payload
-                            const order = await linearClient.placeActiveOrder({
-                                symbol: pair,
-                                side: "Buy",
+                            var cfg = {
+                                side: 'Buy',
                                 order_type: "Market",
+                                symbol: pair,
                                 qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
                                 time_in_force: "GoodTillCancel",
                                 reduce_only: false,
                                 close_on_trigger: false
-                            });
+                            };
+
+                            if (process.env.USE_TAKE_PROFIT == "true")
+                                cfg['take_profit'] = pluspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
+                            if (process.env.USE_STOPLOSS == "true")
+                                cfg['stop_loss'] = minuspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
+
+                            // send order payload
+                            const order = await linearClient.placeActiveOrder(cfg);
+
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -1027,18 +1051,31 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+
+                            //get current price
+                            var priceFetch = await linearClient.getTickers({symbol: pair});
+                            var price = priceFetch.result[0].last_price;
+
                             // set leverage and margin-mode
                             setLeverage(pair, process.env.LEVERAGE)
                             // order payload
-                            const order = await linearClient.placeActiveOrder({
-                                symbol: pair,
-                                side: "Sell",
+                            var cfg = {
+                                side: 'Sell',
                                 order_type: "Market",
+                                symbol: pair,
                                 qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
                                 time_in_force: "GoodTillCancel",
                                 reduce_only: false,
                                 close_on_trigger: false
-                            });
+                            };
+
+                            if (process.env.USE_TAKE_PROFIT == "true")
+                                cfg['take_profit'] = minuspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
+                            if (process.env.USE_STOPLOSS == "true")
+                                cfg['stop_loss'] = pluspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
+
+                            // send order payload
+                            const order = await linearClient.placeActiveOrder(cfg);
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -1158,6 +1195,8 @@ async function checkLeverage(symbol) {
 async function checkOpenPositions() {
     //gor through all pairs and getPosition()
     var positions = await linearClient.getPosition();
+    const data = await linearClient.getWalletBalance();
+
     //check rate_limit_status
     if (positions.rate_limit_status > 100) {
         rateLimit = baseRateLimit;
@@ -1187,16 +1226,22 @@ async function checkOpenPositions() {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
                 //logIT("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
-               
-                takeProfit(positions.result[i].data.symbol, positions.result[i].data);
+                if (process.env.USE_RECALC_SL_TP == "true")
+                    takeProfit(positions.result[i].data.symbol, positions.result[i].data);
    
                 //get usd value of position
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
 
                 var profit = positions.result[i].data.unrealised_pnl;
+                //get available Balance
+                var availableBalance = data.result['USDT'].available_balance;
                 //calculate the profit % change in USD
                 var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
+
+                if (positions.result[i].data.is_isolated == false)
+                    margin = positions.result[i].data.position_margin - availableBalance;
+
                 var percentGain = (profit / margin) * 100;
 
                 //create object to store in postionList
@@ -1208,6 +1253,9 @@ async function checkOpenPositions() {
                     pnl: positions.result[i].data.unrealised_pnl + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
+
+                if (globalTradesStats != 0)
+                    console.log(globalTradesStats)
                 
             }
         }
@@ -1898,6 +1946,22 @@ function updateLastDeploymentDateTime(dateTime) {
             console.log('Updated last change: ', dateTime.toLocaleString());
         }
     });
+}
+
+function minuspercent(wert, per) {
+	var w = parseFloat(wert)
+	var r = (w / 100) * per;
+	var er = w - (r / process.env.LEVERAGE)
+
+	return er;
+}
+
+function pluspercent(wert, per) {
+	var w = parseFloat(wert)
+	var r = (w / 100) * per;
+	var er = w + (r / process.env.LEVERAGE)
+
+	return er;
 }
 
 async function checkForUpdates() {

@@ -221,7 +221,7 @@ b {
   height: 100vh;
 }
 .mid {
-  /* margin-left: 200px; */
+  margin-left: 200px;
   display: grid;
   place-items: center;
 }
