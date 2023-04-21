@@ -76,6 +76,7 @@ var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
+var global_balance;
 const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -537,6 +538,8 @@ async function getBalance() {
         }
         getBalanceTryCount = 0
         var availableBalance = data.result['USDT'].available_balance;
+        // save balance global to reduce api requests
+        global_balance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
 
@@ -1240,7 +1243,7 @@ async function checkOpenPositions() {
                 var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
 
                 if (positions.result[i].data.is_isolated == false)
-                    margin = positions.result[i].data.position_margin - availableBalance;
+                    margin = positions.result[i].data.position_margin - global_balance;
 
                 var percentGain = (profit / margin) * 100;
 
@@ -1253,9 +1256,6 @@ async function checkOpenPositions() {
                     pnl: positions.result[i].data.unrealised_pnl + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
-
-                //if (globalTradesStats != 0)
-                    //console.log(globalTradesStats)
                 
             }
         }

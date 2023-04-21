@@ -227,6 +227,18 @@
                 name="MAX_OPEN_POSITIONS"/>
             </div>
           </div>
+          <div class="settingsValue">
+            <p class="left">USE TAKEPROFIT</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch03"
+                class="switch"
+                name="USE_TAKE_PROFIT"/>
+              <label for="switch03" class="label"></label>
+            </div>
+          </div>
+          <br><br>
           <div class="input-container">
             <div class="input-label">
               <label for="textbox">TAKE PROFIT PERCENT</label>
@@ -299,6 +311,31 @@
             </div>
           </div>
           <br /><br />
+          <div class="settingsValue">
+            <p class="left">BIG DRAWDOWN PROTECTION</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch08"
+                class="switch"
+                name="TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN"/>
+              <label for="switch08" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">DRAWDOWN THRESHOLD</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                step="0.1"
+                class="form-control"
+                name="DRAWDOWN_THRESHOLD"/>
+            </div>
+          </div>
           <div class="settingsValue">
             <p class="left">UPDATE MIN ORDER SIZING</p>
             <div class="switch-container right">
