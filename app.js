@@ -691,7 +691,7 @@ async function getBalance() {
             trade_count: globalTradesStats.trade_count,
             max_loss: globalTradesStats.max_loss,
             wins_count: globalTradesStats.wins_count,
-            loss_count: globalTradesStats.loss_count,
+            loss_count: globalTradesStats.losses_count,
             max_consecutive_wins: globalTradesStats.max_consecutive_wins,
             max_consecutive_losses: globalTradesStats.max_consecutive_losses,
         };
