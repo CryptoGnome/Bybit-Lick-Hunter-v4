@@ -19,6 +19,7 @@ import bodyParser from 'body-parser'
 import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
+import { loadJson, storeJson } from './utils.js';
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ const stopLossCoins = new Map();
 // tradesStat store metric about current trade
 const tradesHistory = new Map();
 // globalTradesStats store global metric
+const globalStatsPath = "./global_stats.json";
 var globalTradesStats = {
   trade_count: 0,
   max_loss : 0,
@@ -70,6 +72,8 @@ var globalTradesStats = {
   max_consecutive_losses: 0,
   max_consecutive_wins: 0
 };
+loadJson(globalStatsPath, globalTradesStats);
+
 var rateLimit = 2000;
 var baseRateLimit = 2000;
 var lastReport = 0;
@@ -230,6 +234,7 @@ wsClient.on('update', (data) => {
           globalTradesStats.trade_count += 1;
           globalTradesStats.max_loss = Math.min(globalTradesStats.max_loss, trade_info._max_loss);
           closePosition(trade_info, order);
+          storeJson(globalStatsPath, globalTradesStats);
           logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
           logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
           tradesHistory.delete(order.symbol);
@@ -686,7 +691,7 @@ async function getBalance() {
             trade_count: globalTradesStats.trade_count,
             max_loss: globalTradesStats.max_loss,
             wins_count: globalTradesStats.wins_count,
-            loss_count: globalTradesStats.loss_count,
+            loss_count: globalTradesStats.losses_count,
             max_consecutive_wins: globalTradesStats.max_consecutive_wins,
             max_consecutive_losses: globalTradesStats.max_consecutive_losses,
         };
