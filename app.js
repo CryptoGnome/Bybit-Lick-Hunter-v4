@@ -19,7 +19,7 @@ import bodyParser from 'body-parser'
 import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
-import { loadJson, storeJson } from './utils.js';
+import { loadJson, storeJson, traceTrade } from './utils.js';
 
 dotenv.config();
 
@@ -73,6 +73,11 @@ var globalTradesStats = {
   max_consecutive_wins: 0
 };
 loadJson(globalStatsPath, globalTradesStats);
+const TRACE_TRADES_LEVEL_OFF = "0";
+const TRACE_TRADES_LEVEL_ON = "1";
+const TRACE_TRADES_LEVEL_MAX = "2";
+const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
+
 
 var rateLimit = 2000;
 var baseRateLimit = 2000;
@@ -180,6 +185,25 @@ if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
     });
 }
 
+function handleNewOrder(order, liquidity_trigger) {
+  // Add liquidity_trigger to order as list of liquidity to keep count of dca order i.e
+  // _liquidity_trigger: "liq1,liq2,...liqN"
+  const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
+  tradesHistory.set(order.symbol, position);
+}
+
+function handleDcaOrder(order, liquidity_trigger) {
+  let trade_info = tradesHistory.get(order.symbol);
+  if (trade_info !== undefined) {
+    trade_info._dca_count++;
+    //remove "" before append a new liquidity item.
+    trade_info._liquidity_trigger = trade_info._liquidity_trigger.replace(/"/g, "");
+    trade_info._liquidity_trigger = `\"${trade_info._liquidity_trigger} ${liquidity_trigger}\"`;
+    if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+      traceTrade("dca", trade_info, traceTradeFields);
+  }
+}
+
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
@@ -201,11 +225,13 @@ wsClient.on('update', (data) => {
         switch(order.create_type) {
           case 'CreateByUser':
             // new trade
-            if (trade_info === undefined) {
-              const position = newPosition(order);
-              tradesHistory.set(order.symbol, position);
-            } else {
-              incrementPosition(trade_info, order, {_dca_count: trade_info._dca_count + 1});
+            if (trade_info !== undefined) {
+              // update price with executed order price
+              // verify that it's starts order not dca
+              if (trade_info._start_price === 0) {
+                trade_info._start_price = order.last_exec_price;
+                traceTrade("start", trade_info, traceTradeFields);
+              }
             }
             break;
           case 'CreateByStopLoss':
@@ -214,6 +240,8 @@ wsClient.on('update', (data) => {
             globalTradesStats.consecutive_losses += 1;
             globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
             globalTradesStats.losses_count += 1;
+            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+              traceTrade("stop_loss", trade_info, traceTradeFields);
             break;
           case 'CreateByTakeProfit':
             close_position = true;
@@ -225,6 +253,8 @@ wsClient.on('update', (data) => {
                 addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
                 logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
             }
+            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+              traceTrade("take_profit", trade_info, traceTradeFields);
             break;
           default:
             // NOP
@@ -674,6 +704,8 @@ async function getBalance() {
                 }
 
                 positionList.push({...position, "dca_count": trade._dca_count, "max_loss": trade._max_loss.toFixed(3)});
+                if (process.env.TRACE_TRADES == TRACE_TRADES_LEVEL_MAX)
+                  traceTrade("cont", {...position, "_dca_count": trade._dca_count, "_max_loss": trade._max_loss.toFixed(3)}, traceTradeFields);
             }
         }
 
@@ -977,7 +1009,7 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
 
                             // send order payload
                             const order = await linearClient.placeActiveOrder(cfg);
-
+                            handleNewOrder(order.result, trigger_qty);
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -1007,6 +1039,7 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
+                                handleDcaOrder(order.result, trigger_qty);
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgGreenBright.black("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
@@ -1084,6 +1117,7 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
 
                             // send order payload
                             const order = await linearClient.placeActiveOrder(cfg);
+                            handleNewOrder(order.result, trigger_qty);
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -1112,6 +1146,7 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
+                                handleDcaOrder(order.result, trigger_qty);
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
                                 logIT(chalk.bgRedBright("Short DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
