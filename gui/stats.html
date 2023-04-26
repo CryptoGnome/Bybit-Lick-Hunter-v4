@@ -70,7 +70,7 @@
         "take profit: " + (msg.wins_count ?? 0) + "\n" +
         "stop loss: " + (msg.loss_count ?? 0) + "\n" +
         "max in a row: win:" + msg.max_consecutive_wins + "/loss:" +  msg.max_consecutive_losses + "\n" +
-        "win rate: " + (msg.max_consecutive_wins / (msg.trade_count > 0 ? msg.trade_count : 1)*100).toFixed(1) + "%";
+        "win rate: " + (msg.wins_count / (msg.trade_count > 0 ? msg.trade_count : 1)*100).toFixed(1) + "%";
         
         document.getElementById("performance").textContent = performanceTxt;
       });
