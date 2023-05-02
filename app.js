@@ -47,7 +47,9 @@ var hook;
 var reporthook;		   
 if (process.env.USE_DISCORD == "true") {
     hook = new Webhook(process.env.DISCORD_URL);
-	reporthook = new Webhook(process.env.DISCORD_URL_REPORT);													  
+	if (process.env.SPLIT_DISCORD_LOG_AND_REPORT == "true") {
+		reporthook = new Webhook(process.env.DISCORD_URL_REPORT);	
+	}
 }
 
 const app = express();
@@ -1904,7 +1906,11 @@ async function reportWebhook() {
             embed.setColor('#9966cc')
             .setTimestamp();
         try {
-            reporthook.send(embed);
+			if (process.env.SPLIT_DISCORD_LOG_AND_REPORT == "true") {
+				reporthook.send(embed);
+			}else{
+				hook.send(embed);
+			}
         }
         catch (err) {
             logIT(chalk.red("Discord Webhook Error"));
