@@ -16,9 +16,18 @@
 
     <div class="menu" id="menu">
       <ul>
-        <li><a href="/">Dashboard</a></li>
-        <li class="active"><a href="/settings">Settings</a></li>
-        <!-- <li><a href="/stats">Statistics</a></li> -->
+        <li><a href="/">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-activity" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M6 2a.5.5 0 0 1 .47.33L10 12.036l1.53-4.208A.5.5 0 0 1 12 7.5h3.5a.5.5 0 0 1 0 1h-3.15l-1.88 5.17a.5.5 0 0 1-.94 0L6 3.964 4.47 8.171A.5.5 0 0 1 4 8.5H.5a.5.5 0 0 1 0-1h3.15l1.88-5.17A.5.5 0 0 1 6 2Z"/> </svg>
+          Dashboard
+        </a></li>
+        <li class="active"><a href="/settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="active" viewBox="0 0 16 16"> <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/> <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/> </svg>
+          Settings
+        </a></li>
+        <li><a href="/stats">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16"> <path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/> </svg>
+          Statistics
+        </a></li>
       </ul>
     </div>
 
@@ -218,6 +227,18 @@
                 name="MAX_OPEN_POSITIONS"/>
             </div>
           </div>
+          <div class="settingsValue">
+            <p class="left">USE TAKEPROFIT</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch03"
+                class="switch"
+                name="USE_TAKE_PROFIT"/>
+              <label for="switch03" class="label"></label>
+            </div>
+          </div>
+          <br><br>
           <div class="input-container">
             <div class="input-label">
               <label for="textbox">TAKE PROFIT PERCENT</label>
@@ -235,10 +256,10 @@
             <div class="switch-container right">
               <input
                 type="checkbox"
-                id="switch2"
+                id="switch02"
                 class="switch"
                 name="USE_STOPLOSS"/>
-              <label for="switch2" class="label"></label>
+              <label for="switch02" class="label"></label>
             </div>
           </div>
           <br /><br />
@@ -290,6 +311,31 @@
             </div>
           </div>
           <br /><br />
+          <div class="settingsValue">
+            <p class="left">BIG DRAWDOWN PROTECTION</p>
+            <div class="switch-container right">
+              <input
+                type="checkbox"
+                id="switch08"
+                class="switch"
+                name="TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN"/>
+              <label for="switch08" class="label"></label>
+            </div>
+          </div>
+          <br /><br />
+          <div class="input-container">
+            <div class="input-label">
+              <label for="textbox">DRAWDOWN THRESHOLD</label>
+            </div>
+            <div class="input-field right">
+              <input
+                type="number"
+                id="numberbox"
+                step="0.1"
+                class="form-control"
+                name="DRAWDOWN_THRESHOLD"/>
+            </div>
+          </div>
           <div class="settingsValue">
             <p class="left">UPDATE MIN ORDER SIZING</p>
             <div class="switch-container right">
@@ -479,130 +525,91 @@
       <br /><br />
       <div class="footer" id="footer"></div>
     </div>
+    <script type="text/javascript" src="/node_modules/socket.io.js"></script>
     <script>
-      class WebSocketClient {
-        constructor() {
-          const serverIp = window.location.hostname;
-          this.socket = new WebSocket(`ws://${serverIp}:3000`);
 
-          this.socket.addEventListener("open", (event) => {
-            console.log("WebSocket connection established.");
-          });
-        }
+    const socket = io();
 
-        send(type, data) {
-            const message = JSON.stringify({ type, data });
-            this.socket.send(message);
-        }
+    socket.on('connect', (socket) => {
+      console.log('WebSocket-Connection OK!');
+      delay(1000).then(() => getSettings());
+    });
 
-        addEventListener(event, callback) {
-          this.socket.addEventListener(event, callback);
-        }
-      }
+    socket.on('listening', (socket) => {
+        socket.volatile.emit("sendsettings", {})
+    });
+    
+    function delay(time) {
+      return new Promise(resolve => setTimeout(resolve, time));
+    }
 
-      const socket = new WebSocketClient();
-
-      socket.addEventListener("open", (event) => {
-        console.log("WebSocket-Connection OK!");
-      });
-
-      socket.addEventListener("message", (event) => {
-        const data = JSON.parse(event.data);
-
-        switch (data.type) {
-          case "settings":
-            for (let key in data.data) {
-              //console.log(`${key}: ${data.data[key]}`);
-              if (data.data[key] === "true" || data.data[key] === "false") {
-                const elements = document.getElementsByTagName("input");
-                for (let i = 0; i < elements.length; i++) {
-                  const element = elements[i];
-                  if (element.getAttribute("name") === key) {
-                    console.log(data.data[key]);
-                    element.checked = false;
-                    if (data.data[key] == "true"){
-                      element.checked = true;
-                    } else {
-                      element.checked = false;
-                    }
-                  }
-                }
-              } else {
-                const elements = document.getElementsByTagName("input");
-                for (let i = 0; i < elements.length; i++) {
-                  const element = elements[i];
-                  if (element.getAttribute("name") === key) {
-                    element.value = data.data[key];
-                  }
-                }
-              }
-            }
-            break;
-          default:
-            console.warn("Unknown message: ", event.data);
-        }
-      });
-
-      socket.addEventListener("error", (event) => {
-        console.error("WebSocket-Error:", event);
-      });
-
-      socket.addEventListener("close", (event) => {
-        console.log("WebSocket-Connection closed");
-      });
-
-      function toggleMenu() {
-        var menu = document.getElementById("menu");
-        menu.classList.toggle("active");
-
-        var hamburger = document.getElementsByClassName("hamburger")[0];
-        hamburger.classList.toggle("active");
-      }
-
-      // get all switch changes
-      document.querySelectorAll(".switch").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          if (event.target.checked) {
-            console.log(`${switchName} is On`);
-            socket.send('setting', {set: switchName, val: true})
+    socket.on("settings", (msg) => {
+      console.log(msg)
+      for (const key in msg) {
+        const value = msg[key];
+        const element = document.querySelector(`input[name="${key}"]`);
+        if (element) {
+          if (element.type === "checkbox") {
+            if (value == "true")
+              element.checked = true;
+            else
+              element.checked = false;
           } else {
-            console.log(`${switchName} is Off`);
-            socket.send('setting', {set: switchName, val: false})
+            element.value = value;
           }
-        });
-      });
-
-      // get all numeric changes
-      document.querySelectorAll("#numberbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          console.log(`${switchName} is ` + event.target.value);
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
-
-      // get all select changes
-      document.querySelectorAll("#listbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          console.log(`${switchName} is ` + event.target.value);
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
-
-      // get all text changes
-      document.querySelectorAll("#textbox").forEach((switchButton) => {
-        switchButton.addEventListener("change", (event) => {
-          const switchName = event.target.getAttribute("name");
-          console.log(`${switchName} is ` + event.target.value);
-          socket.send('setting', {set: switchName, val: event.target.value})
-        });
-      });
-
-      window.onload = function () {
-        socket.send('sendsettings', {})
+        }
       }
+    });
+
+    async function getSettings(){
+      socket.volatile.emit("sendsettings", {})
+    }
+
+    function toggleMenu() {
+      var menu = document.getElementById("menu");
+      menu.classList.toggle("active");
+
+      var hamburger = document.getElementsByClassName("hamburger")[0];
+      hamburger.classList.toggle("active");
+    }
+
+    // get all switch changes
+    document.querySelectorAll(".switch").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        var switchName = event.target.getAttribute("name");
+        console.log("Switch change: " + switchName)
+        if (event.target.checked == true) {
+          socket.emit("setting", { set: switchName, val: true })
+        } else {
+          socket.emit("setting", { set: switchName, val: false })
+        }
+      });
+    });
+
+    // get all numeric changes
+    document.querySelectorAll("#numberbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        var switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
+      });
+    });
+
+    // get all select changes
+    document.querySelectorAll("#listbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        var switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
+      });
+    });
+
+    // get all text changes
+    document.querySelectorAll("#textbox").forEach((switchButton) => {
+      switchButton.addEventListener("change", (event) => {
+        var switchName = event.target.getAttribute("name");
+        socket.emit("setting", { set: switchName, val: event.target.value })
+      });
+    });
+
     </script>
   </body>
 </html>

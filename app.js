@@ -17,6 +17,9 @@ import moment from 'moment';
 import * as cron from 'node-cron'
 import bodyParser from 'body-parser'
 import session from 'express-session';
+import { Server } from 'socket.io'
+import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
+import { loadJson, storeJson, traceTrade } from './utils.js';
 
 dotenv.config();
 
@@ -34,7 +37,8 @@ if (process.env.FIRST_START === 'false') {
     dotenv.config();
 }
 // Check for updates
-checkForUpdates()
+if (process.env.CHECK_FOR_UPDATE === 'true')
+  checkForUpdates()
 
 // used to calculate bot runtime
 const timestampBotStart = moment();
@@ -49,22 +53,47 @@ if (process.env.USE_DISCORD == "true") {
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
+
+// tradesStat store metric about current trade
+const tradesHistory = new Map();
+// globalTradesStats store global metric
+const globalStatsPath = "./global_stats.json";
+var globalTradesStats = {
+  trade_count: 0,
+  max_loss : 0,
+  losses_count: 0,
+  wins_count: 0,
+  consecutive_losses :0,
+  consecutive_wins :0,
+  max_consecutive_losses: 0,
+  max_consecutive_wins: 0
+};
+loadJson(globalStatsPath, globalTradesStats);
+const TRACE_TRADES_LEVEL_OFF = "0";
+const TRACE_TRADES_LEVEL_ON = "1";
+const TRACE_TRADES_LEVEL_MAX = "2";
+const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
+
+
 var rateLimit = 2000;
 var baseRateLimit = 2000;
 var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
 var lastUpdate = 0;
-let _wsClient;
+var global_balance;
+const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
 app.use('/img', express.static('gui/img'));
+app.use('/node_modules', express.static('node_modules/socket.io/client-dist'));
 
 app.use(session({
     secret: process.env.GUI_SESSION_PASSWORD,
@@ -98,28 +127,27 @@ app.get('/stats', isAuthenticated, (req, res) => {
     res.sendFile('stats.html', { root: 'gui' });
 });
 
-wss.on('connection', (ws) => {
-
-    // global client
-    _wsClient = ws;
-
-    //got message from client
-    ws.on('message', (message) => {
-        const data = JSON.parse(message);
-
-        switch (data.type) {
-          case 'setting':
-            changeENV(data.data.set, data.data.val)
-            break;
-          case 'sendsettings':
-            getSettings()
-            break;
-          default:
-            console.warn('Unknown message: ', data.type);
-        }
-    });
+const runningStatus_UNDEFINED = 0;
+const runningStatus_RUN = 1;
+const runningStatus_PAUSE = 2;
+const runningStatus_Label = ["Undefined", "Running", "Paused"];
+var runningStatus = runningStatus_UNDEFINED
+app.get('/runningStatus', getRunningStatus, (req, res) => {
+  res.sendFile('index.html', { root: 'gui' });
 });
 
+
+io.on('connection', (socket) => {
+
+	socket.on('setting', (msg) => {
+        changeENV(msg.set, msg.val)
+    });
+
+    socket.on('sendsettings', (msg) => {
+        getSettings()
+    });
+    
+});
 
 server.listen(PORT, () => {
     const interfaces = networkInterfaces();
@@ -159,11 +187,29 @@ if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
     });
 }
 
+function handleNewOrder(order, liquidity_trigger) {
+  // Add liquidity_trigger to order as list of liquidity to keep count of dca order i.e
+  // _liquidity_trigger: "liq1,liq2,...liqN"
+  const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
+  tradesHistory.set(order.symbol, position);
+}
+
+function handleDcaOrder(order, liquidity_trigger) {
+  let trade_info = tradesHistory.get(order.symbol);
+  if (trade_info !== undefined) {
+    trade_info._dca_count++;
+    //remove "" before append a new liquidity item.
+    trade_info._liquidity_trigger = trade_info._liquidity_trigger.replace(/"/g, "");
+    trade_info._liquidity_trigger = `\"${trade_info._liquidity_trigger} ${liquidity_trigger}\"`;
+    if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+      traceTrade("dca", trade_info, traceTradeFields);
+  }
+}
+
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
     const topic = data.topic;
-
     if (topic === "stop_order") {
         const order_data = data.data;
         //check for stoploss trigger
@@ -172,6 +218,60 @@ wsClient.on('update', (data) => {
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
             messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
         }
+    } else if (topic === "order") {
+      let close_position = false;
+      const filled_orders = data.data.filter(el => el.order_status == 'Filled');
+      filled_orders.forEach( order => {
+        let trade_info = tradesHistory.get(order.symbol);
+
+        switch(order.create_type) {
+          case 'CreateByUser':
+            // new trade
+            if (trade_info !== undefined) {
+              // update price with executed order price
+              // verify that it's starts order not dca
+              if (trade_info._start_price === 0) {
+                trade_info._start_price = order.last_exec_price;
+                traceTrade("start", trade_info, traceTradeFields);
+              }
+            }
+            break;
+          case 'CreateByStopLoss':
+            close_position = true;
+            globalTradesStats.consecutive_wins = 0;
+            globalTradesStats.consecutive_losses += 1;
+            globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
+            globalTradesStats.losses_count += 1;
+            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+              traceTrade("stop_loss", trade_info, traceTradeFields);
+            break;
+          case 'CreateByTakeProfit':
+            close_position = true;
+            globalTradesStats.consecutive_losses = 0;
+            globalTradesStats.consecutive_wins += 1;
+            globalTradesStats.max_consecutive_wins = Math.max(globalTradesStats.max_consecutive_wins, globalTradesStats.consecutive_wins);
+            globalTradesStats.wins_count += 1;            
+            if (drawdownThreshold > 0 && trade_info._max_loss > drawdownThreshold) {
+                addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
+                logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
+            }
+            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+              traceTrade("take_profit", trade_info, traceTradeFields);
+            break;
+          default:
+            // NOP
+        }
+
+        if (close_position) {
+          globalTradesStats.trade_count += 1;
+          globalTradesStats.max_loss = Math.min(globalTradesStats.max_loss, trade_info._max_loss);
+          closePosition(trade_info, order);
+          storeJson(globalStatsPath, globalTradesStats);
+          logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
+          logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+          tradesHistory.delete(order.symbol);
+        }
+      });
     } else {
         var pair = data.data.symbol;
         var price = parseFloat(data.data.price);
@@ -231,13 +331,14 @@ wsClient.on('update', (data) => {
                 liquidationOrders[index].timestamp = timestamp;
                 liquidationOrders[index].amount = 1;
             }
-            
+
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
-                if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit');
-                } else {
+                if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+                } else {
+                    if (runningStatus == runningStatus_RUN)
+                      scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN); 
                 }
     
             }
@@ -318,10 +419,10 @@ binanceClient.on('formattedMessage', (data) => {
 
         if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
                 
-            if (stopLossCoins.has(pair) == false && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
-            } else {
+            if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            } else {
+                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
             }
 
         }
@@ -376,6 +477,9 @@ binanceClient.on('error', (data) => {
 
 //subscribe to stop_order to see when we hit stop-loss
 wsClient.subscribe('stop_order')
+
+//subscribe to order to see when orders where executed
+wsClient.subscribe('order')
 
 //run websocket
 async function liquidationEngine(pairs) {
@@ -455,15 +559,24 @@ async function getMargin() {
 }
 
 //get account balance
+var getBalanceTryCount = 0;
 async function getBalance() {
     try{
+        // get ping
+        var started = Date.now();
         const data = await linearClient.getWalletBalance();
+        var elapsed = (Date.now() - started);
         if (data.ret_code != 0) {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
-            process.exit(1);
+            getBalanceTryCount++;
+            if (getBalanceTryCount == 3)
+              process.exit(1);
+            return;
         }
-
+        getBalanceTryCount = 0
         var availableBalance = data.result['USDT'].available_balance;
+        // save balance global to reduce api requests
+        global_balance = data.result['USDT'].available_balance;
         var usedBalance = data.result['USDT'].used_margin;
         var balance = availableBalance + usedBalance;
 
@@ -508,7 +621,7 @@ async function getBalance() {
     
             var withdrawCoin = spotBal.result.balances.find(item => item.coin === process.env.WITHDRAW_COIN);
     
-            if (withdrawCoin.total >= process.env.AMOUNT_TO_WITHDRAW && process.env.WITHDRAW == "true"){
+            if (withdrawCoin !== undefined && withdrawCoin.total >= process.env.AMOUNT_TO_WITHDRAW && process.env.WITHDRAW == "true"){
                 withdrawFunds();
                 logIT("Withdraw " + withdrawCoin.total + " to " + process.env.WITHDRAW_ADDRESS)
             }
@@ -563,7 +676,7 @@ async function getBalance() {
                 var price = positions.result[i].data.entry_price;
                 var fee = positions.result[i].data.occ_closing_fee;
                 var price = price.toFixed(4);
-                
+
                 //calulate size in USDT
                 var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
                 var position = {
@@ -578,11 +691,26 @@ async function getBalance() {
                     "take_profit": take_profit,
                     "iso": ios,
                     "test": test,
-                    "fee": fee.toFixed(3)
+                    "fee": fee.toFixed(3),
                 }
-                positionList.push(position);
+
+                let trade = tradesHistory.get(symbol);
+                // handle existing orders when app starts
+                if (trade === undefined) {
+                  var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
+                  const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
+                  tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                } else {
+                  updatePosition(trade, position);
+                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                }
+
+                positionList.push({...position, "dca_count": trade._dca_count, "max_loss": trade._max_loss.toFixed(3)});
+                if (process.env.TRACE_TRADES == TRACE_TRADES_LEVEL_MAX)
+                  traceTrade("cont", {...position, "_dca_count": trade._dca_count, "_max_loss": trade._max_loss.toFixed(3)}, traceTradeFields);
             }
         }
+
         //create data payload
         const posidata = { 
             balance: balance.toFixed(2).toString(),
@@ -591,10 +719,18 @@ async function getBalance() {
             profitUSDT: diff.toString(),
             profit: percentGain.toString(),
             servertime: time.toString(),
-            positioncount: openPositions.toString()
+            positioncount: openPositions.toString(),
+            ping: elapsed,
+            runningStatus: runningStatus_Label[runningStatus].toString(),
+            trade_count: globalTradesStats.trade_count,
+            max_loss: globalTradesStats.max_loss,
+            wins_count: globalTradesStats.wins_count,
+            loss_count: globalTradesStats.losses_count,
+            max_consecutive_wins: globalTradesStats.max_consecutive_wins,
+            max_consecutive_losses: globalTradesStats.max_consecutive_losses,
         };
         //send data to gui
-        sendToClient('data', posidata);
+        io.sockets.emit("data", posidata);
 
         const positionsData = [];
 
@@ -612,11 +748,13 @@ async function getBalance() {
                 entry_price: positionList[i].price,
                 stop_loss: positionList[i].stop_loss,
                 take_profit: positionList[i].take_profit,
-                liq_price: positionList[i].liq
+                liq_price: positionList[i].liq,
+                max_loss: positionList[i].max_loss,
+                dca_count: positionList[i].dca_count,
             });
         }
-
-        sendToClient('positions', positionsData);
+        //send data to gui
+        io.sockets.emit("positions", positionsData);
 
 
 
@@ -634,12 +772,18 @@ async function getBalance() {
 async function getPosition(pair, side) {
     //gor through all pairs and getPosition()
     var positions = await linearClient.getPosition(pair);
-
-    if (positions.result !== null) {
+    const error_result = {side: null, entryPrice: null, size: null, percentGain: null};
+    if (positions.result == null)
+      logIT("Open positions response is null");
+    else if (!Array.isArray(positions.result))
+      logIT(`Open positions bad results: array type was expected: positions.result = ${positions.result}`);
+    else {
         //look for pair in positions with the same side
         var index = positions.result.findIndex(x => x.data.symbol === pair && x.data.side === side);
         //make sure index is not -1
-        if (index !== -1) {
+        if (index == -1)
+          logIT(`Open positions bad response: symbol ${pair} not found`);
+        else {
             if (positions.result[index].data.size >= 0) {
                 //console.log(positions.result[index].data);
                 if(positions.result[index].data.size > 0){
@@ -662,17 +806,10 @@ async function getPosition(pair, side) {
                 return {side: null, entryPrice: null, size: null, percentGain: null};
             }
         }
-        else {
-            logIT("Open positions response is null");
-            return {side: null, entryPrice: null, size: null, percentGain: null};
-        }
-
-    }
-    else {
-        logIT("Open positions response is null");
-        return {side: null, entryPrice: null, size: null, percentGain: null};
     }
 
+    // return on error
+    return {side: null, entryPrice: null, size: null, percentGain: null};
 }
 //take profit
 async function takeProfit(symbol, position) {
@@ -682,14 +819,13 @@ async function takeProfit(symbol, position) {
 
     if (positions.side === "Buy") {
         var side = "Buy";
-        var takeProfit = positions.entry_price + (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100));
-        var stopLoss = positions.entry_price - (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100));
-
+        var takeProfit = positions.entry_price + (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100) / process.env.LEVERAGE);
+        var stopLoss = positions.entry_price - (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100) / process.env.LEVERAGE);
     }
     else {
         var side = "Sell";
-        var takeProfit = positions.entry_price - (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100));
-        var stopLoss = positions.entry_price + (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100));
+        var takeProfit = positions.entry_price - (positions.entry_price * (process.env.TAKE_PROFIT_PERCENT/100) / process.env.LEVERAGE);
+        var stopLoss = positions.entry_price + (positions.entry_price * (process.env.STOP_LOSS_PERCENT/100) / process.env.LEVERAGE);
     }
 
     //load min order size json
@@ -701,14 +837,19 @@ async function takeProfit(symbol, position) {
         var tickSize = tickData[index].tickSize;
         var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
 
-        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit !== positions.take_profit.toFixed(decimalPlaces)) {
+        if (positions.size > 0 && positions.take_profit.toFixed(decimalPlaces) === 0 || takeProfit.toFixed(decimalPlaces) !== positions.take_profit.toFixed(decimalPlaces) || stopLoss.toFixed(decimalPlaces) !== positions.stop_loss.toFixed(decimalPlaces)) {
             if(process.env.USE_STOPLOSS.toLowerCase() === "true") {
-                const order = await linearClient.setTradingStop({
+
+                var cfg = {
                     symbol: symbol,
                     side: side,
-                    take_profit: takeProfit.toFixed(decimalPlaces),
                     stop_loss: stopLoss.toFixed(decimalPlaces),
-                });
+                };
+
+                if(process.env.USE_TAKE_PROFIT.toLowerCase() === "true")
+                    cfg['take_profit'] = takeProfit.toFixed(decimalPlaces)
+
+                const order = await linearClient.setTradingStop(cfg);
                 //console.log(JSON.stringify(order, null, 4));
 
                 if (order.ret_msg === "OK" || order.ret_msg === "not modified" || order.ret_code === 10002) {
@@ -725,12 +866,18 @@ async function takeProfit(symbol, position) {
                     else {
                         price = parseFloat(priceFetch.result[0].bid_price);
                     }
-                    const order = await linearClient.setTradingStop({
+
+                    var cfg = {
                         symbol: symbol,
                         side: side,
-                        take_profit: price.toFixed(decimalPlaces),
                         stop_loss: stopLoss.toFixed(decimalPlaces),
-                    });
+                    };
+    
+                    if(process.env.USE_TAKE_PROFIT.toLowerCase() === "true")
+                        cfg['take_profit'] = price.toFixed(decimalPlaces)
+    
+                    const order = await linearClient.setTradingStop(cfg);
+
                     logIT(chalk.red("TAKE PROFIT FAILED FOR " + symbol + " WITH ERROR PRICE MOVING TOO FAST OR ORDER ALREADY CLOSED, TRYING TO FILL AT BID/ASK!!"));
                 }
                 else {
@@ -738,7 +885,7 @@ async function takeProfit(symbol, position) {
                 }
 
             }
-            else {
+            else if (process.env.USE_TAKE_PROFIT.toLowerCase() === "true"){
                 const order = await linearClient.setTradingStop({
                     symbol: symbol,
                     side: side,
@@ -776,8 +923,8 @@ async function takeProfit(symbol, position) {
         }
         else {
             logIT("No take profit to set for " + symbol);
-            console.log("takeProfit " + takeProfit)
-            console.log("positions.take_profit " + positions.take_profit)
+            console.log("takeProfit " + takeProfit.toFixed(decimalPlaces))
+            console.log("positions.take_profit " + positions.take_profit.toFixed(decimalPlaces))
         }
     }
     catch (e) {
@@ -808,7 +955,7 @@ async function totalOpenPositions() {
     }
 }
 //against trend
-async function scalp(pair, index, trigger_qty, source) {
+async function scalp(pair, index, trigger_qty, source, new_trades_disabled = false) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
     logIT("Open positions: " + openPositions);
@@ -830,23 +977,41 @@ async function scalp(pair, index, trigger_qty, source) {
                         //console.log(position);
                         //no open position
                         if (position.side === "Buy" && position.size === 0) {
+                            if (new_trades_disabled) {
+                              logIT("Server is in pause new trades are disabled");
+                              return;
+                            }
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+
+                            //get current price
+                            var priceFetch = await linearClient.getTickers({symbol: pair});
+                            var price = priceFetch.result[0].last_price;
+
                             // set leverage and margin-mode
                             setLeverage(pair, process.env.LEVERAGE)
                             // order payload
-                            const order = await linearClient.placeActiveOrder({
-                                symbol: pair,
-                                side: "Buy",
+                            var cfg = {
+                                side: 'Buy',
                                 order_type: "Market",
+                                symbol: pair,
                                 qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
                                 time_in_force: "GoodTillCancel",
                                 reduce_only: false,
                                 close_on_trigger: false
-                            });
+                            };
+
+                            if (process.env.USE_TAKE_PROFIT == "true")
+                                cfg['take_profit'] = pluspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
+                            if (process.env.USE_STOPLOSS == "true")
+                                cfg['stop_loss'] = minuspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
+
+                            // send order payload
+                            const order = await linearClient.placeActiveOrder(cfg);
+                            handleNewOrder(order.result, trigger_qty);
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -876,8 +1041,9 @@ async function scalp(pair, index, trigger_qty, source) {
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
+                                handleDcaOrder(order.result, trigger_qty);
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                logIT(chalk.bgGreenBright.black("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
                                 }
@@ -919,23 +1085,41 @@ async function scalp(pair, index, trigger_qty, source) {
                         //console.log(position);
                         //no open position
                         if (position.side === "Sell" && position.size === 0) {
+                            if (new_trades_disabled) {
+                              logIT("Server is in pause new trades are disabled");
+                              return;
+                            }
                             //load min order size json
                             const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
                             var index = tickData.findIndex(x => x.pair === pair);
                             var tickSize = tickData[index].tickSize;
                             var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+
+                            //get current price
+                            var priceFetch = await linearClient.getTickers({symbol: pair});
+                            var price = priceFetch.result[0].last_price;
+
                             // set leverage and margin-mode
                             setLeverage(pair, process.env.LEVERAGE)
                             // order payload
-                            const order = await linearClient.placeActiveOrder({
-                                symbol: pair,
-                                side: "Sell",
+                            var cfg = {
+                                side: 'Sell',
                                 order_type: "Market",
+                                symbol: pair,
                                 qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
                                 time_in_force: "GoodTillCancel",
                                 reduce_only: false,
                                 close_on_trigger: false
-                            });
+                            };
+
+                            if (process.env.USE_TAKE_PROFIT == "true")
+                                cfg['take_profit'] = minuspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
+                            if (process.env.USE_STOPLOSS == "true")
+                                cfg['stop_loss'] = pluspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
+
+                            // send order payload
+                            const order = await linearClient.placeActiveOrder(cfg);
+                            handleNewOrder(order.result, trigger_qty);
                             //logIT("Order placed: " + JSON.stringify(order, null, 2));
                             logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                             if(process.env.USE_DISCORD == "true") {
@@ -964,8 +1148,9 @@ async function scalp(pair, index, trigger_qty, source) {
                                     reduce_only: false,
                                     close_on_trigger: false
                                 });
+                                handleDcaOrder(order.result, trigger_qty);
                                 //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+                                logIT(chalk.bgRedBright("Short DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
                                 if(process.env.USE_DISCORD == "true") {
                                     orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
                                 }
@@ -990,7 +1175,7 @@ async function scalp(pair, index, trigger_qty, source) {
                 }
             }
             else {
-                logIT(chalk.bgCyan(pair + " does not exist in settings.json"));
+                logIT(chalk.bgCyan.black(pair + " does not exist in settings.json"));
             }
         }
     }
@@ -1055,6 +1240,8 @@ async function checkLeverage(symbol) {
 async function checkOpenPositions() {
     //gor through all pairs and getPosition()
     var positions = await linearClient.getPosition();
+    const data = await linearClient.getWalletBalance();
+
     //check rate_limit_status
     if (positions.rate_limit_status > 100) {
         rateLimit = baseRateLimit;
@@ -1084,21 +1271,31 @@ async function checkOpenPositions() {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
                 //logIT("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
-               
-                takeProfit(positions.result[i].data.symbol, positions.result[i].data);
+                if (process.env.USE_RECALC_SL_TP == "true")
+                    takeProfit(positions.result[i].data.symbol, positions.result[i].data);
    
                 //get usd value of position
                 var usdValue = (positions.result[i].data.entry_price * positions.result[i].data.size) / process.env.LEVERAGE;
                 totalPositions++;
 
-                        
+                var profit = positions.result[i].data.unrealised_pnl;
+                //get available Balance
+                var availableBalance = data.result['USDT'].available_balance;
+                //calculate the profit % change in USD
+                var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
+
+                if (positions.result[i].data.is_isolated == false)
+                    margin = positions.result[i].data.position_margin - global_balance;
+
+                var percentGain = (profit / margin) * 100;
+
                 //create object to store in postionList
                 var position = {
                     symbol: positions.result[i].data.symbol,
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
-                    pnl: positions.result[i].data.unrealised_pnl
+                    pnl: positions.result[i].data.unrealised_pnl + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
                 
@@ -1134,6 +1331,10 @@ async function getMinTradingSize() {
             var minOrderSize = data.result[i].lot_size_filter.min_trading_qty;
             //get price of pair from tickers
             var priceFetch = tickers.result.find(x => x.symbol === data.result[i].name);
+            if (!priceFetch) {
+              console.log("Ignore Pair: " + data.result[i].name + " as ticker was not found");
+              continue;
+            }
             var price = priceFetch.last_price;
             //get usd value of min order size
             var usdValue = (minOrderSize * price);
@@ -1155,6 +1356,10 @@ async function getMinTradingSize() {
             try{
                 //find pair ion positions
                 var position = positions.result.find(x => x.data.symbol === data.result[i].name);
+                if (position === undefined) {
+                  logIT(chalk.bgRed(`skip ${data.result[i].name} position is undefined`));
+                  continue;
+                }
 
                 //find max position size for pair
                 var maxPositionSize = ((balance * (process.env.MAX_POSITION_SIZE_PERCENT/100)) / price) * process.env.LEVERAGE;
@@ -1229,13 +1434,6 @@ async function getSymbols() {
 //sleep function
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-//send data to gui
-function sendToClient(type, data) {
-    if (_wsClient) {
-      const message = JSON.stringify({ type, data });
-      _wsClient.send(message);
-    }
 }
 //auto create settings.json file
 async function createSettings() {
@@ -1520,6 +1718,34 @@ function logIT(msg) {
     }
 }
 
+function getRunningStatus(req, res, next) {
+  const old_runningStatus = runningStatus;
+
+  if (!req.session.isLoggedIn) {
+    res.redirect('/login');
+  }
+
+  if (req.query.set !== undefined) {
+    switch(req.query.set.toLowerCase())
+    {
+      case "run":
+        runningStatus = runningStatus_RUN;
+        break;
+      case "pause":
+        runningStatus = runningStatus_PAUSE;
+        break;
+      default:
+        logIT(`get running status request bad value ${req.query.status}`)
+    }
+  }
+
+  if (old_runningStatus == runningStatus)
+    logIT(`running status is ${runningStatus_Label[runningStatus]}`);
+  else
+    logIT(`running status switch from  ${runningStatus_Label[old_runningStatus]} to ${runningStatus_Label[runningStatus]}`);
+  next();
+}
+
 function isAuthenticated(req, res, next) {
     if (req.session.isLoggedIn) {
       return next();
@@ -1690,6 +1916,7 @@ async function reportWebhook() {
 async function main() {
     //logIT("Starting Lick Hunter!");
     logIT("Starting Lick Hunter!");
+    runningStatus = runningStatus_RUN;
     reportWebhook();
     try{
         pairs = await getSymbols();
@@ -1763,6 +1990,22 @@ function updateLastDeploymentDateTime(dateTime) {
     });
 }
 
+function minuspercent(wert, per) {
+	var w = parseFloat(wert)
+	var r = (w / 100) * per;
+	var er = w - (r / process.env.LEVERAGE)
+
+	return er;
+}
+
+function pluspercent(wert, per) {
+	var w = parseFloat(wert)
+	var r = (w / 100) * per;
+	var er = w + (r / process.env.LEVERAGE)
+
+	return er;
+}
+
 async function checkForUpdates() {
     const lastDeploymentDateTime = await getLastDeploymentDateTime();
     const options = {
@@ -1827,7 +2070,7 @@ function getSettings(){
         json[key] = process.env[key];
     }
 
-    sendToClient('settings', json);
+    io.sockets.emit("settings", json);
 }
 
 try {

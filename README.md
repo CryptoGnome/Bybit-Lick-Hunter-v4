@@ -123,6 +123,7 @@ MAX_OPEN_POSITIONS = 10 // Max Amount of Positions the bot will open
 PERCENT_ORDER_SIZE = 0.01 // Deafult order size the bot will use, if this is not bigger than minimum bot will use min order size (START WITH SMALL %  TO TEST!!!)
 MIN_LIQUIDATION_VOLUME = 500 // the min liquidation amount in USDT in a period of 5s that the bot will trade on (bot will count up over multiple liquidations)
 USE_DCA_FEATURE = true // If another liquidation happens but the position is already open, the PERCENT_ORDER_SIZE will be opened as a DCA order 
+USE_TAKE_PROFIT=true // bool for using take profit
 TAKE_PROFIT_PERCENT = 0.886 // take profit limit, will be adjust based on average entry price
 STOP_LOSS_PERCENT = 20 // stop loss  will be adjusted based on avg entry price
 USE_STOPLOSS = true // bool for using stop loss
@@ -135,6 +136,10 @@ WHITELIST = ETHUSDT, ETCUSDT, BTCUSDT, BCHUSDT, LINKUSDT, LTCUSDT, FTMUSDT, MANA
 USE_DISCORD = false // if you want to use discord webhooks make this true and add link to channel below
 DISCORD_URL = webhook_url_here //webhook url for discord channel here
 DISCORD_REPORT_INTERVALL = */5 * * * *  // cron style timeing for the report send to discord webhook - ex.  */5 * * * * will send every 5 seconds; 00 */1 * * * * will send every hout at 00:00 01:00 02:00 and so on..
+FIRST_START = false // bool for if the bot has startet yet
+CHECK_FOR_UPDATE = false // bool for check on every start for new version
+TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN = false // bool for drawdown protection
+DRAWDOWN_THRESHOLD = 3.5 // drawdown to set a pair on timeout
 ```
 <br>
 
