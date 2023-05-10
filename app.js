@@ -339,8 +339,7 @@ wsClient.on('update', (data) => {
                 if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 } else {
-                    if (runningStatus == runningStatus_RUN)
-                      scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN); 
+                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN);
                 }
     
             }
@@ -424,7 +423,7 @@ binanceClient.on('formattedMessage', (data) => {
             if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             } else {
-                scalp(pair, index, liquidationOrders[index].qty, 'Binance');
+                scalp(pair, index, liquidationOrders[index].qty, 'Binance', runningStatus != runningStatus_RUN);
             }
 
         }
