@@ -940,12 +940,7 @@ async function totalOpenPositions() {
         var open = 0;
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
-                if (open === null) {
-                    open = 1;
-                }
-                else {
-                    open++;
-                }
+                open++;
             }
         }
         return open;
