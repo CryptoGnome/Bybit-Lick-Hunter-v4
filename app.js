@@ -62,6 +62,9 @@ const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
 
+// keep tracks of opened positions
+var openPositions = undefined;
+
 // tradesStat store metric about current trade
 const tradesHistory = new Map();
 // globalTradesStats store global metric
@@ -235,6 +238,7 @@ wsClient.on('update', (data) => {
               if (trade_info._start_price === 0) {
                 trade_info._start_price = order.last_exec_price;
                 traceTrade("start", trade_info, traceTradeFields);
+                incOpenPosition();
               }
             }
             break;
@@ -272,6 +276,7 @@ wsClient.on('update', (data) => {
           logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
           logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
           tradesHistory.delete(order.symbol);
+          decOpenPosition();
         }
       });
     } else {
@@ -933,22 +938,40 @@ async function takeProfit(symbol, position) {
     }
 
 }
+
+
+function incOpenPosition() {
+  openPositions = (openPositions ?? 0) + 1;
+}
+
+function decOpenPosition() {
+  openPositions = (openPositions ?? 0) - 1;
+  if (openPositions < 0) {
+    logIT("decOpenPosition ERROR: open position < 0");
+    openPositions = undefined;
+  }
+}
+
 //fetch how how openPositions there are
 async function totalOpenPositions() {
-    try{
-        var positions = await linearClient.getPosition();
-        var open = 0;
-        for (var i = 0; i < positions.result.length; i++) {
-            if (positions.result[i].data.size > 0) {
-                open++;
-            }
-        }
-        return open;
+    if (openPositions === undefined) {
+      try{
+          var positions = await linearClient.getPosition();
+          var open = 0;
+          for (var i = 0; i < positions.result.length; i++) {
+              if (positions.result[i].data.size > 0) {
+                  open++;
+              }
+          }
+          openPositions = open;
 
+      }
+      catch (error) {
+          return null;
+      }
     }
-    catch (error) {
-        return null;
-    }
+
+    return openPositions;
 }
 //against trend
 async function scalp(pair, index, trigger_qty, source, new_trades_disabled = false) {
