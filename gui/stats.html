@@ -65,8 +65,8 @@
 
       socket.on("data", (msg) => {
 
-        var performanceTxt = "deals: " + (msg.trade_count ?? "0") + "\n" +
-        "max_loss: " + (msg.max_loss ?? 0) + "\n" +
+        var performanceTxt = "trades: " + (msg.trade_count ?? "0") + "\n" +
+        "max drawdown: " + (msg.max_loss ?? 0) + "\n" +
         "take profit: " + (msg.wins_count ?? 0) + "\n" +
         "stop loss: " + (msg.loss_count ?? 0) + "\n" +
         "max in a row: win:" + msg.max_consecutive_wins + "/loss:" +  msg.max_consecutive_losses + "\n" +
