@@ -80,9 +80,9 @@ var globalTradesStats = {
   max_consecutive_wins: 0
 };
 loadJson(globalStatsPath, globalTradesStats);
-const TRACE_TRADES_LEVEL_OFF = "0";
-const TRACE_TRADES_LEVEL_ON = "1";
-const TRACE_TRADES_LEVEL_MAX = "2";
+const TRACE_TRADES_LEVEL_OFF = "OFF";
+const TRACE_TRADES_LEVEL_ON = "ON";
+const TRACE_TRADES_LEVEL_MAX = "MAX";
 const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
 
 
@@ -706,14 +706,14 @@ async function getBalance() {
                   var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
                   const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
                   tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                  trade = tradesHistory.get(symbol);
                 } else {
-                  updatePosition(trade, position);
-                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                  updatePosition(trade, {"_max_loss": Math.min(pnl, trade._max_loss), "price": price, "stop_loss": stop_loss, "take_profit": take_profit});
                 }
 
                 positionList.push({...position, "dca_count": trade._dca_count, "max_loss": trade._max_loss.toFixed(3)});
                 if (process.env.TRACE_TRADES == TRACE_TRADES_LEVEL_MAX)
-                  traceTrade("cont", {...position, "_dca_count": trade._dca_count, "_max_loss": trade._max_loss.toFixed(3)}, traceTradeFields);
+                  traceTrade("cont", trade, traceTradeFields);
             }
         }
 
