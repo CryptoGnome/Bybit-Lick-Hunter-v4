@@ -224,13 +224,21 @@ wsClient.on('update', (data) => {
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
             messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
         }
+        let trade_info = tradesHistory.get(order_data[0].symbol);
+        if (trade_info !== undefined && order_data[0].order_status === "Triggered" && (order_data[0].stop_order_type === "StopLoss" || order_data[0].stop_order_type === "TakeProfit")) {
+            trade_info._close_type = order_data[0].stop_order_type;
+        }
     } else if (topic === "order") {
       let close_position = false;
       const filled_orders = data.data.filter(el => el.order_status == 'Filled');
       filled_orders.forEach( order => {
+
         let trade_info = tradesHistory.get(order.symbol);
 
-        switch(order.create_type) {
+        // 26/05/2023 patch as ByBit change order.create_type
+        const order_type = trade_info._close_type ? trade_info._close_type : order.create_type;
+
+        switch(order_type) {
           case 'CreateByUser':
             // new trade
             if (trade_info !== undefined) {
@@ -243,16 +251,14 @@ wsClient.on('update', (data) => {
               }
             }
             break;
-          case 'CreateByStopLoss':
+          case 'StopLoss':
             close_position = true;
             globalTradesStats.consecutive_wins = 0;
             globalTradesStats.consecutive_losses += 1;
             globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
             globalTradesStats.losses_count += 1;
-            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
-              traceTrade("stop_loss", trade_info, traceTradeFields);
             break;
-          case 'CreateByTakeProfit':
+          case 'TakeProfit':
             close_position = true;
             globalTradesStats.consecutive_losses = 0;
             globalTradesStats.consecutive_wins += 1;
@@ -262,8 +268,6 @@ wsClient.on('update', (data) => {
                 addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
                 logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
             }
-            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
-              traceTrade("take_profit", trade_info, traceTradeFields);
             break;
           default:
             // NOP
@@ -276,6 +280,8 @@ wsClient.on('update', (data) => {
           storeJson(globalStatsPath, globalTradesStats);
           logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
           logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+          if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+            traceTrade(order_type, trade_info, traceTradeFields);
           tradesHistory.delete(order.symbol);
           decOpenPosition();
         }
