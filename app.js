@@ -1446,7 +1446,7 @@ async function updateSettings() {
                     //find index of pair in min_order_sizes.json "pair" key
                     var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
                     var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
-                    if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
+                    if (index === -1 || settingsIndex === -1 || out.data[i].name.includes("1000")) {
                         //logIT("Skipping " + out.data[i].name + "USDT");
                     }
                     else {
