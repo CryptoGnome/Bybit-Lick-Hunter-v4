@@ -96,6 +96,9 @@ var lastUpdate = 0;
 var global_balance;
 const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
 
+// queue to sequentially execute scalp method
+var tradeOrdersQueue = [];
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
 app.use('/img', express.static('gui/img'));
@@ -210,6 +213,12 @@ function handleDcaOrder(order, liquidity_trigger) {
     if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
       traceTrade("dca", trade_info, traceTradeFields);
   }
+}
+
+function tradeOrdersQueue_enqueue(orderFnObj) {
+  let ordersInProgress = tradeOrdersQueue.filter(el => el.pair === orderFnObj.pair);
+  if (ordersInProgress.length == 0)
+    tradeOrdersQueue.push(orderFnObj);
 }
 
 wsClient.on('update', (data) => {
@@ -347,11 +356,14 @@ wsClient.on('update', (data) => {
             }
 
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-                
+
                 if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 } else {
-                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN);
+                    if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
+                      tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN)});
+                    else
+                      scalp(pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN);
                 }
     
             }
@@ -436,7 +448,10 @@ binanceClient.on('formattedMessage', (data) => {
             if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             } else {
-                scalp(pair, index, liquidationOrders[index].qty, 'Binance', runningStatus != runningStatus_RUN);
+                if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
+                    tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Binance', runningStatus != runningStatus_RUN)});
+                else
+                  scalp(pair, {...liquidationOrders[index]}, 'Binance', runningStatus != runningStatus_RUN);
             }
 
         }
@@ -983,10 +998,12 @@ async function totalOpenPositions() {
 }
 
 //against trend
-async function scalp(pair, index, trigger_qty, source, new_trades_disabled = false) {
+async function scalp(pair, liquidationInfo, source, new_trades_disabled = false) {
     //check how many positions are open
     const open_positions = await totalOpenPositions();
     logIT("scalp - Open positions: " + open_positions);
+
+    const trigger_qty = liquidationInfo.qty;
 
     //make sure openPositions is less than max open positions and not null
     if (open_positions === null) {
@@ -998,7 +1015,7 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
       return;
     }
 
-    let side = liquidationOrders[index].side;
+    let side = liquidationInfo.side;
     const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
     var settingsIndex = await settings.pairs.findIndex(x => x.symbol === pair);
 
@@ -1007,12 +1024,12 @@ async function scalp(pair, index, trigger_qty, source, new_trades_disabled = fal
       logIT(chalk.bgRedBright("scalp - " + pair + " does not exist in settings.json"));
       return;
     }
-    if (side == "Buy" && liquidationOrders[index].price >= settings.pairs[settingsIndex].long_price) {
-      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+    if (side == "Buy" && liquidationInfo.price >= settings.pairs[settingsIndex].long_price) {
+      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationInfo.price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
       return;
     }
-    if (side == "Sell" && liquidationOrders[index].price <= settings.pairs[settingsIndex].short_price) {
-      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+    if (side == "Sell" && liquidationInfo.price <= settings.pairs[settingsIndex].short_price) {
+      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationInfo.price + " is lower than short price " + settings.pairs[settingsIndex].long_price + " for " + pair));
       return;
     }
 
@@ -1858,6 +1875,17 @@ async function main() {
     }
 
     await liquidationEngine(pairs);
+
+    // place orders loop
+    let tradeFunction = undefined;
+    setInterval( async () => {
+      if (tradeOrdersQueue.length > 0 && tradeFunction === undefined) {
+        // dequeue and execute first order
+        tradeFunction = tradeOrdersQueue.shift();
+        await tradeFunction.fn();
+        tradeFunction = undefined;
+      }
+    }, 100);
 
     while (true) {
         try {
