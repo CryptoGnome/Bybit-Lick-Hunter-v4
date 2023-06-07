@@ -37,7 +37,7 @@ export function newPosition(order) {
     "_liquidity_trigger": order.liquidity_trigger,
     "_dca_count" : 0,
     "_start_price" : order.last_exec_price,
-    "_start_time" : order.create_time,
+    "_start_time" : order.created_time,
     "_end_time": undefined,
   };
   const usdValue = position.price * position.size / process.env.LEVERAGE;
