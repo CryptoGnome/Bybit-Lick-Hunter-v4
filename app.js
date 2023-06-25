@@ -1010,10 +1010,6 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       logIT(chalk.redBright("scalp - failed to fetch open positions!"));
       return;
     }
-    if (open_positions >= process.env.MAX_OPEN_POSITIONS) {
-      logIT(chalk.redBright("scalp - Max Open Positions Reached!"));
-      return;
-    }
 
     let side = liquidationInfo.side;
     const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
@@ -1058,6 +1054,12 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
 
     // place new order
     if (position.size === 0) {
+
+      if (open_positions >= process.env.MAX_OPEN_POSITIONS) {
+        logIT(chalk.redBright("scalp - Max Open Positions Reached!"));
+        return;
+      }
+
       //get current price
       var priceFetch = await linearClient.getTickers({symbol: pair});
       var price = priceFetch.result[0].last_price;
