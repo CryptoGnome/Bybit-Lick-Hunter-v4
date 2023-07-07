@@ -20,6 +20,7 @@ import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
 import { loadJson, storeJson, traceTrade } from './utils.js';
+import { createMarketOrder } from './order.js';
 
 dotenv.config();
 
@@ -62,6 +63,9 @@ const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
 const stopLossCoins = new Map();
 
+// keep tracks of opened positions
+var openPositions = undefined;
+
 // tradesStat store metric about current trade
 const tradesHistory = new Map();
 // globalTradesStats store global metric
@@ -77,9 +81,9 @@ var globalTradesStats = {
   max_consecutive_wins: 0
 };
 loadJson(globalStatsPath, globalTradesStats);
-const TRACE_TRADES_LEVEL_OFF = "0";
-const TRACE_TRADES_LEVEL_ON = "1";
-const TRACE_TRADES_LEVEL_MAX = "2";
+const TRACE_TRADES_LEVEL_OFF = "OFF";
+const TRACE_TRADES_LEVEL_ON = "ON";
+const TRACE_TRADES_LEVEL_MAX = "MAX";
 const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
 
 
@@ -91,6 +95,9 @@ var liquidationOrders = [];
 var lastUpdate = 0;
 var global_balance;
 const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "true" ?  parseFloat(process.env.DRAWDOWN_THRESHOLD) : 0
+
+// queue to sequentially execute scalp method
+var tradeOrdersQueue = [];
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
@@ -208,6 +215,12 @@ function handleDcaOrder(order, liquidity_trigger) {
   }
 }
 
+function tradeOrdersQueue_enqueue(orderFnObj) {
+  let ordersInProgress = tradeOrdersQueue.filter(el => el.pair === orderFnObj.pair);
+  if (ordersInProgress.length == 0)
+    tradeOrdersQueue.push(orderFnObj);
+}
+
 wsClient.on('update', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
 
@@ -220,13 +233,21 @@ wsClient.on('update', (data) => {
             addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
             messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
         }
+        let trade_info = tradesHistory.get(order_data[0].symbol);
+        if (trade_info !== undefined && order_data[0].order_status === "Triggered" && (order_data[0].stop_order_type === "StopLoss" || order_data[0].stop_order_type === "TakeProfit")) {
+            trade_info._close_type = order_data[0].stop_order_type;
+        }
     } else if (topic === "order") {
       let close_position = false;
       const filled_orders = data.data.filter(el => el.order_status == 'Filled');
       filled_orders.forEach( order => {
+
         let trade_info = tradesHistory.get(order.symbol);
 
-        switch(order.create_type) {
+        // 26/05/2023 patch as ByBit change order.create_type
+        const order_type = trade_info._close_type ? trade_info._close_type : order.create_type;
+
+        switch(order_type) {
           case 'CreateByUser':
             // new trade
             if (trade_info !== undefined) {
@@ -235,19 +256,18 @@ wsClient.on('update', (data) => {
               if (trade_info._start_price === 0) {
                 trade_info._start_price = order.last_exec_price;
                 traceTrade("start", trade_info, traceTradeFields);
+                incOpenPosition();
               }
             }
             break;
-          case 'CreateByStopLoss':
+          case 'StopLoss':
             close_position = true;
             globalTradesStats.consecutive_wins = 0;
             globalTradesStats.consecutive_losses += 1;
             globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
             globalTradesStats.losses_count += 1;
-            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
-              traceTrade("stop_loss", trade_info, traceTradeFields);
             break;
-          case 'CreateByTakeProfit':
+          case 'TakeProfit':
             close_position = true;
             globalTradesStats.consecutive_losses = 0;
             globalTradesStats.consecutive_wins += 1;
@@ -257,8 +277,6 @@ wsClient.on('update', (data) => {
                 addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
                 logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
             }
-            if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
-              traceTrade("take_profit", trade_info, traceTradeFields);
             break;
           default:
             // NOP
@@ -271,7 +289,10 @@ wsClient.on('update', (data) => {
           storeJson(globalStatsPath, globalTradesStats);
           logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
           logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+          if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+            traceTrade(order_type, trade_info, traceTradeFields);
           tradesHistory.delete(order.symbol);
+          decOpenPosition();
         }
       });
     } else {
@@ -335,11 +356,14 @@ wsClient.on('update', (data) => {
             }
 
             if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-                
+
                 if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                     logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
                 } else {
-                    scalp(pair, index, liquidationOrders[index].qty, 'Bybit', runningStatus != runningStatus_RUN);
+                    if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
+                      tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN)});
+                    else
+                      scalp(pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN);
                 }
     
             }
@@ -354,6 +378,7 @@ wsClient.on('update', (data) => {
         }
     }
 });
+
 binanceClient.on('formattedMessage', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
     var pair = data.liquidationOrder.symbol;
@@ -423,7 +448,10 @@ binanceClient.on('formattedMessage', (data) => {
             if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
                 logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
             } else {
-                scalp(pair, index, liquidationOrders[index].qty, 'Binance', runningStatus != runningStatus_RUN);
+                if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
+                    tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Binance', runningStatus != runningStatus_RUN)});
+                else
+                  scalp(pair, {...liquidationOrders[index]}, 'Binance', runningStatus != runningStatus_RUN);
             }
 
         }
@@ -701,14 +729,14 @@ async function getBalance() {
                   var usdValue = (positions.result[i].data.entry_price * size) / process.env.LEVERAGE;
                   const dca_count = Math.trunc( usdValue / (balance*process.env.PERCENT_ORDER_SIZE/100) );
                   tradesHistory.set(symbol, {...position, "_max_loss" : 0, "_dca_count" : dca_count, "_start_price" : positions.result[i].data.entry_price});
+                  trade = tradesHistory.get(symbol);
                 } else {
-                  updatePosition(trade, position);
-                  trade._max_loss = Math.min(pnl, trade._max_loss);
+                  updatePosition(trade, {"_max_loss": Math.min(pnl, trade._max_loss), "price": price, "stop_loss": stop_loss, "take_profit": take_profit});
                 }
 
                 positionList.push({...position, "dca_count": trade._dca_count, "max_loss": trade._max_loss.toFixed(3)});
                 if (process.env.TRACE_TRADES == TRACE_TRADES_LEVEL_MAX)
-                  traceTrade("cont", {...position, "_dca_count": trade._dca_count, "_max_loss": trade._max_loss.toFixed(3)}, traceTradeFields);
+                  traceTrade("cont", trade, traceTradeFields);
             }
         }
 
@@ -933,257 +961,150 @@ async function takeProfit(symbol, position) {
     }
 
 }
+
+
+function incOpenPosition() {
+  openPositions = (openPositions ?? 0) + 1;
+}
+
+function decOpenPosition() {
+  openPositions = (openPositions ?? 0) - 1;
+  if (openPositions < 0) {
+    logIT("decOpenPosition ERROR: open position < 0");
+    openPositions = undefined;
+  }
+}
+
 //fetch how how openPositions there are
 async function totalOpenPositions() {
-    try{
-        var positions = await linearClient.getPosition();
-        var open = 0;
-        for (var i = 0; i < positions.result.length; i++) {
-            if (positions.result[i].data.size > 0) {
-                if (open === null) {
-                    open = 1;
-                }
-                else {
-                    open++;
-                }
-            }
-        }
-        return open;
+    if (openPositions === undefined) {
+      try{
+          var positions = await linearClient.getPosition();
+          var open = 0;
+          for (var i = 0; i < positions.result.length; i++) {
+              if (positions.result[i].data.size > 0) {
+                  open++;
+              }
+          }
+          openPositions = open;
 
+      }
+      catch (error) {
+          return null;
+      }
     }
-    catch (error) {
-        return null;
-    }
+
+    return openPositions;
 }
+
 //against trend
-async function scalp(pair, index, trigger_qty, source, new_trades_disabled = false) {
+async function scalp(pair, liquidationInfo, source, new_trades_disabled = false) {
     //check how many positions are open
-    var openPositions = await totalOpenPositions();
-    logIT("Open positions: " + openPositions);
+    const open_positions = await totalOpenPositions();
+    logIT("scalp - Open positions: " + open_positions);
+
+    const trigger_qty = liquidationInfo.qty;
 
     //make sure openPositions is less than max open positions and not null
-    if (openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
-        //Long liquidation
-        if (liquidationOrders[index].side === "Buy") {
-            const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-            var settingsIndex = await settings.pairs.findIndex(x => x.symbol === pair);
-            
-            if(settingsIndex !== -1) {
-                if (liquidationOrders[index].price < settings.pairs[settingsIndex].long_price)  {
-                    //see if we have an open position
-                    var position = await getPosition(pair, "Buy");
-
-                    //make sure position.size greater than or equal to 0
-                    if (position.size != null) {
-                        //console.log(position);
-                        //no open position
-                        if (position.side === "Buy" && position.size === 0) {
-                            if (new_trades_disabled) {
-                              logIT("Server is in pause new trades are disabled");
-                              return;
-                            }
-                            //load min order size json
-                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                            var index = tickData.findIndex(x => x.pair === pair);
-                            var tickSize = tickData[index].tickSize;
-                            var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-
-                            //get current price
-                            var priceFetch = await linearClient.getTickers({symbol: pair});
-                            var price = priceFetch.result[0].last_price;
-
-                            // set leverage and margin-mode
-                            setLeverage(pair, process.env.LEVERAGE)
-                            // order payload
-                            var cfg = {
-                                side: 'Buy',
-                                order_type: "Market",
-                                symbol: pair,
-                                qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                                time_in_force: "GoodTillCancel",
-                                reduce_only: false,
-                                close_on_trigger: false
-                            };
-
-                            if (process.env.USE_TAKE_PROFIT == "true")
-                                cfg['take_profit'] = pluspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
-                            if (process.env.USE_STOPLOSS == "true")
-                                cfg['stop_loss'] = minuspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
-
-                            // send order payload
-                            const order = await linearClient.placeActiveOrder(cfg);
-                            handleNewOrder(order.result, trigger_qty);
-                            //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                            logIT(chalk.bgGreenBright("Long Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
-                            }
-                            
-            
-                        }
-                        //open DCA position
-                        else if (position.side === "Buy" && position.size > 0 && position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true") {
-                            //maxe sure order is less than max order size
-                            if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size) {
-                                //load min order size json
-                                const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                                var index = tickData.findIndex(x => x.pair === pair);
-                                var tickSize = tickData[index].tickSize;
-                                var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                                // set leverage and margin-mode
-                                setLeverage(pair, process.env.LEVERAGE)
-                                // order payload
-                                const order = await linearClient.placeActiveOrder({
-                                    symbol: pair,
-                                    side: "Buy",
-                                    order_type: "Market",
-                                    qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                                    time_in_force: "GoodTillCancel",
-                                    reduce_only: false,
-                                    close_on_trigger: false
-                                });
-                                handleDcaOrder(order.result, trigger_qty);
-                                //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgGreenBright.black("Long DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Buy", position.size, position.percentGain, trigger_qty, source);
-                                }
-                            }
-                            else {
-                                //max position size reached
-                                logIT("Max position size reached for " + pair);
-                                messageWebhook("Max position size reached for " + pair);
-                                
-                            }
-                        }
-                        else {
-                            logIT(chalk.redBright("Order size is greaer than max position size for " + pair));
-                        }
-                    }
-                    else {
-                        logIT(chalk.redBright("Error getting position for " + pair));
-                    }
-
-                }
-                else {
-                    logIT(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
-                }
-            }
-            else {
-                logIT(chalk.bgRedBright( pair + " does not exist in settings.json"));
-            }
-
-        }
-        else {
-            const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-            var settingsIndex = await settings.pairs.findIndex(x => x.symbol === pair);
-            if(settingsIndex !== -1) {
-                if (liquidationOrders[index].price > settings.pairs[settingsIndex].short_price)  {
-                    var position = await getPosition(pair, "Sell");
-
-                    //make sure position.size greater than or equal to 0
-                    if (position.size != null) {
-                        //console.log(position);
-                        //no open position
-                        if (position.side === "Sell" && position.size === 0) {
-                            if (new_trades_disabled) {
-                              logIT("Server is in pause new trades are disabled");
-                              return;
-                            }
-                            //load min order size json
-                            const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                            var index = tickData.findIndex(x => x.pair === pair);
-                            var tickSize = tickData[index].tickSize;
-                            var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-
-                            //get current price
-                            var priceFetch = await linearClient.getTickers({symbol: pair});
-                            var price = priceFetch.result[0].last_price;
-
-                            // set leverage and margin-mode
-                            setLeverage(pair, process.env.LEVERAGE)
-                            // order payload
-                            var cfg = {
-                                side: 'Sell',
-                                order_type: "Market",
-                                symbol: pair,
-                                qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                                time_in_force: "GoodTillCancel",
-                                reduce_only: false,
-                                close_on_trigger: false
-                            };
-
-                            if (process.env.USE_TAKE_PROFIT == "true")
-                                cfg['take_profit'] = minuspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)
-                            if (process.env.USE_STOPLOSS == "true")
-                                cfg['stop_loss'] = pluspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)
-
-                            // send order payload
-                            const order = await linearClient.placeActiveOrder(cfg);
-                            handleNewOrder(order.result, trigger_qty);
-                            //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                            logIT(chalk.bgRedBright("Short Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                            if(process.env.USE_DISCORD == "true") {
-                                orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
-                            }
-    
-                        }
-                        //open DCA position
-                        else if (position.side === "Sell" && position.size > 0 && position.percentGain < 0) {
-                            //maxe sure order is less than max order size
-                            if ((position.size + settings.pairs[settingsIndex].order_size) < settings.pairs[settingsIndex].max_position_size && process.env.USE_DCA_FEATURE == "true") {
-                                //load min order size json
-                                const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
-                                var index = tickData.findIndex(x => x.pair === pair);
-                                var tickSize = tickData[index].tickSize;
-                                var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
-                                // set leverage and margin-mode
-                                setLeverage(pair, process.env.LEVERAGE)
-                                // order payload
-                                const order = await linearClient.placeActiveOrder({
-                                    symbol: pair,
-                                    side: "Sell",
-                                    order_type: "Market",
-                                    qty: settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces),
-                                    time_in_force: "GoodTillCancel",
-                                    reduce_only: false,
-                                    close_on_trigger: false
-                                });
-                                handleDcaOrder(order.result, trigger_qty);
-                                //logIT("Order placed: " + JSON.stringify(order, null, 2));
-                                logIT(chalk.bgRedBright("Short DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
-                                if(process.env.USE_DISCORD == "true") {
-                                    orderWebhook(pair, settings.pairs[settingsIndex].order_size, "Sell", position.size, position.percentGain, trigger_qty, source);
-                                }
-                            }
-                            else {
-                                //max position size reached
-                                logIT("Max position size reached for " + pair);
-                                messageWebhook("Max position size reached for " + pair);
-                            }
-                        }
-                        else {
-                            logIT(chalk.redBright("Order size is greater than max position size for " + pair));
-                        }
-                    }
-                    else {
-                        logIT(chalk.redBright("Error getting position for " + pair));
-                    }
-
-                }
-                else {
-                    logIT(chalk.cyan("!! Liquidation price " + liquidationOrders[index].price + " is lower than short price " + settings.pairs[settingsIndex].short_price + " for " + pair));
-                }
-            }
-            else {
-                logIT(chalk.bgCyan.black(pair + " does not exist in settings.json"));
-            }
-        }
-    }
-    else {
-        logIT(chalk.redBright("Max Open Positions Reached!"));
+    if (open_positions === null) {
+      logIT(chalk.redBright("scalp - failed to fetch open positions!"));
+      return;
     }
 
+    let side = liquidationInfo.side;
+    const settings = await JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+    var settingsIndex = await settings.pairs.findIndex(x => x.symbol === pair);
+
+    // check price bounds
+    if(settingsIndex == -1) {
+      logIT(chalk.bgRedBright("scalp - " + pair + " does not exist in settings.json"));
+      return;
+    }
+    if (side == "Buy" && liquidationInfo.price >= settings.pairs[settingsIndex].long_price) {
+      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationInfo.price + " is higher than long price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+      return;
+    }
+    if (side == "Sell" && liquidationInfo.price <= settings.pairs[settingsIndex].short_price) {
+      logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationInfo.price + " is lower than short price " + settings.pairs[settingsIndex].long_price + " for " + pair));
+      return;
+    }
+
+    //load min order size json
+    const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
+    var index = tickData.findIndex(x => x.pair === pair);
+    var tickSize = tickData[index].tickSize;
+    var decimalPlaces = (tickSize.toString().split(".")[1] || []).length;
+
+    var position = await getPosition(pair, side);
+
+    if (position ? position.size == null : true) {
+      logIT(chalk.redBright("scalp - " + "Error getting position for " + pair));
+      return;
+    }
+
+    if (position.size === 0 && new_trades_disabled) {
+      logIT("scalp - " + "Server is in pause new trades are disabled");
+      return;
+    }
+
+    if (position.size === 0 && tradesHistory.get(pair) != undefined) {
+      logIT("scalp - discard order as exchange position data is not updated: position was already opened and does not result on exchange yet");
+      return;
+    }
+
+    // place new order
+    if (position.size === 0) {
+
+      if (open_positions >= process.env.MAX_OPEN_POSITIONS) {
+        logIT(chalk.redBright("scalp - Max Open Positions Reached!"));
+        return;
+      }
+
+      //get current price
+      var priceFetch = await linearClient.getTickers({symbol: pair});
+      var price = priceFetch.result[0].last_price;
+
+      // set leverage and margin-mode
+      setLeverage(pair, process.env.LEVERAGE)
+      // send order payload
+      let take_profit = process.env.USE_TAKE_PROFIT == "true" ?
+        (side == "Buy" ? pluspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces) : minuspercent(price, process.env.TAKE_PROFIT_PERCENT).toFixed(decimalPlaces)) : 0;
+      let stop_loss = process.env.USE_STOPLOSS == "true" ?
+        (side == "Buy" ? minuspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces) : pluspercent(price, process.env.STOP_LOSS_PERCENT).toFixed(decimalPlaces)) : 0;
+      let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
+      let order = await createMarketOrder(linearClient, pair, side, size, take_profit, stop_loss);
+      if (order.ret_msg != "OK") {
+        logIT(`Scalp exit: Error placing new ${side} order: ${order.ret_msg}`);
+        return;
+      }
+      handleNewOrder(order.result, trigger_qty);
+      logIT(chalk.bgGreenBright(`${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
+      if(process.env.USE_DISCORD == "true") {
+        orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
+      }
+    } else if (position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true") {
+
+        //Long/Short liquidation
+        //make sure order is less than max order size
+        if ((position.size + settings.pairs[settingsIndex].order_size) > settings.pairs[settingsIndex].max_position_size) {
+          //max position size reached
+          logIT("scalp - " + "Max position size reached for " + pair);
+          messageWebhook("Max position size reached for " + pair);
+          return;
+        }
+        // set leverage and margin-mode
+        setLeverage(pair, process.env.LEVERAGE)
+        // order payload
+        let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
+        let order = await createMarketOrder(linearClient, pair, position.side, size, price);
+        handleDcaOrder(order.result, trigger_qty);
+        logIT(chalk.bgGreenBright.black(side + " DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+        if(process.env.USE_DISCORD == "true") {
+            orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
+        }
+    } else {
+      logIT(chalk.redBright("scalp - " + "DCA disabled or position pnl is positive for " + pair));
+    }
 }
 
 //set leverage on pair
@@ -1550,7 +1471,7 @@ async function updateSettings() {
                     //find index of pair in min_order_sizes.json "pair" key
                     var index = minOrderSizes.findIndex(x => x.pair === out.data[i].name + "USDT");
                     var settingsIndex = settingsFile.pairs.findIndex(x => x.symbol === out.data[i].name + "USDT");
-                    if (index === -1 || settingsIndex === 'undefined' || out.data[i].name.includes("1000")) {
+                    if (index === -1 || settingsIndex === -1 || out.data[i].name.includes("1000")) {
                         //logIT("Skipping " + out.data[i].name + "USDT");
                     }
                     else {
@@ -1956,6 +1877,17 @@ async function main() {
     }
 
     await liquidationEngine(pairs);
+
+    // place orders loop
+    let tradeFunction = undefined;
+    setInterval( async () => {
+      if (tradeOrdersQueue.length > 0 && tradeFunction === undefined) {
+        // dequeue and execute first order
+        tradeFunction = tradeOrdersQueue.shift();
+        await tradeFunction.fn();
+        tradeFunction = undefined;
+      }
+    }, 100);
 
     while (true) {
         try {
