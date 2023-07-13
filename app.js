@@ -1357,7 +1357,7 @@ async function getSymbols() {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-/auto create settings.json file
+//auto create settings.json file
 async function createSettings() {
     await getMinTradingSize();
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
