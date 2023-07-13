@@ -1357,7 +1357,7 @@ async function getSymbols() {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-//auto create settings.json file
+/auto create settings.json file
 async function createSettings() {
     await getMinTradingSize();
     var minOrderSizes = JSON.parse(fs.readFileSync('min_order_sizes.json'));
@@ -1383,36 +1383,23 @@ async function createSettings() {
                 }
                 else {
                     //risk level
-                    var riskLevel = process.env.RISK_LEVEL;
-                    if (riskLevel == 1) {
-                        //add 0.5% to long_price and subtract 0.5% from short_price
-                        var long_risk = out.data[i].long_price * 1.005
-                        var short_risk = out.data[i].short_price * 0.995
-                    }
-                    else if (riskLevel == 2) {
-                        //calculate price 1% below current price and 1% above current price
-                        var long_risk = out.data[i].long_price * 1.01
-                        var short_risk = out.data[i].short_price * 0.99
-                    }
-                    else if (riskLevel == 3) {
-                        //calculate price 2% below current price and 2% above current price
-                        var long_risk = out.data[i].long_price * 1.02
-                        var short_risk = out.data[i].short_price * 0.98
-                    }
-                    else if (riskLevel == 4) {
-                        //calculate price 3% below current price and 3% above current price
-                        var long_risk = out.data[i].long_price * 1.03
-                        var short_risk = out.data[i].short_price * 0.97
-                    }
-                    else if (riskLevel == 5) {
-                        //calculate price 4% below current price and 4% above current price
-                        var long_risk = out.data[i].long_price * 1.04
-                        var short_risk = out.data[i].short_price * 0.96
-                    }
-                    else {
-                        var long_risk = out.data[i].long_price;
-                        var short_risk = out.data[i].short_price;
-                    }
+                    var riskLevellong  = process.env.RISK_LEVEL_LONG;
+					var riskLevelshort = process.env.RISK_LEVEL_SHORT;
+					if (riskLevellong !== '0') {
+						var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
+						var long_risk = out.data[i].long_price * (1 + riskPercentagelong / 100);
+					} 
+					else {
+					var long_risk = out.data[i].long_price;
+					}
+
+					if (riskLevelshort !== '0') {
+						var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
+						var short_risk = out.data[i].short_price * (1 - riskPercentageshort / 100);
+					} 
+					else {
+					var short_risk = out.data[i].short_price;
+					}
 
                     var pair = {
                         "symbol": out.data[i].name + "USDT",
@@ -1476,35 +1463,21 @@ async function updateSettings() {
                     }
                     else {
                         //set risk then update long_price and short_price
-                        var riskLevel = process.env.RISK_LEVEL;
-                        if (riskLevel == 1) {
-                            //add 0.5% to long_price and subtract 0.5% from short_price
-                            var long_risk = out.data[i].long_price * 1.005
-                            var short_risk = out.data[i].short_price * 0.995
-                        }
-                        else if (riskLevel == 2) {
-                            //calculate price 1% below current price and1% above current price
-                            var long_risk = out.data[i].long_price * 1.01
-                            var short_risk = out.data[i].short_price * 0.99
-                        }
-                        else if (riskLevel == 3) {
-                            //calculate price 2% below current price and 2% above current price
-                            var long_risk = out.data[i].long_price * 1.02
-                            var short_risk = out.data[i].short_price * 0.98
-                        }
-                        else if (riskLevel == 4) {
-                            //calculate price 3% below current price and 3% above current price
-                            var long_risk = out.data[i].long_price * 1.03
-                            var short_risk = out.data[i].short_price * 0.97
-                        }
-                        else if (riskLevel == 5) {
-                            //calculate price 4% below current price and 4% above current price
-                            var long_risk = out.data[i].long_price * 1.04
-                            var short_risk = out.data[i].short_price * 0.96
-                        }
-                        else {
-                            var long_risk = out.data[i].long_price;
-                            var short_risk = out.data[i].short_price;
+                        var riskLevellong  = process.env.RISK_LEVEL_LONG;
+						var riskLevelshort = process.env.RISK_LEVEL_SHORT;
+						if (riskLevellong !== '0') {
+							var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
+							var long_risk = out.data[i].long_price * (1 + riskPercentagelong / 100);
+						} 
+						else {
+						var long_risk = out.data[i].long_price;
+						}
+						if (riskLevelshort !== '0') {
+							var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
+							var short_risk = out.data[i].short_price * (1 - riskPercentageshort / 100);
+						} 
+						else {
+						var short_risk = out.data[i].short_price;
                         }
                         //updated settings.json file
                         settingsFile.pairs[settingsIndex].long_price = long_risk;
@@ -1531,36 +1504,22 @@ async function updateSettings() {
                             }
                             else {
                                 //set risk then update long_price and short_price
-                                var riskLevel = process.env.RISK_LEVEL;
-                                if (riskLevel == 1) {
-                                    //add 0.5% to long_price and subtract 0.5% from short_price
-                                    var long_risk = researchFile.data[i].long_price * 1.005
-                                    var short_risk = researchFile.data[i].short_price * 0.995
-                                }
-                                else if (riskLevel == 2) {
-                                    //calculate price 1% below current price and1% above current price
-                                    var long_risk = researchFile.data[i].long_price * 1.01
-                                    var short_risk = researchFile.data[i].short_price * 0.99
-                                }
-                                else if (riskLevel == 3) {
-                                    //calculate price 2% below current price and 2% above current price
-                                    var long_risk = researchFile.data[i].long_price * 1.02
-                                    var short_risk = researchFile.data[i].short_price * 0.98
-                                }
-                                else if (riskLevel == 4) {
-                                    //calculate price 3% below current price and 3% above current price
-                                    var long_risk = researchFile.data[i].long_price * 1.03
-                                    var short_risk = researchFile.data[i].short_price * 0.97
-                                }
-                                else if (riskLevel == 5) {
-                                    //calculate price 4% below current price and 4% above current price
-                                    var long_risk = researchFile.data[i].long_price * 1.04
-                                    var short_risk = researchFile.data[i].short_price * 0.96
-                                }
-                                else {
-                                    var long_risk = researchFile.data[i].long_price;
-                                    var short_risk = researchFile.data[i].short_price;
-                                }
+                                var riskLevellong = process.env.RISK_LEVEL_LONG;
+								var riskLevelshort = process.env.RISK_LEVEL_SHORT;
+								if (riskLevellong !== '0') {
+									var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
+									var long_risk = researchFile.data[i].long_price * (1 + riskPercentagelong / 100);
+								} 
+								else {
+									var long_risk = researchFile.data[i].long_price;
+								}
+								if (riskLevelshort !== '0') {
+									var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
+									var short_risk = researchFile.data[i].short_price * (1 - riskPercentageshort / 100);
+								} 
+								else {
+								var short_risk = researchFile.data[i].short_price;
+								}
                                 //updated settings.json file
                                 settingsFile.pairs[settingsIndex].long_price = long_risk;
                                 settingsFile.pairs[settingsIndex].short_price = short_risk;
