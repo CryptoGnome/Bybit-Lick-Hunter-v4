@@ -224,7 +224,7 @@ function tradeOrdersQueue_enqueue(orderFnObj) {
 }
 
 wsClient.on('update', (data) => {
-    //console.log('raw message received ', JSON.stringify(data, null, 2));
+    logIT(`raw message received ${JSON.stringify(data, null, 2)}`, LOG_LEVEL.DEBUG);
 
     const topic = data.topic;
     if (topic === "stop_order") {
