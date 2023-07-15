@@ -1078,7 +1078,7 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         return;
       }
       handleNewOrder(order.result, trigger_qty);
-      logIT(chalk.bgGreenBright(`${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
+      logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
       if(process.env.USE_DISCORD == "true") {
         orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
       }
@@ -1098,7 +1098,7 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
         let order = await createMarketOrder(linearClient, pair, position.side, size, price);
         handleDcaOrder(order.result, trigger_qty);
-        logIT(chalk.bgGreenBright.black(side + " DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+        logIT(chalk.bgGreenBright.black("scalp - " + side + " DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
         if(process.env.USE_DISCORD == "true") {
             orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
         }
