@@ -201,6 +201,7 @@ function handleNewOrder(order, liquidity_trigger) {
   // _liquidity_trigger: "liq1,liq2,...liqN"
   const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
   tradesHistory.set(order.symbol, position);
+  incOpenPosition();
 }
 
 function handleDcaOrder(order, liquidity_trigger) {
@@ -256,7 +257,6 @@ wsClient.on('update', (data) => {
               if (trade_info._start_price === 0) {
                 trade_info._start_price = order.last_exec_price;
                 traceTrade("start", trade_info, traceTradeFields);
-                incOpenPosition();
               }
             }
             break;
