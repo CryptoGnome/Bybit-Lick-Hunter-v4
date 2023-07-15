@@ -21,6 +21,7 @@ import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
 import { loadJson, storeJson, traceTrade } from './utils.js';
 import { createMarketOrder } from './order.js';
+import { logIT, LOG_LEVEL } from './log.js';
 
 dotenv.config();
 
@@ -1584,19 +1585,6 @@ function calculateBotUptime(uptimeSeconds) {
     var elapsedSeconds = restSeconds % 60;
     var times = [parseInt(elapsedDays), parseInt(elapsedHours), parseInt(elapsedMinutes), parseInt(elapsedSeconds)];
     return times;
-}
-
-function logIT(msg) {
-    console.log('[' + moment().local().toString() + '] :: ' + msg)
-	// Log to file
-    if (process.env.USE_LOG == "true"){
-        fs.appendFile('log', '[' + moment().local().toString() + '] ' + msg.replace(/\u001b\[\d+m/g, '') + '\n', function (err) {
-            if (err) {
-                logIT("Logging error: " + err);
-                return console.log("Logging error: " + err);
-            }
-        });
-    }
 }
 
 function getRunningStatus(req, res, next) {
