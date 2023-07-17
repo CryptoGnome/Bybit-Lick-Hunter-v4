@@ -21,6 +21,7 @@ import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
 import { loadJson, storeJson, traceTrade } from './utils.js';
 import { createMarketOrder } from './order.js';
+import { logIT, LOG_LEVEL } from './log.js';
 
 dotenv.config();
 
@@ -201,6 +202,7 @@ function handleNewOrder(order, liquidity_trigger) {
   // _liquidity_trigger: "liq1,liq2,...liqN"
   const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
   tradesHistory.set(order.symbol, position);
+  incOpenPosition();
 }
 
 function handleDcaOrder(order, liquidity_trigger) {
@@ -222,7 +224,7 @@ function tradeOrdersQueue_enqueue(orderFnObj) {
 }
 
 wsClient.on('update', (data) => {
-    //console.log('raw message received ', JSON.stringify(data, null, 2));
+    logIT(`raw message received ${JSON.stringify(data, null, 2)}`, LOG_LEVEL.DEBUG);
 
     const topic = data.topic;
     if (topic === "stop_order") {
@@ -256,7 +258,6 @@ wsClient.on('update', (data) => {
               if (trade_info._start_price === 0) {
                 trade_info._start_price = order.last_exec_price;
                 traceTrade("start", trade_info, traceTradeFields);
-                incOpenPosition();
               }
             }
             break;
@@ -1078,7 +1079,7 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         return;
       }
       handleNewOrder(order.result, trigger_qty);
-      logIT(chalk.bgGreenBright(`${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
+      logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
       if(process.env.USE_DISCORD == "true") {
         orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
       }
@@ -1098,7 +1099,7 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
         let order = await createMarketOrder(linearClient, pair, position.side, size, price);
         handleDcaOrder(order.result, trigger_qty);
-        logIT(chalk.bgGreenBright.black(side + " DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
+        logIT(chalk.bgGreenBright.black("scalp - " + side + " DCA Order Placed for " + pair + " at " + settings.pairs[settingsIndex].order_size + " size"));
         if(process.env.USE_DISCORD == "true") {
             orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
         }
@@ -1584,19 +1585,6 @@ function calculateBotUptime(uptimeSeconds) {
     var elapsedSeconds = restSeconds % 60;
     var times = [parseInt(elapsedDays), parseInt(elapsedHours), parseInt(elapsedMinutes), parseInt(elapsedSeconds)];
     return times;
-}
-
-function logIT(msg) {
-    console.log('[' + moment().local().toString() + '] :: ' + msg)
-	// Log to file
-    if (process.env.USE_LOG == "true"){
-        fs.appendFile('log', '[' + moment().local().toString() + '] ' + msg.replace(/\u001b\[\d+m/g, '') + '\n', function (err) {
-            if (err) {
-                logIT("Logging error: " + err);
-                return console.log("Logging error: " + err);
-            }
-        });
-    }
 }
 
 function getRunningStatus(req, res, next) {
