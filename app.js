@@ -202,7 +202,6 @@ function handleNewOrder(order, liquidity_trigger) {
   // _liquidity_trigger: "liq1,liq2,...liqN"
   const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
   tradesHistory.set(order.symbol, position);
-  incOpenPosition();
 }
 
 function handleDcaOrder(order, liquidity_trigger) {
@@ -293,7 +292,6 @@ wsClient.on('update', (data) => {
           if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
             traceTrade(order_type, trade_info, traceTradeFields);
           tradesHistory.delete(order.symbol);
-          decOpenPosition();
         }
       });
     } else {
@@ -672,10 +670,6 @@ async function getBalance() {
         //fetch positions
         var positions = await linearClient.getPosition();
         var positionList = [];
-        var openPositions = await totalOpenPositions();
-        if(openPositions === null) {
-            openPositions = 0;
-        }
         var marg = await getMargin();
         var time = await getServerTime();
         //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
@@ -964,44 +958,10 @@ async function takeProfit(symbol, position) {
 }
 
 
-function incOpenPosition() {
-  openPositions = (openPositions ?? 0) + 1;
-}
-
-function decOpenPosition() {
-  openPositions = (openPositions ?? 0) - 1;
-  if (openPositions < 0) {
-    logIT("decOpenPosition ERROR: open position < 0");
-    openPositions = undefined;
-  }
-}
-
-//fetch how how openPositions there are
-async function totalOpenPositions() {
-    if (openPositions === undefined) {
-      try{
-          var positions = await linearClient.getPosition();
-          var open = 0;
-          for (var i = 0; i < positions.result.length; i++) {
-              if (positions.result[i].data.size > 0) {
-                  open++;
-              }
-          }
-          openPositions = open;
-
-      }
-      catch (error) {
-          return null;
-      }
-    }
-
-    return openPositions;
-}
-
 //against trend
 async function scalp(pair, liquidationInfo, source, new_trades_disabled = false) {
     //check how many positions are open
-    const open_positions = await totalOpenPositions();
+    const open_positions = openPositions
     logIT("scalp - Open positions: " + open_positions);
 
     const trigger_qty = liquidationInfo.qty;
@@ -1161,8 +1121,14 @@ async function checkLeverage(symbol) {
 }
 //create loop that checks for open positions every second
 async function checkOpenPositions() {
-    //gor through all pairs and getPosition()
+    //go through all pairs and getPosition()
     var positions = await linearClient.getPosition();
+    if (positions.ret_msg != "OK") {
+      logIT("checkOpenPositions - getPosition fails", LOG_LEVEL.ERROR);
+      rateLimit = baseRateLimit + 2000;
+      return;
+    }
+    openPositions = positions.result.filter(el => el.data.size > 0).length;
     const data = await linearClient.getWalletBalance();
 
     //check rate_limit_status
@@ -1679,10 +1645,6 @@ async function reportWebhook() {
         //fetch positions
         var positions = await linearClient.getPosition();
         var positionList = [];
-        var openPositions = await totalOpenPositions();
-        if(openPositions === null) {
-            openPositions = 0;
-        }
         var marg = await getMargin();
         var time = await getServerTime();
         //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
