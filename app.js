@@ -1218,7 +1218,7 @@ async function checkOpenPositions() {
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
-					dca_count: positions.result[i].dca_count,
+					dca_count: positions.result[i].dca_count, // for future use
                     pnl: positions.result[i].data.unrealised_pnl.toFixed(5) + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
