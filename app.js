@@ -1,4 +1,4 @@
-import pkg from 'bybit-api-gnome';
+import pkg, { ContractClient } from 'bybit-api-gnome';
 const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
 import { WebsocketClient as binanceWS } from 'binance';
 import dotenv from 'dotenv';
@@ -20,7 +20,7 @@ import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
 import { loadJson, storeJson, traceTrade } from './utils.js';
-import { createMarketOrder } from './order.js';
+import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
 
 dotenv.config();
@@ -188,6 +188,12 @@ const linearClient = new LinearClient({
     secret: secret,
     livenet: true,
 });
+//create linear client
+const contractClient = new ContractClient({
+  key: key,
+  secret: secret,
+  livenet: true,
+});
 //account client
 if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
     const accountClient = new AccountAssetClient({
@@ -241,7 +247,7 @@ wsClient.on('update', (data) => {
     } else if (topic === "order") {
       let close_position = false;
       const filled_orders = data.data.filter(el => el.order_status == 'Filled');
-      filled_orders.forEach( order => {
+      filled_orders.forEach( async order => {
 
         let trade_info = tradesHistory.get(order.symbol);
 
@@ -289,6 +295,16 @@ wsClient.on('update', (data) => {
           storeJson(globalStatsPath, globalTradesStats);
           logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
           logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+
+          //only needed with DCA_AVERAGE_ENTRIES features on.
+          if (process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+            let res = await cancelOrder(linearClient, order.symbol);
+            if (res.ret_msg != "OK")
+              logIT(`on-update - error cancelling orphan orders for ${order.symbol}`, LOG_LEVEL.ERROR);
+            else
+              logIT(`on-update - successfully cancel orphan orders for ${order.symbol}`);
+          }
+
           if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
             traceTrade(order_type, trade_info, traceTradeFields);
           tradesHistory.delete(order.symbol);
@@ -1035,15 +1051,32 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
       let order = await createMarketOrder(linearClient, pair, side, size, take_profit, stop_loss);
       if (order.ret_msg != "OK") {
-        logIT(`Scalp exit: Error placing new ${side} order: ${order.ret_msg}`);
+        logIT(`scalp exit: Error placing new ${side} order: ${order.ret_msg}`);
         return;
+      } else {
+        handleNewOrder(order.result, trigger_qty);
+        logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
+
+        if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+          let dca_size = size;
+          for (let i = 1; i <= process.env.DCA_SAFETY_ORDERS; i++) {
+            let dca_price = side == "Buy" ? price * (1 - process.env.DCA_PRICE_DEVIATION_PRC * i / 100) : price * (1 + process.env.DCA_PRICE_DEVIATION_PRC * i /100)
+            dca_price = dca_price.toFixed(decimalPlaces)
+            dca_size = (dca_size * process.env.DCA_VOLUME_SCALE).toFixed(decimalPlaces)
+            const dcaOrder = await createLimitOrder(linearClient, pair, side, dca_size, dca_price);
+            if (dcaOrder.ret_msg != "OK") {
+              logIT(`scalp exit: Error placing new ${side} DCA[${i}] order: ${dcaOrder.ret_msg} for ${pair} at price ${dca_price}`, LOG_LEVEL.ERROR);
+              return;
+            }
+            logIT(chalk.bgGreenBright(`scalp - ${side} DCA[${i}] Order Placed for ${pair} at ${dca_size} size`));
+          }
+        }
+
+        if(process.env.USE_DISCORD == "true") {
+          orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
+        }
       }
-      handleNewOrder(order.result, trigger_qty);
-      logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
-      if(process.env.USE_DISCORD == "true") {
-        orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
-      }
-    } else if (position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true") {
+    } else if (position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_LIQUIDATIONS") {
 
         //Long/Short liquidation
         //make sure order is less than max order size
@@ -1200,6 +1233,30 @@ async function checkOpenPositions() {
         console.log("¦ Open Positions ¦");
         console.table(postionList);
     }
+    return postionList;
+}
+
+async function getNewOrders() {
+  const openOrdersResp = await contractClient.getHistoricOrders({orderStatus: "New"});
+  if (openOrdersResp.retMsg != "OK") {
+    logIT(`closeQuitPosition - error getting orders list: ${openOrdersResp.retMsg}`, LOG_LEVEL.ERROR);
+    return [];
+  }
+
+  return openOrdersResp.result.list;
+}
+
+async function closeOrphanOrders(openPositionsList, openOrders) {
+  const orphans = openOrders.filter(el => openPositionsList.find( el2 => el2.symbol == el.symbol) == undefined);
+  if(orphans != undefined) {
+    orphans.forEach(async el => {
+      let res =  await cancelOrder(linearClient, el.symbol);
+      if (res.ret_msg != "OK")
+        logIT(`closeQuitPosition - error cancelling orphan orders for ${el.symbol}`, LOG_LEVEL.ERROR);
+      else
+        logIT(`closeQuitPosition - successfully cancel orphan orders for ${el.symbol}`);
+    });
+  }
 }
 
 async function getMinTradingSize() {
@@ -1796,7 +1853,13 @@ async function main() {
         try {
             await getBalance();
             await updateSettings();
-            await checkOpenPositions();
+            const newOrders = await getNewOrders();
+            const openPositionList = await checkOpenPositions();
+
+            //only needed with DCA_AVERAGE_ENTRIES features on.
+            if (process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+              await closeOrphanOrders(openPositionList, newOrders);
+            }
             await sleep(rateLimit);
         } catch (e) {
             console.log(e);

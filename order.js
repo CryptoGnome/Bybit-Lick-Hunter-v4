@@ -45,7 +45,6 @@ export async function createLimitOrder(linearClient, pair, side, size, price, ta
   return order;
 }
 
-export async function cancelOrder(linearClient, pair, id) {
-  res = await linearClient.cancelOrder({pair: pair, orderId: id});
-  return res;
+export async function cancelOrder(linearClient, pair) {
+  return await linearClient.cancelAllActiveOrders({'symbol': pair});
 }
