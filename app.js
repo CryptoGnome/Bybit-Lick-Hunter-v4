@@ -331,12 +331,12 @@ wsClient.on('update', (data) => {
         });
     
         //if pair is not in liquidationOrders array and not in blacklist, add it
-        if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        if (index === -1 && (!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
             liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
             index = liquidationOrders.findIndex(x => x.pair === pair);
         }
         //if pair is in liquidationOrders array, update it
-        else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+        else if ((!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
             //check if timesstamp is withing 5 seconds of previous timestamp
             if (timestamp - liquidationOrders[index].timestamp <= 5) {
                 liquidationOrders[index].price = price;
@@ -419,12 +419,12 @@ binanceClient.on('formattedMessage', (data) => {
     });
 
     //if pair is not in liquidationOrders array and not in blacklist, add it
-    if (index === -1 && !blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+    if (index === -1 && (!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
         liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
         index = liquidationOrders.findIndex(x => x.pair === pair);
     }
     //if pair is in liquidationOrders array, update it
-    else if (!blacklist.includes(pair) && process.env.USE_WHITELIST == "false" || process.env.USE_WHITELIST == "true" && whitelist.includes(pair)) {
+    else if ((!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
         //check if timesstamp is withing 5 seconds of previous timestamp
         if (timestamp - liquidationOrders[index].timestamp <= 5) {
             liquidationOrders[index].price = price;
@@ -1218,7 +1218,8 @@ async function checkOpenPositions() {
                     size: positions.result[i].data.size,
                     usdValue: usdValue.toFixed(4),
                     side: positions.result[i].data.side,
-                    pnl: positions.result[i].data.unrealised_pnl + "(" + percentGain.toFixed(2) + ")"
+					dca_count: positions.result[i].dca_count,
+                    pnl: positions.result[i].data.unrealised_pnl.toFixed(5) + "(" + percentGain.toFixed(2) + ")"
                 }
                 postionList.push(position);
                 
@@ -1229,9 +1230,8 @@ async function checkOpenPositions() {
         logIT("Open positions response is null");
     }
     if (postionList != 0){
-        console.log("----------------------------------------------------");
-        console.log("------------------ OPEN POSITIONS ------------------");
-        console.log("----------------------------------------------------");
+        console.log("+----------------+");
+        console.log("¦ Open Positions ¦");
         console.table(postionList);
     }
 }
@@ -1387,16 +1387,14 @@ async function createSettings() {
                     var riskLevellong  = process.env.RISK_LEVEL_LONG;
 					var riskLevelshort = process.env.RISK_LEVEL_SHORT;
 					if (riskLevellong !== '0') {
-						var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
-						var long_risk = out.data[i].long_price * (1 + riskPercentagelong / 100);
+						var long_risk = out.data[i].long_price * (1 + riskLevellong / 100);
 					} 
 					else {
 					var long_risk = out.data[i].long_price;
 					}
 
 					if (riskLevelshort !== '0') {
-						var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
-						var short_risk = out.data[i].short_price * (1 - riskPercentageshort / 100);
+						var short_risk = out.data[i].short_price * (1 - riskLevelshort / 100);
 					} 
 					else {
 					var short_risk = out.data[i].short_price;
@@ -1467,15 +1465,13 @@ async function updateSettings() {
                         var riskLevellong  = process.env.RISK_LEVEL_LONG;
 						var riskLevelshort = process.env.RISK_LEVEL_SHORT;
 						if (riskLevellong !== '0') {
-							var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
-							var long_risk = out.data[i].long_price * (1 + riskPercentagelong / 100);
+							var long_risk = out.data[i].long_price * (1 + riskLevellong / 100);
 						} 
 						else {
 						var long_risk = out.data[i].long_price;
 						}
 						if (riskLevelshort !== '0') {
-							var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
-							var short_risk = out.data[i].short_price * (1 - riskPercentageshort / 100);
+							var short_risk = out.data[i].short_price * (1 - riskLevelshort / 100);
 						} 
 						else {
 						var short_risk = out.data[i].short_price;
@@ -1508,15 +1504,13 @@ async function updateSettings() {
                                 var riskLevellong = process.env.RISK_LEVEL_LONG;
 								var riskLevelshort = process.env.RISK_LEVEL_SHORT;
 								if (riskLevellong !== '0') {
-									var riskPercentagelong = 0.5 + (riskLevellong - 1) * 0.5;
-									var long_risk = researchFile.data[i].long_price * (1 + riskPercentagelong / 100);
+									var long_risk = researchFile.data[i].long_price * (1 + riskLevellong / 100);
 								} 
 								else {
 									var long_risk = researchFile.data[i].long_price;
 								}
 								if (riskLevelshort !== '0') {
-									var riskPercentageshort = 0.5 + (riskLevelshort - 1) * 0.5;
-									var short_risk = researchFile.data[i].short_price * (1 - riskPercentageshort / 100);
+									var short_risk = researchFile.data[i].short_price * (1 - riskLevelshort / 100);
 								} 
 								else {
 								var short_risk = researchFile.data[i].short_price;
