@@ -252,7 +252,7 @@ wsClient.on('update', (data) => {
         let trade_info = tradesHistory.get(order.symbol);
 
         // 26/05/2023 patch as ByBit change order.create_type
-        const order_type = trade_info._close_type ? trade_info._close_type : order.create_type;
+        const order_type = trade_info?._close_type ? trade_info._close_type : order.create_type;
 
         switch(order_type) {
           case 'CreateByUser':
