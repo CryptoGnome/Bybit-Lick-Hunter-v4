@@ -1318,8 +1318,13 @@ async function getMinTradingSize() {
                     "tickSize": data.result[i].price_filter.tick_size,
                     "tradeable": tradeable
                 }
-                //add to array
-                minOrderSizes.push(minOrderSizeJson);
+
+                if (minOrderSizeJson.tickSize == undefined) {
+                  logIT(`getMinTradingSize - bad tickSize: ignore pair ${minOrderSizeJson.pair}`, LOG_LEVEL.ERROR);
+                } else {
+                  //add to array
+                  minOrderSizes.push(minOrderSizeJson);
+                }
             }
             catch (e) {
                 await sleep(10);
