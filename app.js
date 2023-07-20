@@ -1055,6 +1055,7 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         return;
       } else {
         handleNewOrder(order.result, trigger_qty);
+        openPositions++; // increment here as async liquidation could be already enqueued and need synched openPositions status
         logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
 
         if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
