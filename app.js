@@ -1187,6 +1187,10 @@ async function checkOpenPositions() {
         logIT("Rate limit status: " + chalk.red(positions.rate_limit_status));
     }
 
+    // pairs in paused list are not handled
+    // in this way user could set custom tp/sl and wait the trade to be completed
+    const pausedList = process.env.PAUSED_LIST.replace(/ /g, "").split(",");
+
     //logIT("Positions: " + JSON.stringify(positions, null, 2));
     var totalPositions = 0;
     var postionList = [];
@@ -1194,7 +1198,7 @@ async function checkOpenPositions() {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
                 //logIT("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
-                if (process.env.USE_RECALC_SL_TP == "true")
+                if (process.env.USE_RECALC_SL_TP == "true" && !pausedList.includes(positions.result[i].data.symbol))
                     takeProfit(positions.result[i].data.symbol, positions.result[i].data);
    
                 //get usd value of position
