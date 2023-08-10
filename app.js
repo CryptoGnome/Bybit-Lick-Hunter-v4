@@ -204,9 +204,7 @@ if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
 }
 
 function handleNewOrder(order, liquidity_trigger) {
-  // Add liquidity_trigger to order as list of liquidity to keep count of dca order i.e
-  // _liquidity_trigger: "liq1,liq2,...liqN"
-  const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
+  const position = newPosition({...order, "liquidity_trigger": liquidity_trigger});
   tradesHistory.set(order.symbol, position);
 }
 
@@ -214,9 +212,7 @@ function handleDcaOrder(order, liquidity_trigger) {
   let trade_info = tradesHistory.get(order.symbol);
   if (trade_info !== undefined) {
     trade_info._dca_count++;
-    //remove "" before append a new liquidity item.
-    trade_info._liquidity_trigger = trade_info._liquidity_trigger.replace(/"/g, "");
-    trade_info._liquidity_trigger = `\"${trade_info._liquidity_trigger} ${liquidity_trigger}\"`;
+    trade_info._liquidity_trigger = liquidity_trigger;
     if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
       traceTrade("dca", trade_info, traceTradeFields);
   }
