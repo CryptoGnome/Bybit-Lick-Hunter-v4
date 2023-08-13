@@ -1341,14 +1341,19 @@ async function getMinTradingSize() {
 
 
         //update settings.json with min order sizes
-        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+        let updated = false;
         for (var i = 0; i < minOrderSizes.length; i++) {
             var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
             if(settingsIndex !== -1) {
                 settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
                 settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
-                
+                updated = true;
             }
+        }
+
+        if (updated) {
+          fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
         }
     }
     else {
