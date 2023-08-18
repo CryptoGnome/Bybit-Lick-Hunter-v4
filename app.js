@@ -22,6 +22,7 @@ import { newPosition, incrementPosition, closePosition, updatePosition } from '.
 import { loadJson, storeJson, traceTrade } from './utils.js';
 import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
+import { CachedLinearClient } from './exchange.js'
 
 dotenv.config();
 
@@ -88,8 +89,6 @@ const TRACE_TRADES_LEVEL_MAX = "MAX";
 const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
 
 
-var rateLimit = 2000;
-var baseRateLimit = 2000;
 var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
@@ -188,6 +187,8 @@ const linearClient = new LinearClient({
     secret: secret,
     livenet: true,
 });
+const cachedLinearClient = new CachedLinearClient(linearClient);
+
 //create linear client
 const contractClient = new ContractClient({
   key: key,
@@ -598,10 +599,7 @@ async function getServerTime() {
 
 //Get margin
 async function getMargin() {
-    const data = await linearClient.getWalletBalance();
-    var usedBalance = data.result['USDT'].used_margin;
-    var balance = usedBalance;
-    return balance;
+    return (await cachedLinearClient.getWalletBalance()).used_margin;
 }
 
 //get account balance
@@ -610,9 +608,9 @@ async function getBalance() {
     try{
         // get ping
         var started = Date.now();
-        const data = await linearClient.getWalletBalance();
+        const data = await cachedLinearClient.getWalletBalance();
         var elapsed = (Date.now() - started);
-        if (data.ret_code != 0) {
+        if (!data) {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
             getBalanceTryCount++;
             if (getBalanceTryCount == 3)
@@ -620,11 +618,11 @@ async function getBalance() {
             return;
         }
         getBalanceTryCount = 0
-        var availableBalance = data.result['USDT'].available_balance;
+        var availableBalance = data.available_balance;
         // save balance global to reduce api requests
-        global_balance = data.result['USDT'].available_balance;
-        var usedBalance = data.result['USDT'].used_margin;
-        var balance = availableBalance + usedBalance;
+        global_balance = data.available_balance;
+        var usedBalance = data.used_margin;
+        var balance = data.whole_balance;
 
         //load settings.json
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
@@ -686,7 +684,7 @@ async function getBalance() {
         var percentGain = percentGain.toFixed(6);
         var diff = diff.toFixed(6);
         //fetch positions
-        var positions = await linearClient.getPosition();
+        var positions = await cachedLinearClient.getPosition();
         var positionList = [];
         var marg = await getMargin();
         var time = await getServerTime();
@@ -702,7 +700,7 @@ async function getBalance() {
                 var size = size.toFixed(4);
                 var ios = positions.result[i].data.is_isolated;
 
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var priceFetch = await cachedLinearClient.getTickers({symbol: symbol});
                 var test = priceFetch.result[0].last_price;
 
                 let side = positions.result[i].data.side;
@@ -754,6 +752,7 @@ async function getBalance() {
         }
 
         //create data payload
+        const positionsCount = await cachedLinearClient.getOpenPositions();
         const posidata = { 
             balance: balance.toFixed(2).toString(),
             leverage: process.env.LEVERAGE.toString(),
@@ -761,7 +760,7 @@ async function getBalance() {
             profitUSDT: diff.toString(),
             profit: percentGain.toString(),
             servertime: time.toString(),
-            positioncount: openPositions.toString(),
+            positioncount: positionsCount.toString(),
             ping: elapsed,
             runningStatus: runningStatus_Label[runningStatus].toString(),
             trade_count: globalTradesStats.trade_count,
@@ -798,14 +797,10 @@ async function getBalance() {
         //send data to gui
         io.sockets.emit("positions", positionsData);
 
-
-
-
-
-
         return balance;
     }
     catch (e) {
+        logIT(`getBalance error ${e}`, LOG_LEVEL.ERROR);
         return null;
     }
 
@@ -813,7 +808,7 @@ async function getBalance() {
 //get position
 async function getPosition(pair, side) {
     //gor through all pairs and getPosition()
-    var positions = await linearClient.getPosition(pair);
+    var positions = await cachedLinearClient.getPosition(pair);
     const error_result = {side: null, entryPrice: null, size: null, percentGain: null};
     if (positions.result == null)
       logIT("Open positions response is null");
@@ -1151,43 +1146,16 @@ async function setPositionMode() {
 }
 
 async function checkLeverage(symbol) {
-    var position = await linearClient.getPosition({symbol: symbol});
+    var position = await cachedLinearClient.getPosition({symbol: symbol});
     var leverage = position.result[0].leverage;
     return leverage;
 }
 //create loop that checks for open positions every second
 async function checkOpenPositions() {
     //go through all pairs and getPosition()
-    var positions = await linearClient.getPosition();
-    if (positions.ret_msg != "OK") {
-      logIT("checkOpenPositions - getPosition fails", LOG_LEVEL.ERROR);
-      rateLimit = baseRateLimit + 2000;
-      return;
-    }
+    var positions = await cachedLinearClient.getPosition();
     openPositions = positions.result.filter(el => el.data.size > 0).length;
-    const data = await linearClient.getWalletBalance();
-
-    //check rate_limit_status
-    if (positions.rate_limit_status > 100) {
-        rateLimit = baseRateLimit;
-        logIT("Rate limit status: " + chalk.green(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 75) {
-        rateLimit = rateLimit + 500;
-        logIT("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 50) {
-        rateLimit = rateLimit + 1000;
-        logIT("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 25) {
-        rateLimit = rateLimit + 2000;
-        logIT("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
-    }
-    else {
-        rateLimit = rateLimit + 200;
-        logIT("Rate limit status: " + chalk.red(positions.rate_limit_status));
-    }
+    const data = await cachedLinearClient.getWalletBalance();
 
     // pairs in paused list are not handled
     // in this way user could set custom tp/sl and wait the trade to be completed
@@ -1209,7 +1177,7 @@ async function checkOpenPositions() {
 
                 var profit = positions.result[i].data.unrealised_pnl;
                 //get available Balance
-                var availableBalance = data.result['USDT'].available_balance;
+                var availableBalance = data.available_balance;
                 //calculate the profit % change in USD
                 var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
 
@@ -1270,11 +1238,11 @@ async function getMinTradingSize() {
     const url = "https://api.bybit.com/v2/public/symbols";
     const response = await fetch(url);
     const data = await response.json();
-    var balance = await getBalance();
+    var balance = (await cachedLinearClient.getWalletBalance()).whole_balance;
 
     if (balance !== null) {
-        var tickers = await linearClient.getTickers();
-        var positions = await linearClient.getPosition();
+        var tickers = await cachedLinearClient.getTickers();
+        var positions = await cachedLinearClient.getPosition();
 
         var minOrderSizes = [];
         logIT("Fetching min Trading Sizes for pairs, this could take a minute...");
@@ -1694,7 +1662,7 @@ async function reportWebhook() {
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //fetch balance first if not startingBalance will be null
-        var balance = await getBalance();
+        var balance = (await cachedLinearClient.getWalletBalance()).whole_balance;
         //check if starting balance is set
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
@@ -1717,7 +1685,7 @@ async function reportWebhook() {
         var diff = diff.toFixed(6);
         var balance = balance.toFixed(2);
         //fetch positions
-        var positions = await linearClient.getPosition();
+        var positions = await cachedLinearClient.getPosition();
         var positionList = [];
         var marg = await getMargin();
         var time = await getServerTime();
@@ -1733,7 +1701,7 @@ async function reportWebhook() {
                 var size = size.toFixed(4);
                 var ios = positions.result[i].data.is_isolated;
 
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var priceFetch = await cachedLinearClient.getTickers({symbol: symbol});
                 var test = priceFetch.result[0].last_price;
 
                 let side = positions.result[i].data.side;
@@ -1868,6 +1836,7 @@ async function main() {
 
     while (true) {
         try {
+            cachedLinearClient.invalidate();
             await getBalance();
             await updateSettings();
             const newOrders = await getNewOrders();
@@ -1877,11 +1846,10 @@ async function main() {
             if (process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
               await closeOrphanOrders(openPositionList, newOrders);
             }
-            await sleep(rateLimit);
+            await sleep(cachedLinearClient.getRateLimit());
         } catch (e) {
             console.log(e);
             sleep(1000);
-            rateLimit = rateLimit + 1000;
         }
     }
 }
