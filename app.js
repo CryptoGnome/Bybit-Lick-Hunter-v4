@@ -1888,7 +1888,7 @@ async function main() {
             const openPositionList = await checkOpenPositions();
 
             //only needed with DCA_AVERAGE_ENTRIES features on.
-            if (process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+            if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
               await closeOrphanOrders(openPositionList, newOrders);
             }
             await sleep(cachedLinearClient.getRateLimit());
