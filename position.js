@@ -14,6 +14,8 @@ export function closePosition(position, order) {
   position.price = order.last_exec_price;
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
+  position._roi = position.side == "Buy" ? (position.price - position._start_price) / position._start_price : 
+    (position._start_price - position.price) / position._start_price;
 };
 
 export function updatePosition(position, obj = {}) {
@@ -39,6 +41,7 @@ export function newPosition(order) {
     "_start_price" : order.last_exec_price,
     "_start_time" : order.created_time,
     "_end_time": undefined,
+    "_roi": undefined,
   };
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
