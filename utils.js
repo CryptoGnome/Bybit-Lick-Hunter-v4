@@ -78,3 +78,17 @@ export function traceTradeAsCSV(step, obj, fields) {
     }
   );
 }
+
+export function dumpLiquidationInfo(liqInfo) {
+  let line = `${liqInfo.time},${liqInfo.pair},${liqInfo.side},${liqInfo.size}`;
+  if (fs.existsSync("liqInfo.csv")) {
+    line = '\n' + line;
+  }
+  fs.appendFile("liqInfo.csv",line,
+    function (err) {
+      if (err) {
+        logIT("Logging error: " + err);
+        return console.log("Logging error: " + err);
+      }
+  });
+}

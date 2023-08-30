@@ -19,7 +19,7 @@ import bodyParser from 'body-parser'
 import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
-import { loadJson, storeJson, traceTrade } from './utils.js';
+import { loadJson, storeJson, traceTrade, dumpLiquidationInfo } from './utils.js';
 import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
 import { CachedLinearClient } from './exchange.js'
@@ -1047,6 +1047,14 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       logIT(chalk.cyan("scalp - " + "!! Liquidation price " + liquidationInfo.price + " is lower than short price " + settings.pairs[settingsIndex].long_price + " for " + pair));
       return;
     }
+
+    dumpLiquidationInfo({
+      'time': moment().utc().format(),
+      'pair': pair,
+      'side': side,
+      'price': liquidationInfo.price,
+      'size': liquidationInfo.qty,
+    });
 
     //load min order size json
     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
