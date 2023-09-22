@@ -1087,6 +1087,14 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
         return;
       }
 
+      // evaluate process.env.TRADE_POSITIONS_SIDE_BALANCE to have equals number of long and short
+      const maxTradeForSide = Math.round(process.env.MAX_OPEN_POSITIONS / process.env.TRADE_POSITIONS_SIDE_BALANCE == true ? 2 : 1);
+      const tradesForSide =  Array.from(tradesHistory.values()).filter(el => el.side == side).length;
+      if (tradesForSide >  maxTradeForSide) {
+        logIT(chalk.redBright("scalp - Max {side} Positions Reached!"));
+        return;
+      }
+
       //get current price
       var priceFetch = await linearClient.getTickers({symbol: pair});
       var price = priceFetch.result[0].last_price;
