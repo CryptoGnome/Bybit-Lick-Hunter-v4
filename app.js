@@ -1284,7 +1284,7 @@ async function getNewOrders() {
 
 async function closeOrphanOrders(openPositionsList, openOrders) {
   const orphans = openOrders.filter(el => openPositionsList.find( el2 => el2.symbol == el.symbol) == undefined);
-  if(orphans != undefined) {
+  if(orphans.length > 0) {
     orphans.forEach(async el => {
       let res =  await cancelOrder(linearClient, el.symbol);
       if (res.ret_msg != "OK")
@@ -1292,6 +1292,8 @@ async function closeOrphanOrders(openPositionsList, openOrders) {
       else
         logIT(`closeQuitPosition - successfully cancel orphan orders for ${el.symbol}`);
     });
+  } else {
+    logIT(`closeQuitPosition - Orphan orders not found`);
   }
 }
 
@@ -1872,6 +1874,16 @@ async function main() {
             logIT("Updating settings.json with smart settings");
             await createSettings();
         }
+
+        // Only needed with DCA_AVERAGE_ENTRIES features on.
+        // Check if there are orphan limit orders created by DCA.
+        // Happens when the trade was closed when the app is not running.
+        if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+          const openPositionList = await checkOpenPositions();
+          const newOrders = await getNewOrders();
+          await closeOrphanOrders(openPositionList, newOrders);
+        }
+
     }
     catch (err) {
         logIT(chalk.red("Error in main()"));
@@ -1898,15 +1910,10 @@ async function main() {
     while (true) {
         try {
             cachedLinearClient.invalidate();
+            await checkOpenPositions();
             await getBalance();
             await updateSettings();
-            const newOrders = await getNewOrders();
-            const openPositionList = await checkOpenPositions();
 
-            //only needed with DCA_AVERAGE_ENTRIES features on.
-            if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
-              await closeOrphanOrders(openPositionList, newOrders);
-            }
             await sleep(cachedLinearClient.getRateLimit());
         } catch (e) {
             console.log(e);
