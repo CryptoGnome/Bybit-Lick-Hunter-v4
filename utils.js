@@ -44,7 +44,7 @@ export function traceTrade(step, obj, fields, format = "JSON") {
 export function traceTradeAsJSON(step, obj, fields) {
   //Object.entries(obj).forEach( ([k, v]) => position[k] = v );
 
-  let tradeObj = {'step': step, ...obj};
+  let tradeObj = {'date': new Date().toISOString(), 'step': step, ...obj};
   let records = [];
 
   if (fs.existsSync("trades.json")) {

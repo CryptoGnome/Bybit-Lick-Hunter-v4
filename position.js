@@ -1,21 +1,25 @@
 
 export function incrementPosition(position, order, aux = {}) {
-  let updated_position = position;
-  position.size = order.qty;
+  const tmp_position_size = position.size;
+  position._dca_count++;
+  position._update_time = order.update_time;
+  position.size += order.qty;
   position.price = order.last_exec_price;
+  position._averaged_price = (position.price * tmp_position_size + order.qty * order.last_exec_price) / position.size;
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
+  // TODO: consider cum_exec_fee,
   Object.entries(aux).forEach( ([k, v]) => position[k] = v );
 };
 
 export function closePosition(position, order) {
   let updated_position = position;
-  position._end_time= order.create_time;
+  position._update_time= order.update_time;
   position.price = order.last_exec_price;
   const usdValue = position.price * position.size / process.env.LEVERAGE;
   position.sizeUSD =  usdValue.toFixed(3);
-  position._roi = position.side == "Buy" ? (position.price - position._start_price) / position._start_price : 
-    (position._start_price - position.price) / position._start_price;
+  position._roi = position.side == "Buy" ? (position.price - position._averaged_price) / position._start_price :
+    (position._averaged_price - position.price) / position._start_price;
 };
 
 export function updatePosition(position, obj = {}) {
@@ -39,8 +43,9 @@ export function newPosition(order) {
     "_liquidity_trigger": order.liquidity_trigger,
     "_dca_count" : 0,
     "_start_price" : order.last_exec_price,
+    "_averaged_price" : order.last_exec_price,
     "_start_time" : order.created_time,
-    "_end_time": undefined,
+    "_update_time": undefined,
     "_roi": undefined,
   };
   const usdValue = position.price * position.size / process.env.LEVERAGE;

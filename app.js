@@ -273,11 +273,13 @@ function wsHandleOrder(data) {
             // verify that it's starts order not dca
             if (trade_info._start_price === 0) {
               trade_info._start_price = order.last_exec_price;
+              // TODO: Handle new order should be called here to have price field with a value
+              trade_info._averaged_price = order.last_exec_price;
               traceTrade("start", trade_info, traceTradeFields);
             } else {
               // handle fill of DCA orders when DCA type is DCA_AVERAGE_ENTRIES
               if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
-                trade_info._dca_count++;
+                incrementPosition(trade_info, order);
                 traceTrade("dca", trade_info, traceTradeFields);
               }
             }
