@@ -101,6 +101,9 @@ const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "tr
 // queue to sequentially execute scalp method
 var tradeOrdersQueue = [];
 
+var settings = {}; // a memory copy of settings file
+var minOrderSizes = []; // a memory copy of min order size
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
 app.use('/img', express.static('gui/img'));
@@ -1309,7 +1312,7 @@ async function getMinTradingSize() {
         var tickers = await cachedLinearClient.getTickers();
         var positions = await cachedLinearClient.getPosition();
 
-        var minOrderSizes = [];
+        minOrderSizes = []; //update global variable TODO: refactoring to avoid global
         logIT("Fetching min Trading Sizes for pairs, this could take a minute...");
         for (var i = 0; i < data.result.length; i++) {
             logIT("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
@@ -1374,19 +1377,22 @@ async function getMinTradingSize() {
 
 
         //update settings.json with min order sizes
-        let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-        let updated = false;
-        for (var i = 0; i < minOrderSizes.length; i++) {
-            var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
-            if(settingsIndex !== -1) {
-                settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
-                settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
-                updated = true;
-            }
-        }
+        if (fs.existsSync('settings.json')) { // check existence of the file
+          if (Object.keys(settings).length === 0) // avoid read file if it's already loaded in the global settings TODO: avoid global
+            settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+          let updated = false;
+          for (var i = 0; i < minOrderSizes.length; i++) {
+              var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
+              if(settingsIndex !== -1) {
+                  settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
+                  settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
+                  updated = true;
+              }
+          }
 
-        if (updated) {
-          fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+          if (updated) {
+            fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+          }
         }
     }
     else {
@@ -1441,7 +1447,7 @@ async function createSettings() {
     .then(res => res.json())
     .then((out) => {
         //create settings.json file with multiple pairs
-        var settings = {};
+        settings = {}; // use global var TODO: avoid global
         settings["pairs"] = [];
         for (var i = 0; i < out.data.length; i++) {
             //logIT("Adding Smart Settings for " + out.data[i].name + " to settings.json");
