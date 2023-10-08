@@ -23,7 +23,7 @@ import { loadJson, storeJson, traceTrade, dumpLiquidationInfo } from './utils.js
 import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
 import { CachedLinearClient } from './exchange.js'
-import { checkListingDate } from './filters.js'
+import { checkListingDate, getVolatility } from './filters.js'
 
 dotenv.config();
 
@@ -1101,6 +1101,14 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       if (open_positions >= process.env.MAX_OPEN_POSITIONS) {
         logIT(chalk.redBright("scalp - Max Open Positions Reached!"));
         return;
+      }
+
+      // check volatility filter
+      if (parseFloat(env.FILTER_CHECK_VOLATILITY_PRC) != 0) {
+        const volatility = await getVolatility(pair, parseInt(env.FILTER_CHECK_VOLATILITY_PERIOD));
+        if (volatility >  parseFloat(env.FILTER_CHECK_VOLATILITY_PRC)) { // if volatility > env.FILTER_CHECK_VOLATILITY_PRC discard token
+          logIT("scalp - discard order as token ${pair} have too big volatility ${volatility}");
+        }
       }
 
       // evaluate process.env.TRADE_POSITIONS_SIDE_BALANCE to have equals number of long and short

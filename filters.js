@@ -25,3 +25,20 @@ export async function checkListingDate(symbol, days) {
   }
   return res;
 }
+
+export async function getVolatility(symbol, days) {
+  let vol = 0;
+  try {
+    const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=D&limit=${days}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const historicalData = data.result.list;
+
+    // data are in format ts, ohlcv
+    vol = Math.max(...historicalData.map(item => (Number(item[2]) - Number(item[3])) / Number(item[3])));
+  } catch (error) {
+    throw error;
+  }
+
+  return vol;
+}
