@@ -23,6 +23,7 @@ import { loadJson, storeJson, traceTrade, dumpLiquidationInfo } from './utils.js
 import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
 import { CachedLinearClient } from './exchange.js'
+import { checkListingDate } from './filters.js'
 
 dotenv.config();
 
@@ -100,6 +101,9 @@ const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "tr
 
 // queue to sequentially execute scalp method
 var tradeOrdersQueue = [];
+
+// set filters to discard some symbol
+var filteredPairs = [];
 
 var settings = {}; // a memory copy of settings file
 var minOrderSizes = []; // a memory copy of min order size
@@ -1084,6 +1088,13 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       return;
     }
 
+    // handle filteredPair
+    const filtered = filteredPairs.find(el => el.symbol == pair);
+    if (filtered !== undefined) {
+      logIT(`scalp - discard order as pair ${pair} is in filter list reason ${filtered.reason}`);
+      return;
+    }
+
     // place new order
     if (position.size === 0) {
 
@@ -1854,14 +1865,47 @@ async function reportWebhook() {
     }
 }
 
+async function applyFilters(pairs) {
+  let i = 0;
+  let filtered = [];
+  for(let i = 0; i < pairs.length; i++){
+    let sym = pairs[i];
+
+    if (parseInt(env.FILTER_MIN_LISTING_DAYS) != 0) {
+      const wasListed = await checkListingDate(sym, parseInt(env.FILTER_MIN_LISTING_DAYS));
+      if (!wasListed) {
+        logIT(`applyFilters - discard symbol ${sym} as it's not listed at list from ${env.FILTER_MIN_LISTING_DAYS} days`);
+        filtered.push({symbol: sym, reason: "FILTER_MIN_LISTING_DAYS"});
+      }
+    }
+
+    if (i%50 == 0) // rate limit to 100 request per second (limit is 120 x 5 sec)
+      await sleep(1000);
+  }
+
+  return filtered;
+}
 
 async function main() {
+    let initDone = false;
+
     //logIT("Starting Lick Hunter!");
     logIT("Starting Lick Hunter!");
     runningStatus = runningStatus_RUN;
     reportWebhook();
     try{
         pairs = await getSymbols();
+
+        // set globally filtered pairs
+        let tmpFilters = await applyFilters(pairs.map(el => el.split(".")[1]));
+        if (tmpFilters.length > 0) {
+          logIT(`filteredPairs ${JSON.stringify(tmpFilters)}`);
+          filteredPairs = tmpFilters;
+          // TODO: filter disabled symbols from wssocket
+        }
+        // set initDone to true anyway but force the main loop to wait for filters initialization.
+        if (tmpFilters.length >= 0 )
+          initDone = true;
 
         //load local file acccount.json with out require and see if "config_set" is true
         var account = JSON.parse(fs.readFileSync('account.json', 'utf8'));
@@ -1915,7 +1959,8 @@ async function main() {
       }
     }, 100);
 
-    while (true) {
+    // start main loop when the initialization is completed
+    while (initDone) {
         try {
             cachedLinearClient.invalidate();
             await checkOpenPositions();
