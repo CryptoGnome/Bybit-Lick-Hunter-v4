@@ -33,7 +33,30 @@ function jsonToCsv(json) {
   return csv;
 }
 
-export function traceTrade(step, obj, fields) {
+export function traceTrade(step, obj, fields, format = "JSON") {
+  if (format == "JSON") {
+    traceTradeAsJSON(step, obj, fields);
+  } else {
+    traceTradeAsCSV(step, obj, fields);
+  }
+}
+
+export function traceTradeAsJSON(step, obj, fields) {
+  //Object.entries(obj).forEach( ([k, v]) => position[k] = v );
+
+  let tradeObj = {'date': new Date().toISOString(), 'step': step, ...obj};
+  let records = [];
+
+  if (fs.existsSync("trades.json")) {
+    let jsonFile = fs.readFileSync("trades.json","utf-8");
+    records = JSON.parse(jsonFile);
+  }
+
+  records.push(tradeObj);
+  fs.writeFileSync("trades.json", JSON.stringify(records, null, '\t'));
+}
+
+export function traceTradeAsCSV(step, obj, fields) {
   let csv_line = moment().local().toString() + "," + step;
   fields.forEach((key) => (csv_line += "," + (obj[key] ?? "")));
   csv_line += "\n";
@@ -54,4 +77,18 @@ export function traceTrade(step, obj, fields) {
       }
     }
   );
+}
+
+export function dumpLiquidationInfo(liqInfo) {
+  let line = `${liqInfo.time},${liqInfo.pair},${liqInfo.side},${liqInfo.size}`;
+  if (fs.existsSync("liqInfo.csv")) {
+    line = '\n' + line;
+  }
+  fs.appendFile("liqInfo.csv",line,
+    function (err) {
+      if (err) {
+        logIT("Logging error: " + err);
+        return console.log("Logging error: " + err);
+      }
+  });
 }

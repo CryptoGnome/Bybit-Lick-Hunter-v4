@@ -1,4 +1,4 @@
-import pkg from 'bybit-api-gnome';
+import pkg, { ContractClient } from 'bybit-api-gnome';
 const { WebsocketClient, WS_KEY_MAP, LinearClient, AccountAssetClient, SpotClientV3} = pkg;
 import { WebsocketClient as binanceWS } from 'binance';
 import dotenv from 'dotenv';
@@ -19,9 +19,11 @@ import bodyParser from 'body-parser'
 import session from 'express-session';
 import { Server } from 'socket.io'
 import { newPosition, incrementPosition, closePosition, updatePosition } from './position.js';
-import { loadJson, storeJson, traceTrade } from './utils.js';
-import { createMarketOrder } from './order.js';
+import { loadJson, storeJson, traceTrade, dumpLiquidationInfo } from './utils.js';
+import { createMarketOrder, createLimitOrder, cancelOrder } from './order.js';
 import { logIT, LOG_LEVEL } from './log.js';
+import { CachedLinearClient } from './exchange.js'
+import { checkListingDate, getVolatility } from './filters.js'
 
 dotenv.config();
 
@@ -62,6 +64,8 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const key = process.env.API_KEY;
 const secret = process.env.API_SECRET;
+const key_webSocket = process.env.USE_TESTNET == "true" ? process.env.API_KEY_WEBSOCKET : process.env.API_KEY;
+const secret_webSocket = process.env.USE_TESTNET == "true" ? process.env.API_SECRET_WEBSOCKET : process.env.API_SECRET;
 const stopLossCoins = new Map();
 
 // keep tracks of opened positions
@@ -88,8 +92,6 @@ const TRACE_TRADES_LEVEL_MAX = "MAX";
 const traceTradeFields = process.env.TRACE_TRADES_FIELDS.replace(/ /g,"").split(",")
 
 
-var rateLimit = 2000;
-var baseRateLimit = 2000;
 var lastReport = 0;
 var pairs = [];
 var liquidationOrders = [];
@@ -99,6 +101,12 @@ const drawdownThreshold =  process.env.TIMEOUT_BLACKLIST_FOR_BIG_DRAWDOWN == "tr
 
 // queue to sequentially execute scalp method
 var tradeOrdersQueue = [];
+
+// set filters to discard some symbol
+var filteredPairs = [];
+
+var settings = {}; // a memory copy of settings file
+var minOrderSizes = []; // a memory copy of min order size
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/css', express.static('gui/css'));
@@ -174,11 +182,23 @@ server.listen(PORT, () => {
 
 //create ws client
 const wsClient = new WebsocketClient({
+    key: key_webSocket,
+    secret: secret_webSocket,
+    market: 'linear',
+    livenet: true,
+});
+
+let wsTestClient = null;
+if (process.env.USE_TESTNET == "true") {
+    wsTestClient = new WebsocketClient({
     key: key,
     secret: secret,
     market: 'linear',
     livenet: true,
-});
+    testnet: true,
+    });
+}
+
 const binanceClient = new binanceWS({
     beautify: true,
 });
@@ -187,6 +207,16 @@ const linearClient = new LinearClient({
     key: key,
     secret: secret,
     livenet: true,
+    testnet: process.env.USE_TESTNET == "true",
+});
+const cachedLinearClient = new CachedLinearClient(linearClient);
+
+//create linear client
+const contractClient = new ContractClient({
+  key: key,
+  secret: secret,
+  livenet: true,
+  testnet: process.env.USE_TESTNET == "true",
 });
 //account client
 if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
@@ -198,20 +228,15 @@ if (process.env.WITHDRAW == "true" || process.env.TRANSFER_TO_SPOT == "true"){
 }
 
 function handleNewOrder(order, liquidity_trigger) {
-  // Add liquidity_trigger to order as list of liquidity to keep count of dca order i.e
-  // _liquidity_trigger: "liq1,liq2,...liqN"
-  const position = newPosition({...order, "liquidity_trigger": `\"${liquidity_trigger}\"`});
+  const position = newPosition({...order, "liquidity_trigger": liquidity_trigger});
   tradesHistory.set(order.symbol, position);
-  incOpenPosition();
 }
 
 function handleDcaOrder(order, liquidity_trigger) {
   let trade_info = tradesHistory.get(order.symbol);
   if (trade_info !== undefined) {
     trade_info._dca_count++;
-    //remove "" before append a new liquidity item.
-    trade_info._liquidity_trigger = trade_info._liquidity_trigger.replace(/"/g, "");
-    trade_info._liquidity_trigger = `\"${trade_info._liquidity_trigger} ${liquidity_trigger}\"`;
+    trade_info._liquidity_trigger = liquidity_trigger;
     if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
       traceTrade("dca", trade_info, traceTradeFields);
   }
@@ -223,162 +248,207 @@ function tradeOrdersQueue_enqueue(orderFnObj) {
     tradeOrdersQueue.push(orderFnObj);
 }
 
+function wsHandleStopOrder(data) {
+    const order_data = data.data;
+    //check for stoploss trigger
+    if (order_data[0].stop_order_type === "StopLoss" && order_data[0].order_status === "Triggered"){
+        //add coin to timeout
+        addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
+        messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
+    }
+    let trade_info = tradesHistory.get(order_data[0].symbol);
+    if (trade_info !== undefined && order_data[0].order_status === "Triggered" && (order_data[0].stop_order_type === "StopLoss" || order_data[0].stop_order_type === "TakeProfit")) {
+        trade_info._close_type = order_data[0].stop_order_type;
+    }
+}
+
+function wsHandleOrder(data) {
+    let close_position = false;
+    const filled_orders = data.data.filter(el => el.order_status == 'Filled');
+    filled_orders.forEach( async order => {
+
+      let trade_info = tradesHistory.get(order.symbol);
+
+      // 26/05/2023 patch as ByBit change order.create_type
+      const order_type = trade_info?._close_type ? trade_info._close_type : order.create_type;
+
+      switch(order_type) {
+        case 'CreateByUser':
+          // new trade
+          if (trade_info !== undefined) {
+            // update price with executed order price
+            // verify that it's starts order not dca
+            if (trade_info._start_price === 0) {
+              trade_info._start_price = order.last_exec_price;
+              // TODO: Handle new order should be called here to have price field with a value
+              trade_info._averaged_price = order.last_exec_price;
+              traceTrade("start", trade_info, traceTradeFields);
+            } else {
+              // handle fill of DCA orders when DCA type is DCA_AVERAGE_ENTRIES
+              if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+                incrementPosition(trade_info, order);
+                traceTrade("dca", trade_info, traceTradeFields);
+              }
+            }
+          }
+          break;
+        case 'StopLoss':
+          close_position = true;
+          globalTradesStats.consecutive_wins = 0;
+          globalTradesStats.consecutive_losses += 1;
+          globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
+          globalTradesStats.losses_count += 1;
+          break;
+        case 'TakeProfit':
+          close_position = true;
+          globalTradesStats.consecutive_losses = 0;
+          globalTradesStats.consecutive_wins += 1;
+          globalTradesStats.max_consecutive_wins = Math.max(globalTradesStats.max_consecutive_wins, globalTradesStats.consecutive_wins);
+          globalTradesStats.wins_count += 1;
+          if (drawdownThreshold > 0 && trade_info._max_loss > drawdownThreshold) {
+              addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
+              logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
+          }
+          break;
+        default:
+          // NOP
+      }
+
+      if (close_position) {
+        globalTradesStats.trade_count += 1;
+        globalTradesStats.max_loss = Math.min(globalTradesStats.max_loss, trade_info._max_loss);
+        closePosition(trade_info, order);
+        storeJson(globalStatsPath, globalTradesStats);
+        logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
+        logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
+
+        //only needed with DCA_AVERAGE_ENTRIES features on.
+        if (process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+          let res = await cancelOrder(linearClient, order.symbol);
+          if (res.ret_msg != "OK")
+            logIT(`on-update - error cancelling orphan orders for ${order.symbol}`, LOG_LEVEL.ERROR);
+          else
+            logIT(`on-update - successfully cancel orphan orders for ${order.symbol}`);
+        }
+
+        if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
+          traceTrade(order_type, trade_info, traceTradeFields);
+        tradesHistory.delete(order.symbol);
+      }
+    });
+};
+
+function wsHandleLiquidations(data) {
+    var pair = data.data.symbol;
+    var price = parseFloat(data.data.price);
+    var side = data.data.side;
+    //convert to float
+    var qty = parseFloat(data.data.qty) * price;
+    //create timestamp
+    var timestamp = Math.floor(Date.now() / 1000);
+    //find what index of liquidationOrders array is the pair
+    var index = liquidationOrders.findIndex(x => x.pair === pair);
+
+    var dir = "";
+    if (side === "Buy") {
+        dir = "Long";
+    } else {
+        dir = "Short";
+    }
+
+    //get blacklisted pairs
+    const blacklist = [];
+    var blacklist_all = process.env.BLACKLIST;
+    blacklist_all = blacklist_all.replaceAll(" ", "");
+    blacklist_all.split(',').forEach(item => {
+        blacklist.push(item);
+    });
+
+    // get whitelisted pairs
+    const whitelist = [];
+    var whitelist_all = process.env.WHITELIST;
+    whitelist_all = whitelist_all.replaceAll(" ", "");
+    whitelist_all.split(',').forEach(item => {
+        whitelist.push(item);
+    });
+
+    //if pair is not in liquidationOrders array and not in blacklist, add it
+    if (index === -1 && (!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
+        liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
+        index = liquidationOrders.findIndex(x => x.pair === pair);
+    }
+    //if pair is in liquidationOrders array, update it
+    else if ((!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
+        //check if timesstamp is withing 5 seconds of previous timestamp
+        if (timestamp - liquidationOrders[index].timestamp <= 5) {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            //add qty to existing qty and round to 2 decimal places
+            liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
+
+        }
+        //if timestamp is more than 5 seconds from previous timestamp, overwrite
+        else {
+            liquidationOrders[index].price = price;
+            liquidationOrders[index].side = side;
+            liquidationOrders[index].qty = qty;
+            liquidationOrders[index].timestamp = timestamp;
+            liquidationOrders[index].amount = 1;
+        }
+
+        if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
+
+            if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
+                logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
+            } else {
+                if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
+                  tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN)});
+                else
+                  scalp(pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN);
+            }
+
+        }
+        else {
+            logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " @Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
+            logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
+        }
+
+    }
+    else {
+        logIT(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
+    }
+}
+
 wsClient.on('update', (data) => {
     logIT(`raw message received ${JSON.stringify(data, null, 2)}`, LOG_LEVEL.DEBUG);
 
     const topic = data.topic;
     if (topic === "stop_order") {
-        const order_data = data.data;
-        //check for stoploss trigger
-        if (order_data[0].stop_order_type === "StopLoss" && order_data[0].order_status === "Triggered"){
-            //add coin to timeout
-            addCoinToTimeout(order_data[0].symbol, process.env.STOP_LOSS_TIMEOUT);
-            messageWebhook(order_data[0].symbol + " hit Stop Loss!\n Waiting " + process.env.STOP_LOSS_TIMEOUT + " ms for timeout...");
-        }
-        let trade_info = tradesHistory.get(order_data[0].symbol);
-        if (trade_info !== undefined && order_data[0].order_status === "Triggered" && (order_data[0].stop_order_type === "StopLoss" || order_data[0].stop_order_type === "TakeProfit")) {
-            trade_info._close_type = order_data[0].stop_order_type;
-        }
+        wsHandleStopOrder(data);
     } else if (topic === "order") {
-      let close_position = false;
-      const filled_orders = data.data.filter(el => el.order_status == 'Filled');
-      filled_orders.forEach( order => {
-
-        let trade_info = tradesHistory.get(order.symbol);
-
-        // 26/05/2023 patch as ByBit change order.create_type
-        const order_type = trade_info._close_type ? trade_info._close_type : order.create_type;
-
-        switch(order_type) {
-          case 'CreateByUser':
-            // new trade
-            if (trade_info !== undefined) {
-              // update price with executed order price
-              // verify that it's starts order not dca
-              if (trade_info._start_price === 0) {
-                trade_info._start_price = order.last_exec_price;
-                traceTrade("start", trade_info, traceTradeFields);
-              }
-            }
-            break;
-          case 'StopLoss':
-            close_position = true;
-            globalTradesStats.consecutive_wins = 0;
-            globalTradesStats.consecutive_losses += 1;
-            globalTradesStats.max_consecutive_losses = Math.max(globalTradesStats.max_consecutive_losses, globalTradesStats.consecutive_losses);
-            globalTradesStats.losses_count += 1;
-            break;
-          case 'TakeProfit':
-            close_position = true;
-            globalTradesStats.consecutive_losses = 0;
-            globalTradesStats.consecutive_wins += 1;
-            globalTradesStats.max_consecutive_wins = Math.max(globalTradesStats.max_consecutive_wins, globalTradesStats.consecutive_wins);
-            globalTradesStats.wins_count += 1;            
-            if (drawdownThreshold > 0 && trade_info._max_loss > drawdownThreshold) {
-                addCoinToTimeout(order.symbol, process.env.STOP_LOSS_TIMEOUT);
-                logIT(`handleTakeProfit::addCoinToTimeout for ${order.symbol} as during the trade have a loss greater than drawdownThreshold`);
-            }
-            break;
-          default:
-            // NOP
-        }
-
-        if (close_position) {
-          globalTradesStats.trade_count += 1;
-          globalTradesStats.max_loss = Math.min(globalTradesStats.max_loss, trade_info._max_loss);
-          closePosition(trade_info, order);
-          storeJson(globalStatsPath, globalTradesStats);
-          logIT(`#trade_stats:close# ${order.symbol}: ${JSON.stringify(trade_info)}`);
-          logIT(`#global_stats:close# ${JSON.stringify(globalTradesStats)}`);
-          if (process.env.TRACE_TRADES != TRACE_TRADES_LEVEL_OFF)
-            traceTrade(order_type, trade_info, traceTradeFields);
-          tradesHistory.delete(order.symbol);
-          decOpenPosition();
-        }
-      });
+        wsHandleOrder(data);
     } else {
-        var pair = data.data.symbol;
-        var price = parseFloat(data.data.price);
-        var side = data.data.side;
-        //convert to float
-        var qty = parseFloat(data.data.qty) * price;
-        //create timestamp
-        var timestamp = Math.floor(Date.now() / 1000);
-        //find what index of liquidationOrders array is the pair
-        var index = liquidationOrders.findIndex(x => x.pair === pair);
-    
-        var dir = "";
-        if (side === "Buy") {
-            dir = "Long";
-        } else {
-            dir = "Short";
-        }
-    
-        //get blacklisted pairs
-        const blacklist = [];
-        var blacklist_all = process.env.BLACKLIST;
-        blacklist_all = blacklist_all.replaceAll(" ", "");
-        blacklist_all.split(',').forEach(item => {
-            blacklist.push(item);
-        });
-    
-        // get whitelisted pairs
-        const whitelist = [];
-        var whitelist_all = process.env.WHITELIST;
-        whitelist_all = whitelist_all.replaceAll(" ", "");
-        whitelist_all.split(',').forEach(item => {
-            whitelist.push(item);
-        });
-    
-        //if pair is not in liquidationOrders array and not in blacklist, add it
-        if (index === -1 && (!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
-            liquidationOrders.push({pair: pair, price: price, side: side, qty: qty, amount: 1, timestamp: timestamp});
-            index = liquidationOrders.findIndex(x => x.pair === pair);
-        }
-        //if pair is in liquidationOrders array, update it
-        else if ((!blacklist.includes(pair)) && (process.env.USE_WHITELIST == "false" || (process.env.USE_WHITELIST == "true" && whitelist.includes(pair)))) {
-            //check if timesstamp is withing 5 seconds of previous timestamp
-            if (timestamp - liquidationOrders[index].timestamp <= 5) {
-                liquidationOrders[index].price = price;
-                liquidationOrders[index].side = side;
-                //add qty to existing qty and round to 2 decimal places
-                liquidationOrders[index].qty = parseFloat((liquidationOrders[index].qty + qty).toFixed(2));
-                liquidationOrders[index].timestamp = timestamp;
-                liquidationOrders[index].amount = liquidationOrders[index].amount + 1;
-    
-            }
-            //if timestamp is more than 5 seconds from previous timestamp, overwrite
-            else {
-                liquidationOrders[index].price = price;
-                liquidationOrders[index].side = side;
-                liquidationOrders[index].qty = qty;
-                liquidationOrders[index].timestamp = timestamp;
-                liquidationOrders[index].amount = 1;
-            }
-
-            if (liquidationOrders[index].qty > process.env.MIN_LIQUIDATION_VOLUME) {
-
-                if (stopLossCoins.has(pair) == true && process.env.USE_STOP_LOSS_TIMEOUT == "true") {
-                    logIT(chalk.yellow(liquidationOrders[index].pair + " is not allowed to trade cause it is on timeout"));
-                } else {
-                    if (process.env.PLACE_ORDERS_SEQUENTIALLY == "true")
-                      tradeOrdersQueue_enqueue({'pair': pair, 'fn': scalp.bind(null, pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN)});
-                    else
-                      scalp(pair, {...liquidationOrders[index]}, 'Bybit', runningStatus != runningStatus_RUN);
-                }
-    
-            }
-            else {
-                logIT(chalk.magenta("[" + liquidationOrders[index].amount + "] " + dir + " Liquidation order for " + liquidationOrders[index].pair + " @Bybit with a cumulative value of " + liquidationOrders[index].qty + " USDT"));
-                logIT(chalk.yellow("Not enough liquidations to trade " + liquidationOrders[index].pair));
-            }
-    
-        }
-        else {
-            logIT(chalk.gray("Liquidation Found for Blacklisted pair: " + pair + " ignoring..."));
-        }
+        wsHandleLiquidations(data);
     }
 });
+
+// using testnet needs to receive update notifications for
+// orders and stop_orders, instead liquidations comes from regular net.
+if (process.env.USE_TESTNET == "true") {
+    wsTestClient.on('update', (data) => {
+        logIT(`raw message received ${JSON.stringify(data, null, 2)}`, LOG_LEVEL.DEBUG);
+
+        const topic = data.topic;
+        if (topic === "stop_order") {
+            wsHandleStopOrder(data);
+        } else if (topic === "order") {
+            wsHandleOrder(data);
+        }
+
+    });
+}
 
 binanceClient.on('formattedMessage', (data) => {
     //console.log('raw message received ', JSON.stringify(data, null, 2));
@@ -505,11 +575,12 @@ binanceClient.on('error', (data) => {
     logIT('ws saw error ', data?.wsKey);
 });
 
+const wsClientPtr = process.env.USE_TESTNET == "true" ? wsTestClient : wsClient;
 //subscribe to stop_order to see when we hit stop-loss
-wsClient.subscribe('stop_order')
+wsClientPtr.subscribe('stop_order');
 
 //subscribe to order to see when orders where executed
-wsClient.subscribe('order')
+wsClientPtr.subscribe('order');
 
 //run websocket
 async function liquidationEngine(pairs) {
@@ -582,10 +653,7 @@ async function getServerTime() {
 
 //Get margin
 async function getMargin() {
-    const data = await linearClient.getWalletBalance();
-    var usedBalance = data.result['USDT'].used_margin;
-    var balance = usedBalance;
-    return balance;
+    return (await cachedLinearClient.getWalletBalance()).used_margin;
 }
 
 //get account balance
@@ -594,9 +662,9 @@ async function getBalance() {
     try{
         // get ping
         var started = Date.now();
-        const data = await linearClient.getWalletBalance();
+        const data = await cachedLinearClient.getWalletBalance();
         var elapsed = (Date.now() - started);
-        if (data.ret_code != 0) {
+        if (!data) {
             logIT(chalk.redBright("Error fetching balance. err: " + data.ret_code + "; msg: " + data.ret_msg));
             getBalanceTryCount++;
             if (getBalanceTryCount == 3)
@@ -604,11 +672,11 @@ async function getBalance() {
             return;
         }
         getBalanceTryCount = 0
-        var availableBalance = data.result['USDT'].available_balance;
+        var availableBalance = data.available_balance;
         // save balance global to reduce api requests
-        global_balance = data.result['USDT'].available_balance;
-        var usedBalance = data.result['USDT'].used_margin;
-        var balance = availableBalance + usedBalance;
+        global_balance = data.available_balance;
+        var usedBalance = data.used_margin;
+        var balance = data.whole_balance;
 
         //load settings.json
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
@@ -670,12 +738,8 @@ async function getBalance() {
         var percentGain = percentGain.toFixed(6);
         var diff = diff.toFixed(6);
         //fetch positions
-        var positions = await linearClient.getPosition();
+        var positions = await cachedLinearClient.getPosition();
         var positionList = [];
-        var openPositions = await totalOpenPositions();
-        if(openPositions === null) {
-            openPositions = 0;
-        }
         var marg = await getMargin();
         var time = await getServerTime();
         //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
@@ -690,7 +754,7 @@ async function getBalance() {
                 var size = size.toFixed(4);
                 var ios = positions.result[i].data.is_isolated;
 
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var priceFetch = await cachedLinearClient.getTickers({symbol: symbol});
                 var test = priceFetch.result[0].last_price;
 
                 let side = positions.result[i].data.side;
@@ -742,6 +806,7 @@ async function getBalance() {
         }
 
         //create data payload
+        const positionsCount = await cachedLinearClient.getOpenPositions();
         const posidata = { 
             balance: balance.toFixed(2).toString(),
             leverage: process.env.LEVERAGE.toString(),
@@ -749,7 +814,7 @@ async function getBalance() {
             profitUSDT: diff.toString(),
             profit: percentGain.toString(),
             servertime: time.toString(),
-            positioncount: openPositions.toString(),
+            positioncount: positionsCount.toString(),
             ping: elapsed,
             runningStatus: runningStatus_Label[runningStatus].toString(),
             trade_count: globalTradesStats.trade_count,
@@ -786,14 +851,10 @@ async function getBalance() {
         //send data to gui
         io.sockets.emit("positions", positionsData);
 
-
-
-
-
-
         return balance;
     }
     catch (e) {
+        logIT(`getBalance error ${e}`, LOG_LEVEL.ERROR);
         return null;
     }
 
@@ -801,7 +862,7 @@ async function getBalance() {
 //get position
 async function getPosition(pair, side) {
     //gor through all pairs and getPosition()
-    var positions = await linearClient.getPosition(pair);
+    var positions = await cachedLinearClient.getPosition(pair);
     const error_result = {side: null, entryPrice: null, size: null, percentGain: null};
     if (positions.result == null)
       logIT("Open positions response is null");
@@ -964,44 +1025,10 @@ async function takeProfit(symbol, position) {
 }
 
 
-function incOpenPosition() {
-  openPositions = (openPositions ?? 0) + 1;
-}
-
-function decOpenPosition() {
-  openPositions = (openPositions ?? 0) - 1;
-  if (openPositions < 0) {
-    logIT("decOpenPosition ERROR: open position < 0");
-    openPositions = undefined;
-  }
-}
-
-//fetch how how openPositions there are
-async function totalOpenPositions() {
-    if (openPositions === undefined) {
-      try{
-          var positions = await linearClient.getPosition();
-          var open = 0;
-          for (var i = 0; i < positions.result.length; i++) {
-              if (positions.result[i].data.size > 0) {
-                  open++;
-              }
-          }
-          openPositions = open;
-
-      }
-      catch (error) {
-          return null;
-      }
-    }
-
-    return openPositions;
-}
-
 //against trend
 async function scalp(pair, liquidationInfo, source, new_trades_disabled = false) {
     //check how many positions are open
-    const open_positions = await totalOpenPositions();
+    const open_positions = openPositions
     logIT("scalp - Open positions: " + open_positions);
 
     const trigger_qty = liquidationInfo.qty;
@@ -1030,6 +1057,14 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       return;
     }
 
+    dumpLiquidationInfo({
+      'time': moment().utc().format(),
+      'pair': pair,
+      'side': side,
+      'price': liquidationInfo.price,
+      'size': liquidationInfo.qty,
+    });
+
     //load min order size json
     const tickData = JSON.parse(fs.readFileSync('min_order_sizes.json', 'utf8'));
     var index = tickData.findIndex(x => x.pair === pair);
@@ -1053,11 +1088,34 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       return;
     }
 
+    // handle filteredPair
+    const filtered = filteredPairs.find(el => el.symbol == pair);
+    if (filtered !== undefined) {
+      logIT(`scalp - discard order as pair ${pair} is in filter list reason ${filtered.reason}`);
+      return;
+    }
+
     // place new order
     if (position.size === 0) {
 
       if (open_positions >= process.env.MAX_OPEN_POSITIONS) {
         logIT(chalk.redBright("scalp - Max Open Positions Reached!"));
+        return;
+      }
+
+      // check volatility filter
+      if (parseFloat(env.FILTER_CHECK_VOLATILITY_PRC) != 0) {
+        const volatility = await getVolatility(pair, parseInt(env.FILTER_CHECK_VOLATILITY_PERIOD));
+        if (volatility >  parseFloat(env.FILTER_CHECK_VOLATILITY_PRC)) { // if volatility > env.FILTER_CHECK_VOLATILITY_PRC discard token
+          logIT("scalp - discard order as token ${pair} have too big volatility ${volatility}");
+        }
+      }
+
+      // evaluate process.env.TRADE_POSITIONS_SIDE_BALANCE to have equals number of long and short
+      const maxTradeForSide = Math.round(process.env.MAX_OPEN_POSITIONS / process.env.TRADE_POSITIONS_SIDE_BALANCE == true ? 2 : 1);
+      const tradesForSide =  Array.from(tradesHistory.values()).filter(el => el.side == side).length;
+      if (tradesForSide >  maxTradeForSide) {
+        logIT(chalk.redBright("scalp - Max {side} Positions Reached!"));
         return;
       }
 
@@ -1075,15 +1133,33 @@ async function scalp(pair, liquidationInfo, source, new_trades_disabled = false)
       let size = settings.pairs[settingsIndex].order_size.toFixed(decimalPlaces);
       let order = await createMarketOrder(linearClient, pair, side, size, take_profit, stop_loss);
       if (order.ret_msg != "OK") {
-        logIT(`Scalp exit: Error placing new ${side} order: ${order.ret_msg}`);
+        logIT(`scalp exit: Error placing new ${side} order: ${order.ret_msg}`);
         return;
+      } else {
+        handleNewOrder(order.result, trigger_qty);
+        openPositions++; // increment here as async liquidation could be already enqueued and need synched openPositions status
+        logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
+
+        if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+          let dca_size = size;
+          for (let i = 1; i <= process.env.DCA_SAFETY_ORDERS; i++) {
+            let dca_price = side == "Buy" ? price * (1 - process.env.DCA_PRICE_DEVIATION_PRC * i / 100) : price * (1 + process.env.DCA_PRICE_DEVIATION_PRC * i /100)
+            dca_price = dca_price.toFixed(decimalPlaces)
+            dca_size = (dca_size * process.env.DCA_VOLUME_SCALE).toFixed(decimalPlaces)
+            const dcaOrder = await createLimitOrder(linearClient, pair, side, dca_size, dca_price);
+            if (dcaOrder.ret_msg != "OK") {
+              logIT(`scalp exit: Error placing new ${side} DCA[${i}] order: ${dcaOrder.ret_msg} for ${pair} at price ${dca_price}`, LOG_LEVEL.ERROR);
+              return;
+            }
+            logIT(chalk.bgGreenBright(`scalp - ${side} DCA[${i}] Order Placed for ${pair} at ${dca_size} size`));
+          }
+        }
+
+        if(process.env.USE_DISCORD == "true") {
+          orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
+        }
       }
-      handleNewOrder(order.result, trigger_qty);
-      logIT(chalk.bgGreenBright(`scalp - ${side} Order Placed for ${pair} at ${settings.pairs[settingsIndex].order_size} size`));
-      if(process.env.USE_DISCORD == "true") {
-        orderWebhook(pair, settings.pairs[settingsIndex].order_size, side, position.size, position.percentGain, trigger_qty, source);
-      }
-    } else if (position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true") {
+    } else if (position.percentGain < 0 && process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_LIQUIDATIONS") {
 
         //Long/Short liquidation
         //make sure order is less than max order size
@@ -1155,37 +1231,20 @@ async function setPositionMode() {
 }
 
 async function checkLeverage(symbol) {
-    var position = await linearClient.getPosition({symbol: symbol});
+    var position = await cachedLinearClient.getPosition({symbol: symbol});
     var leverage = position.result[0].leverage;
     return leverage;
 }
 //create loop that checks for open positions every second
 async function checkOpenPositions() {
-    //gor through all pairs and getPosition()
-    var positions = await linearClient.getPosition();
-    const data = await linearClient.getWalletBalance();
+    //go through all pairs and getPosition()
+    var positions = await cachedLinearClient.getPosition();
+    openPositions = positions.result.filter(el => el.data.size > 0).length;
+    const data = await cachedLinearClient.getWalletBalance();
 
-    //check rate_limit_status
-    if (positions.rate_limit_status > 100) {
-        rateLimit = baseRateLimit;
-        logIT("Rate limit status: " + chalk.green(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 75) {
-        rateLimit = rateLimit + 500;
-        logIT("Rate limit status: " + chalk.greenBright(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 50) {
-        rateLimit = rateLimit + 1000;
-        logIT("Rate limit status: " + chalk.yellowBright(positions.rate_limit_status));
-    }
-    else if (positions.rate_limit_status > 25) {
-        rateLimit = rateLimit + 2000;
-        logIT("Rate limit status: " + chalk.yellow(positions.rate_limit_status));
-    }
-    else {
-        rateLimit = rateLimit + 200;
-        logIT("Rate limit status: " + chalk.red(positions.rate_limit_status));
-    }
+    // pairs in paused list are not handled
+    // in this way user could set custom tp/sl and wait the trade to be completed
+    const pausedList = process.env.PAUSED_LIST.replace(/ /g, "").split(",");
 
     //logIT("Positions: " + JSON.stringify(positions, null, 2));
     var totalPositions = 0;
@@ -1194,7 +1253,7 @@ async function checkOpenPositions() {
         for (var i = 0; i < positions.result.length; i++) {
             if (positions.result[i].data.size > 0) {
                 //logIT("Open Position for " + positions.result[i].data.symbol + " with size " + positions.result[i].data.size + " and side " + positions.result[i].data.side + " and pnl " + positions.result[i].data.unrealised_pnl);
-                if (process.env.USE_RECALC_SL_TP == "true")
+                if (process.env.USE_RECALC_SL_TP == "true" && !pausedList.includes(positions.result[i].data.symbol))
                     takeProfit(positions.result[i].data.symbol, positions.result[i].data);
    
                 //get usd value of position
@@ -1203,7 +1262,7 @@ async function checkOpenPositions() {
 
                 var profit = positions.result[i].data.unrealised_pnl;
                 //get available Balance
-                var availableBalance = data.result['USDT'].available_balance;
+                var availableBalance = data.available_balance;
                 //calculate the profit % change in USD
                 var margin = positions.result[i].data.position_value/process.env.LEVERAGE;
 
@@ -1234,19 +1293,45 @@ async function checkOpenPositions() {
         console.log("¦ Open Positions ¦");
         console.table(postionList);
     }
+    return postionList;
+}
+
+async function getNewOrders() {
+  const openOrdersResp = await contractClient.getHistoricOrders({orderStatus: "New"});
+  if (openOrdersResp.retMsg != "OK") {
+    logIT(`closeQuitPosition - error getting orders list: ${openOrdersResp.retMsg}`, LOG_LEVEL.ERROR);
+    return [];
+  }
+
+  return openOrdersResp.result.list;
+}
+
+async function closeOrphanOrders(openPositionsList, openOrders) {
+  const orphans = openOrders.filter(el => openPositionsList.find( el2 => el2.symbol == el.symbol) == undefined);
+  if(orphans.length > 0) {
+    orphans.forEach(async el => {
+      let res =  await cancelOrder(linearClient, el.symbol);
+      if (res.ret_msg != "OK")
+        logIT(`closeQuitPosition - error cancelling orphan orders for ${el.symbol}`, LOG_LEVEL.ERROR);
+      else
+        logIT(`closeQuitPosition - successfully cancel orphan orders for ${el.symbol}`);
+    });
+  } else {
+    logIT(`closeQuitPosition - Orphan orders not found`);
+  }
 }
 
 async function getMinTradingSize() {
     const url = "https://api.bybit.com/v2/public/symbols";
     const response = await fetch(url);
     const data = await response.json();
-    var balance = await getBalance();
+    var balance = (await cachedLinearClient.getWalletBalance()).whole_balance;
 
     if (balance !== null) {
-        var tickers = await linearClient.getTickers();
-        var positions = await linearClient.getPosition();
+        var tickers = await cachedLinearClient.getTickers();
+        var positions = await cachedLinearClient.getPosition();
 
-        var minOrderSizes = [];
+        minOrderSizes = []; //update global variable TODO: refactoring to avoid global
         logIT("Fetching min Trading Sizes for pairs, this could take a minute...");
         for (var i = 0; i < data.result.length; i++) {
             logIT("Pair: " + data.result[i].name + " Min Trading Size: " + data.result[i].lot_size_filter.min_trading_qty);
@@ -1294,8 +1379,13 @@ async function getMinTradingSize() {
                     "tickSize": data.result[i].price_filter.tick_size,
                     "tradeable": tradeable
                 }
-                //add to array
-                minOrderSizes.push(minOrderSizeJson);
+
+                if (minOrderSizeJson.tickSize == undefined) {
+                  logIT(`getMinTradingSize - bad tickSize: ignore pair ${minOrderSizeJson.pair}`, LOG_LEVEL.ERROR);
+                } else {
+                  //add to array
+                  minOrderSizes.push(minOrderSizeJson);
+                }
             }
             catch (e) {
                 await sleep(10);
@@ -1306,14 +1396,22 @@ async function getMinTradingSize() {
 
 
         //update settings.json with min order sizes
-        const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-        for (var i = 0; i < minOrderSizes.length; i++) {
-            var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
-            if(settingsIndex !== -1) {
-                settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
-                settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
-                
-            }
+        if (fs.existsSync('settings.json')) { // check existence of the file
+          if (Object.keys(settings).length === 0) // avoid read file if it's already loaded in the global settings TODO: avoid global
+            settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+          let updated = false;
+          for (var i = 0; i < minOrderSizes.length; i++) {
+              var settingsIndex = settings.pairs.findIndex(x => x.symbol === minOrderSizes[i].pair);
+              if(settingsIndex !== -1) {
+                  settings.pairs[settingsIndex].order_size = minOrderSizes[i].minOrderSize;
+                  settings.pairs[settingsIndex].max_position_size = minOrderSizes[i].maxPositionSize;
+                  updated = true;
+              }
+          }
+
+          if (updated) {
+            fs.writeFileSync('settings.json', JSON.stringify(settings, null, 2));
+          }
         }
     }
     else {
@@ -1368,7 +1466,7 @@ async function createSettings() {
     .then(res => res.json())
     .then((out) => {
         //create settings.json file with multiple pairs
-        var settings = {};
+        settings = {}; // use global var TODO: avoid global
         settings["pairs"] = [];
         for (var i = 0; i < out.data.length; i++) {
             //logIT("Adding Smart Settings for " + out.data[i].name + " to settings.json");
@@ -1654,7 +1752,7 @@ async function reportWebhook() {
     if(process.env.USE_DISCORD == "true") {
         const settings = JSON.parse(fs.readFileSync('account.json', 'utf8'));
         //fetch balance first if not startingBalance will be null
-        var balance = await getBalance();
+        var balance = (await cachedLinearClient.getWalletBalance()).whole_balance;
         //check if starting balance is set
         if (settings.startingBalance === 0) {
             settings.startingBalance = balance;
@@ -1677,12 +1775,8 @@ async function reportWebhook() {
         var diff = diff.toFixed(6);
         var balance = balance.toFixed(2);
         //fetch positions
-        var positions = await linearClient.getPosition();
+        var positions = await cachedLinearClient.getPosition();
         var positionList = [];
-        var openPositions = await totalOpenPositions();
-        if(openPositions === null) {
-            openPositions = 0;
-        }
         var marg = await getMargin();
         var time = await getServerTime();
         //loop through positions.result[i].data get open symbols with size > 0 calculate pnl and to array
@@ -1697,7 +1791,7 @@ async function reportWebhook() {
                 var size = size.toFixed(4);
                 var ios = positions.result[i].data.is_isolated;
 
-                var priceFetch = await linearClient.getTickers({symbol: symbol});
+                var priceFetch = await cachedLinearClient.getTickers({symbol: symbol});
                 var test = priceFetch.result[0].last_price;
 
                 let side = positions.result[i].data.side;
@@ -1779,14 +1873,47 @@ async function reportWebhook() {
     }
 }
 
+async function applyFilters(pairs) {
+  let i = 0;
+  let filtered = [];
+  for(let i = 0; i < pairs.length; i++){
+    let sym = pairs[i];
+
+    if (parseInt(env.FILTER_MIN_LISTING_DAYS) != 0) {
+      const wasListed = await checkListingDate(sym, parseInt(env.FILTER_MIN_LISTING_DAYS));
+      if (!wasListed) {
+        logIT(`applyFilters - discard symbol ${sym} as it's not listed at list from ${env.FILTER_MIN_LISTING_DAYS} days`);
+        filtered.push({symbol: sym, reason: "FILTER_MIN_LISTING_DAYS"});
+      }
+    }
+
+    if (i%50 == 0) // rate limit to 100 request per second (limit is 120 x 5 sec)
+      await sleep(1000);
+  }
+
+  return filtered;
+}
 
 async function main() {
+    let initDone = false;
+
     //logIT("Starting Lick Hunter!");
     logIT("Starting Lick Hunter!");
     runningStatus = runningStatus_RUN;
     reportWebhook();
     try{
         pairs = await getSymbols();
+
+        // set globally filtered pairs
+        let tmpFilters = await applyFilters(pairs.map(el => el.split(".")[1]));
+        if (tmpFilters.length > 0) {
+          logIT(`filteredPairs ${JSON.stringify(tmpFilters)}`);
+          filteredPairs = tmpFilters;
+          // TODO: filter disabled symbols from wssocket
+        }
+        // set initDone to true anyway but force the main loop to wait for filters initialization.
+        if (tmpFilters.length >= 0 )
+          initDone = true;
 
         //load local file acccount.json with out require and see if "config_set" is true
         var account = JSON.parse(fs.readFileSync('account.json', 'utf8'));
@@ -1807,6 +1934,16 @@ async function main() {
             logIT("Updating settings.json with smart settings");
             await createSettings();
         }
+
+        // Only needed with DCA_AVERAGE_ENTRIES features on.
+        // Check if there are orphan limit orders created by DCA.
+        // Happens when the trade was closed when the app is not running.
+        if (process.env.USE_DCA_FEATURE == "true" && process.env.DCA_TYPE == "DCA_AVERAGE_ENTRIES") {
+          const openPositionList = await checkOpenPositions();
+          const newOrders = await getNewOrders();
+          await closeOrphanOrders(openPositionList, newOrders);
+        }
+
     }
     catch (err) {
         logIT(chalk.red("Error in main()"));
@@ -1830,16 +1967,18 @@ async function main() {
       }
     }, 100);
 
-    while (true) {
+    // start main loop when the initialization is completed
+    while (initDone) {
         try {
+            cachedLinearClient.invalidate();
+            await checkOpenPositions();
             await getBalance();
             await updateSettings();
-            await checkOpenPositions();
-            await sleep(rateLimit);
+
+            await sleep(cachedLinearClient.getRateLimit());
         } catch (e) {
             console.log(e);
             sleep(1000);
-            rateLimit = rateLimit + 1000;
         }
     }
 }
