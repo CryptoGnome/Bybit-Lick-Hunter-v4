@@ -3,3 +3,5 @@ test.js
 settings.json
 version.json
 account.json
+node_modules
+dist

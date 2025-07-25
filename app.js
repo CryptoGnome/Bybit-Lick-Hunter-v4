@@ -54,7 +54,7 @@ const spotClient = new SpotClientV3({
 });
 
 wsClient.on('update', (data) => {
-    //console.log('raw message received ', JSON.stringify(data, null, 2));
+    console.log('raw message received ', JSON.stringify(data, null, 2));
     var pair = data.data.symbol;
     var price = parseFloat(data.data.price);
     var side = data.data.side;
@@ -129,20 +129,16 @@ wsClient.on('update', (data) => {
 });
 
 wsClient.on('open', (data,) => {
-    //console.log('connection opened open:', data.wsKey);
-    //catch error
     if (data.wsKey === WS_KEY_MAP.WS_KEY_ERROR) {
         console.log('error', data);
         return;
     }
-    //console.log("Connection opened");
 });
 wsClient.on('response', (data) => {
     if (data.wsKey === WS_KEY_MAP.WS_KEY_ERROR) {
         console.log('error', data);
         return;
     }
-    //console.log("Connection opened");
 });
 wsClient.on('reconnect', ({ wsKey }) => {
     console.log('ws automatically reconnecting.... ', wsKey);
@@ -302,6 +298,8 @@ async function getBalance() {
 async function getPosition(pair, side) {
     //gor through all pairs and getPosition()
     var positions = await linearClient.getPosition(pair);
+
+    console.log(positions.result);
 
     if (positions.result !== null) {
         //look for pair in positions with the same side
@@ -477,8 +475,6 @@ async function totalOpenPositions() {
 async function scalp(pair, index, trigger_qty) {
     //check how many positions are open
     var openPositions = await totalOpenPositions();
-    console.log("Open positions: " + openPositions);
-
     //make sure openPositions is less than max open positions and not null
     if (openPositions < process.env.MAX_OPEN_POSITIONS && openPositions !== null) {
         //Long liquidation
